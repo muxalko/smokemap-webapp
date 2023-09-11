@@ -6,7 +6,7 @@ import styled, { css } from 'styled-components'
 
 import RequestsList from '../components/requestsList';
 
-export function CreateRequest({ onSuccessfulCreation }) {
+export function CreateRequest(props) {
 
   const [refresh, setRefresh] = useState(false);
 
@@ -45,7 +45,7 @@ export function CreateRequest({ onSuccessfulCreation }) {
     //console.log("CreateRequest handleSubmit event.target: " + JSON.stringify(event.target))
     console.log("CreateRequest form_data: " + JSON.stringify(form_data))
 
-    setSubmislssionError(null); // Reset the error state before making the mutation
+    setSubmissionError(null); // Reset the error state before making the mutation
     setSubmissionResult(null);
 
     createRequest({ variables: { input: form_data } });
@@ -57,7 +57,7 @@ export function CreateRequest({ onSuccessfulCreation }) {
   useEffect(() => {
     if (submission_result) {
       console.log("submission_result: "+JSON.stringify(submission_result));
-      onSuccessfulCreation([submission_result.address.long, submission_result.address.lat]);
+      props.onSuccessfulCreation([submission_result.address.long, submission_result.address.lat]);
       setRefresh(true);
     }
   },[submission_result]);

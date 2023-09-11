@@ -2,7 +2,7 @@ import { gql, useQuery } from "@apollo/client";
 import { ALL_PLACES_QUERY } from "../src/graphql/queries/place";
 import { useEffect } from "react";
 
-function PlacesList({onClickHandler}) {
+function PlacesList(props) {
   
   useEffect(() => {
     console.log("Component render: PlacesList");
@@ -20,7 +20,9 @@ function PlacesList({onClickHandler}) {
       <li key={place.id}>
           <div>
             <p>{place.id}.{place.properties.name})</p>
-            <button onClick={() => {onClickHandler(place.geometry.coordinates)}}>FlyTo</button>
+            <button onClick={() => {
+              props.onClickHandler(place.geometry.coordinates)
+              }} >FlyTo</button>
           </div>
         </li>
     )
