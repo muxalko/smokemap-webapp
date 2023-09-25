@@ -8,7 +8,9 @@ function PlacesList(props) {
     console.log("Component render: PlacesList");
   });
 
-  const { loading, error, data } = useQuery(ALL_PLACES_QUERY);
+  const { loading, error, data } = useQuery(ALL_PLACES_QUERY, {
+    //pollInterval: 1000,
+  });
 
   if (error) return <div>Error loading Places.</div>;
   if (loading) return <div>Loading</div>;

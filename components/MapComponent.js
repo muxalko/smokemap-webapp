@@ -13,6 +13,7 @@ import Map, {
 
 //import ControlPanel from "./control-panel_cities";
 import ControlPanel from "./control-panel_requests";
+// import GeocoderControl from "./geocoder-control"
 // TODO: investigate error when installing canvas - neeeded for SVG type of images
 //import MarkerIconSvg from "./../src/assets/icon-marker.svg";
 //import { Image } from "canvas";
@@ -27,33 +28,48 @@ import {
 const lon = -123.11343223112543;
 const lat = 49.28339038044595;
 const pointsLayerId = "places";
+const flyToZoomLevel = 12;
 
 export default function MapComponent() {
   const mapRef = useRef();
   const map = mapRef.current;
-  
-  useEffect(() => {
-    console.log("Component render: MapComponent");
-    if (mapRef && mapRef.current) {
-      const map = mapRef.current;
-      // const pointsLayerId = "places";
-      console.log(
-        mapRef && mapRef.current
-          ? mapRef.current.getStyle().sources
-          : "mapRef is null"
-      );
-    }
-  });
+
+  // useEffect(() => {
+  //   console.log("Component render: MapComponent");
+  //   if (mapRef && mapRef.current) {
+  //     const map = mapRef.current;
+  //     // const pointsLayerId = "places";
+  //     console.log(
+  //       mapRef && mapRef.current
+  //         ? mapRef.current.getStyle().sources
+  //         : "mapRef is null"
+  //     );
+  //   }
+  // });
 
   const onSelectRequest = useCallback((longitude, latitude) => {
-    mapRef.current?.flyTo({ center: [longitude, latitude], duration: 2000 });
+    mapRef.current?.flyTo({
+      center: [longitude, latitude],
+      duration: 2000,
+      //minZoom: minFlyToZoomLevel,
+      zoom: flyToZoomLevel,
+    });
+    // mapRef.current?.setLayoutProperty(
+    //   layerID,
+    //   'visibility',
+    //   layerID.indexOf(value) > -1 ? 'visible' : 'none'
+    // );
   }, []);
 
   const onClick = (event) => {
+    // When the map is clicked, get the geographic coordinate.
+    let coordinate = map.unproject(event.point);
+    // get first element clicked - for zooming in to cluster expand
     const feature = event?.features[0];
+    // find out which cluster was clicked
     const clusterId = feature && feature?.properties.cluster_id;
 
-    const mapSource = mapRef.current.getSource("hydrants");
+    const mapSource = mapRef.current.getSource(pointsLayerId);
 
     mapSource &&
       mapSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
@@ -68,6 +84,7 @@ export default function MapComponent() {
             duration: 500,
           });
       });
+    console.log("Click event coordinate: " + coordinate);
   };
 
   const [viewport, setViewport] = useState({
@@ -94,7 +111,7 @@ export default function MapComponent() {
           properties: {},
           geometry: {
             type: "Point",
-            coordinates: [ -123.1447524165215, 49.25537637491234],
+            coordinates: [-123.1447524165215, 49.25537637491234],
           },
         },
       ],
@@ -115,11 +132,19 @@ export default function MapComponent() {
         }
         //mapStyle={process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN ? "https://api.maptiler.com/maps/basic-v2/style.json?key="+process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN:process.env.NEXT_PUBLIC_MAP_STYLE}
         maxZoom={20}
+        // disable map rotation using right click + drag
+        dragRotate={false}
+        // disable map rotation using touch rotation gesture
+        touchZoomRotate={false}
+        //drag move
         onMove={(evt) => {
           setViewport({ ...evt.viewState });
         }}
+        //enable click on markers
         interactiveLayerIds={[clusterLayer.id]}
+        // set on click action
         onClick={onClick}
+        // on map load
         onLoad={() => {
           console.log("onLoad() fired");
           console.log(
@@ -164,9 +189,9 @@ export default function MapComponent() {
         // disable the default attribution
         attributionControl={false}
       >
-
         {/* <FullscreenControl /> */}
-        
+        {/* <GeocoderControl position="top-left" /> */}
+        <ControlPanel onSelectRequest={onSelectRequest} />
         {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
         <AttributionControl
           style={{
@@ -191,7 +216,7 @@ export default function MapComponent() {
                   customAttribution='<a href="https://www.maptiler.com"><img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler logo"></a>
                                      <a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a>
                                      <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>' /> */}
-        
+
         {/*Adding source for places*/}
         <Source
           id="places"
@@ -205,11 +230,7 @@ export default function MapComponent() {
           <Layer {...{ source: "places", ...clusterCountLayer }} />
           <Layer {...{ source: "places", ...unclusteredPointLayer }} />
         </Source>
-        
-        
       </Map>
-
-      <ControlPanel onSelectRequest={onSelectRequest} />
     </>
   );
 }

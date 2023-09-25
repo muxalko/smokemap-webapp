@@ -3,7 +3,7 @@ import { useCallback} from "react";
 // change to real requests data - think of pagination 
 // has to be admin role to approve
 
-import { CreateRequest } from './form_place';
+import { CreateRequest } from './createRequest';
 import ErrorBoundary from './ErrorBoundary';
 import PlacesList from './placesLists';
 
@@ -22,7 +22,7 @@ function ControlPanel(props) {
     <ControlPanelContainer>
         <ErrorBoundary>
       <h3>Add a new place</h3>
-      <CreateRequest onSuccessfulCreation={flyToLocation} />
+      <CreateRequest onClickHandler={flyToLocation} onSuccessfulCreation={flyToLocation} />
     </ErrorBoundary>
     <h4>Places</h4>
     <PlacesList onClickHandler={flyToLocation} />
