@@ -2,12 +2,12 @@ import { useLazyQuery, useQuery, useMutation } from "@apollo/client";
 import { NOT_APPROVED_REQUESTS_QUERY, APPROVE_REQUEST } from "../src/graphql/queries/request";
 import { useState, useEffect } from "react";
 
-function RequestsList( { doRefresh, setRefresh }) {
+function RequestsList(props) {
 
   
   const { loading, error, data, refetch } = useQuery(NOT_APPROVED_REQUESTS_QUERY, {
       //variables: { test },
-      //pollInterval: 60000,
+      pollInterval: 60000,
     });
   //const [getRequests, { useLazyQueryCalled, useLazyQueryData, useLazyQueryLoading, useLazyQueryError }] = useLazyQuery(NOT_APPROVED_REQUESTS_QUERY);
   const [approveRequest, { error_approve, reset }] = useMutation(APPROVE_REQUEST);
@@ -38,10 +38,10 @@ function RequestsList( { doRefresh, setRefresh }) {
   if (error) return <div>Error loading Requests.</div>;
   if (loading) return <div>Loading</div>;
 
-  if (doRefresh) {
+  if (props.doRefresh) {
       console.log("RequestsList REFRESH");
       //refetch()
-      setRefresh(false)
+      props.setRefresh(false)
   }
 
   if (data) {
@@ -53,6 +53,10 @@ function RequestsList( { doRefresh, setRefresh }) {
             <div>
               <p>{request.id}.{request.name}</p>
               <button onClick={() => onClickApproveHandler(request.id)}>Approve</button>
+              <button onClick={() => {
+                console.log(request);
+                props.onClickHandler([request.address.long, request.address.lat]);
+              }} >FlyTo</button>
             </div>
           </li>
       )
@@ -61,7 +65,7 @@ function RequestsList( { doRefresh, setRefresh }) {
 
   function onClickApproveHandler(value) {
     approveRequest({ variables: { id: value, input: { approvedBy: 'UI', approvedComment: 'Testing approvals' } } })
-    setRefresh(true);
+    props.setRefresh(true);
   }
   
   // function onClickGetRequests() {

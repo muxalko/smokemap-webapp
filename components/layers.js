@@ -19,32 +19,33 @@ export const clusterCountLayer = {
   }
 };
 
-// export const unclusteredPointLayer = {
-//   id: 'unclustered-point',
-//   type: 'circle',
-//   filter: ['!', ['has', 'point_count']],
-//   paint: {
-//     'circle-color': '#11b4da',
-//     'circle-radius': 4,
-//     'circle-stroke-width': 1,
-//     'circle-stroke-color': '#fff'
-//   }
-// }
-
-const hydrantLayout = {
-  'icon-image': 'fire-hydrant',
-  'icon-allow-overlap': true,
-  'icon-size': 0.1,
-  'text-field': ['get', 'status'],
-  'icon-anchor': 'bottom', 
-  'icon-offset': [0, -15],
-  'text-anchor': 'top'
-};
-
 export const unclusteredPointLayer = {
   id: 'unclustered-point',
-  type: 'symbol',
+  type: 'circle',
   filter: ['!', ['has', 'point_count']],
-  layout: {...hydrantLayout}
+  paint: {
+    'circle-color': '#11b4da',
+    'circle-radius': 10,
+    'circle-stroke-width': 3,
+    'circle-stroke-color': '#fff'
+  }
 }
+
+// 
+// const symbolLayout = {
+//   'icon-image': 'fire-hydrant',
+//   'icon-allow-overlap': true,
+//   'icon-size': 0.1,
+//   'text-field': ['get', 'status'],
+//   'icon-anchor': 'bottom', 
+//   'icon-offset': [0, -15],
+//   'text-anchor': 'top'
+// };
+//
+// export const unclusteredPointLayer = {
+//   id: 'unclustered-point',
+//   type: 'symbol',
+//   filter: ['!', ['has', 'point_count']],
+//   layout: {...symbolLayout}
+// }
 

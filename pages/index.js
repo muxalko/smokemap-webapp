@@ -1,46 +1,17 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import { CreateRequest } from '../components/form_place';
-import ErrorBoundary from '../components/ErrorBoundary';
-import PlacesList from '../components/placesLists';
+import React, { useState, useEffect} from 'react';
 import MapComponent from '../components/MapComponent';
 import styled from "styled-components";
 
-const initialFlyTo = [52.51965492668956, 13.406841854355584]
-
 export default function Index() {
   
-  const [flyTo, setFlyTo] = useState(initialFlyTo)
-
-  useEffect(() => {
-    console.log("Component render: About");
-    console.log("About - flyTo: " + JSON.stringify(flyTo));
-  });
-
-  useEffect(() => {
-    console.log("About - flyTo changed: " + JSON.stringify(flyTo));
-  },[flyTo]);
-
     return ( 
       <>
         <Navbar>
-          <Header>Smokemap v0.1</Header>
+          <Header>Smokemap {process.env.NEXT_PUBLIC_VERSION}</Header>
         </Navbar>
         <MapContainer>
-          <MapComponent flyTo={flyTo}/>
+          <MapComponent/>
         </MapContainer>
-        <ControlContainer>
-            <ErrorBoundary>
-              <h3>Add a new place</h3>
-              <CreateRequest onSuccessfulCreation={setFlyTo} />
-            </ErrorBoundary>
-    
-          <h4>Places</h4> 
-          <PlacesList onClickHandler={setFlyTo}/>
- 
-        {/* Additional control elements */}
-       
-
-        </ControlContainer>
         <Clearfix />
     </>
     )
@@ -61,7 +32,7 @@ const Header = styled.h1`
 
 // Styled map container
 const MapContainer = styled.div`
-  width: 75%;
+  width: 100%;
   height: 100vh;
   float: left;
 `;
