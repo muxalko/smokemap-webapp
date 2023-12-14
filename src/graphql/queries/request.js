@@ -1,57 +1,74 @@
 import { gql } from "@apollo/client";
 
 export const ALL_REQUESTS_QUERY = gql`
-  query {
+  query GetAllRequests {
     requests {
       id
       name
+      category {
+        name
+      }
       address {
-        id
-        address
-        lat
-        long
+        properties {
+          addressString
+        }
+        geometry {
+          coordinates
+        }
       }
       description
+      tags
     }
-}
+  }
 `;
 
 export const NOT_APPROVED_REQUESTS_QUERY = gql`
-query {
-	requestsToApprove {
-        id
+  query GetAllNotApprovedRequests {
+    requestsToApprove {
+      id
+      name
+      category {
         name
-        address {
-          id
-          address
-          lat
-          long
-        }
-        description
-        dateCreated
-        dateUpdated
-        dateApproved
-        approved
-        approvedBy
-        approvedComment
       }
-}
+      address {
+        properties {
+          addressString
+        }
+        geometry {
+          coordinates
+        }
+      }
+      description
+      tags
+      dateCreated
+      dateUpdated
+      dateApproved
+      approved
+      approvedBy
+      approvedComment
+    }
+  }
 `;
 
-
-export const ADD_REQUEST = gql`
-mutation CreateRequest($input: RequestInput!) {
+export const CREATE_REQUEST = gql`
+  mutation CreateRequest($input: RequestInput!) {
     createRequest(input: $input) {
       request {
         id
         name
+        category {
+          name
+        }
         address {
-          id
-          address
-          lat
-          long
+          properties {
+            addressString
+          }
+          geometry {
+            coordinates
+          }
         }
         description
+        tags
         dateCreated
       }
     }
@@ -59,16 +76,21 @@ mutation CreateRequest($input: RequestInput!) {
 `;
 
 export const APPROVE_REQUEST = gql`
-mutation ApproveRequest($id: ID!, $input: RequestApproveInput! ) {
+  mutation ApproveRequest($id: ID!, $input: RequestApproveInput!) {
     approveRequest(id: $id, input: $input) {
       request {
         id
         name
+        category {
+          name
+        }
         address {
-          id
-          address
-          lat
-          long
+          properties {
+            addressString
+          }
+          geometry {
+            coordinates
+          }
         }
         description
         dateCreated
@@ -77,7 +99,17 @@ mutation ApproveRequest($id: ID!, $input: RequestApproveInput! ) {
         approved
         approvedBy
         approvedComment
+        tags
       }
+    }
+  }
+`;
+
+
+export const DELETE_REQUEST = gql`
+  mutation DeleteRequest($id: ID!) {
+    deleteRequest(id: $id) {
+      ok
     }
   }
 `;
