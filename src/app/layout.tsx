@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 // import { Providers } from "@/redux/providers";
 import Template from "../components/template/template";
-import { ApolloWrapper } from "@/apollo-wrapper";
+import { ApolloWrapper } from "@/lib/apollo-wrapper";
 import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });

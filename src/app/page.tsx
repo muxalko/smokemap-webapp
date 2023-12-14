@@ -1,7 +1,7 @@
 import { MapComponent } from "@/components/map";
 import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 import { GetAllCategoriesQuery } from "@/graphql/__generated__/graphql";
-import { getClient } from "@/client";
+import { getClient } from "@/lib/client";
 import RequestReactForm from "./requests/request-react-form";
 import { revalidatePath } from "next/cache";
 
