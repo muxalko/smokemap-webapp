@@ -1,3 +1,9 @@
+// hackfix for an old bug  https://stackoverflow.com/questions/71662525/failed-to-load-config-next-babel-to-extend-from-eslintrc-json
+// {
+//   "extends": ["next/babel","next/core-web-vitals"]
+// }
 {
-  "extends": ["next/babel","next/core-web-vitals"]
+  "extends": [
+    "next"
+  ]
 }
