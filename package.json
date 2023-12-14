@@ -3,14 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "jsonsrv": "json-server --watch ./src/components/map/.data/random.json --host 192.168.56.5 --port 3001",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --watch",
     "codegen": "graphql-codegen --config codegen.ts",
-    "prestart": "graphql-codegen --config codegen.ts",
     "predev": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
