@@ -2,32 +2,32 @@
 // export { default } from "next-auth/middleware";
 
 //https://next-auth.js.org/configuration/nextjs#advanced-usage
-import { NextRequestWithAuth, withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { NextRequestWithAuth, withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
 
 export default withAuth(
-  // 'withAuth' augments 'Request' with the user\s token.
-  function middleware(request: NextRequestWithAuth) {
-    // console.log("middleware() nextUrl: " + JSON.stringify(request.nextUrl));
-    // console.log("middleware() nextauth: " + JSON.stringify(request.nextauth));
+    // 'withAuth' augments 'Request' with the user\s token.
+    function middleware(request: NextRequestWithAuth) {
+        // console.log("middleware() nextUrl: " + JSON.stringify(request.nextUrl));
+        // console.log("middleware() nextauth: " + JSON.stringify(request.nextauth));
 
-    if (
-      request.nextUrl.pathname.startsWith("/requests") &&
-      request.nextauth.token?.role !== "admin"
-    ) {
-      return NextResponse.rewrite(new URL("/denied", request.url));
-    }
-  },
-  {
-    //middleware will only execute when 'authorized' returns true
-    callbacks: {
-      authorized: ({ token }) => !!token,
+        if (
+            request.nextUrl.pathname.startsWith('/requests') &&
+            request.nextauth.token?.role !== 'admin'
+        ) {
+            return NextResponse.rewrite(new URL('/denied', request.url));
+        }
     },
-    //   authorized: ({ token }) => {
-    //     console.log("callback(jwt) token: " + JSON.stringify(token))
-    //    return token?.role === "admin"
-    // },
-  },
+    {
+        //middleware will only execute when 'authorized' returns true
+        callbacks: {
+            authorized: ({ token }) => !!token,
+        },
+        //   authorized: ({ token }) => {
+        //     console.log("callback(jwt) token: " + JSON.stringify(token))
+        //    return token?.role === "admin"
+        // },
+    },
 );
 // More on how NextAuth.js middleware works: https://next-auth.js.org/configuration/nextjs#middleware
 // export default withAuth({
@@ -44,4 +44,4 @@ export default withAuth(
 //   },
 // });
 
-export const config = { matcher: ["/requests", "/me"] };
+export const config = { matcher: ['/requests', '/me'] };

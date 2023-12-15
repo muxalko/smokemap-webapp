@@ -1,5 +1,5 @@
-import NextAuth from "next-auth/next";
-import { options } from "./config";
+import NextAuth from 'next-auth/next';
+import { options } from './config';
 
 // something is wrong with auth.ts
 //import { auth, config } from "auth";

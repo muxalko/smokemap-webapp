@@ -1,114 +1,114 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const ALL_REQUESTS_QUERY = gql`
-  query GetAllRequests {
-    requests {
-      id
-      name
-      category {
-        name
-      }
-      address {
-        properties {
-          addressString
+    query GetAllRequests {
+        requests {
+            id
+            name
+            category {
+                name
+            }
+            address {
+                properties {
+                    addressString
+                }
+                geometry {
+                    coordinates
+                }
+            }
+            description
+            tags
         }
-        geometry {
-          coordinates
-        }
-      }
-      description
-      tags
     }
-  }
 `;
 
 export const NOT_APPROVED_REQUESTS_QUERY = gql`
-  query GetAllNotApprovedRequests {
-    requestsToApprove {
-      id
-      name
-      category {
-        name
-      }
-      address {
-        properties {
-          addressString
+    query GetAllNotApprovedRequests {
+        requestsToApprove {
+            id
+            name
+            category {
+                name
+            }
+            address {
+                properties {
+                    addressString
+                }
+                geometry {
+                    coordinates
+                }
+            }
+            description
+            tags
+            dateCreated
+            dateUpdated
+            dateApproved
+            approved
+            approvedBy
+            approvedComment
         }
-        geometry {
-          coordinates
-        }
-      }
-      description
-      tags
-      dateCreated
-      dateUpdated
-      dateApproved
-      approved
-      approvedBy
-      approvedComment
     }
-  }
 `;
 
 export const CREATE_REQUEST = gql`
-  mutation CreateRequest($input: RequestInput!) {
-    createRequest(input: $input) {
-      request {
-        id
-        name
-        category {
-          name
+    mutation CreateRequest($input: RequestInput!) {
+        createRequest(input: $input) {
+            request {
+                id
+                name
+                category {
+                    name
+                }
+                address {
+                    properties {
+                        addressString
+                    }
+                    geometry {
+                        coordinates
+                    }
+                }
+                description
+                tags
+                dateCreated
+            }
         }
-        address {
-          properties {
-            addressString
-          }
-          geometry {
-            coordinates
-          }
-        }
-        description
-        tags
-        dateCreated
-      }
     }
-  }
 `;
 
 export const APPROVE_REQUEST = gql`
-  mutation ApproveRequest($id: ID!, $input: RequestApproveInput!) {
-    approveRequest(id: $id, input: $input) {
-      request {
-        id
-        name
-        category {
-          name
+    mutation ApproveRequest($id: ID!, $input: RequestApproveInput!) {
+        approveRequest(id: $id, input: $input) {
+            request {
+                id
+                name
+                category {
+                    name
+                }
+                address {
+                    properties {
+                        addressString
+                    }
+                    geometry {
+                        coordinates
+                    }
+                }
+                description
+                dateCreated
+                dateUpdated
+                dateApproved
+                approved
+                approvedBy
+                approvedComment
+                tags
+            }
         }
-        address {
-          properties {
-            addressString
-          }
-          geometry {
-            coordinates
-          }
-        }
-        description
-        dateCreated
-        dateUpdated
-        dateApproved
-        approved
-        approvedBy
-        approvedComment
-        tags
-      }
     }
-  }
 `;
 
 export const DELETE_REQUEST = gql`
-  mutation DeleteRequest($id: ID!) {
-    deleteRequest(id: $id) {
-      ok
+    mutation DeleteRequest($id: ID!) {
+        deleteRequest(id: $id) {
+            ok
+        }
     }
-  }
 `;
