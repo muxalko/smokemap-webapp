@@ -1,6 +1,6 @@
 "use server";
 
-import { getClient } from "@/client";
+import { getClient } from "@/lib/client";
 import {
   ApproveRequestMutation,
   DeleteRequestMutation,

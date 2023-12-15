@@ -1,5 +1,5 @@
 import React from "react";
-import { getClient } from "@/client";
+import { getClient } from "@/lib/client";
 import { NOT_APPROVED_REQUESTS_QUERY } from "@/graphql/queries/request";
 import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 import {

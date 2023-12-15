@@ -583,8 +583,8 @@ export default function MapComponent({
   });
 
   const PLACES_SOURCE = {
-    data:
-      `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}/places/?in_bbox=` +
+    data: // our main points source
+      `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
       (mapBounds
         ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
         : [lon - 2, lat - 2, lon + 2, lat + 2].join(",")),
