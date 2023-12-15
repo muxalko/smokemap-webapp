@@ -106,6 +106,13 @@ export default function MapComponent({ categories }: { categories: any }) {
     // console.log("CategorySelection:", categories);
     const [mapStyle, setMapStyle] = useState(null);
 
+    useEffect(() => {
+        console.log(
+            'Places endpoint: ',
+            process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT,
+        );
+    }, []);
+
     const categorySelectorForm = useForm<
         z.infer<typeof CategorySelectorSchema>
     >({
@@ -129,7 +136,6 @@ export default function MapComponent({ categories }: { categories: any }) {
             'SO FAR, getLayoutProperty():',
             mapRef.current?.getLayoutProperty(layer_id, 'visibility'),
         );
-
     };
 
     function onSubmit(data: z.infer<typeof CategorySelectorSchema>) {
@@ -461,7 +467,6 @@ export default function MapComponent({ categories }: { categories: any }) {
             mapRef.current!.getCenter();
 
         console.log("map's geographical centerpoint: ", lng, lat);
-
     };
 
     const debouncedMapOnMoveHandler = useMemo(
@@ -563,13 +568,13 @@ export default function MapComponent({ categories }: { categories: any }) {
 
                 <Source
                     clusterRadius={75} // cluster two points if less than stated pixels apart
-          id={pointsLayerId}
-          maxzoom={15}
-          // clusterMinPoints={2}
-          clusterMaxZoom={14} // display all points individually from stated zoom up
-          type="geojson"
-          // tolerance={20}
-          cluster={true}
+                    id={pointsLayerId}
+                    maxzoom={15}
+                    // clusterMinPoints={2}
+                    clusterMaxZoom={14} // display all points individually from stated zoom up
+                    type="geojson"
+                    // tolerance={20}
+                    cluster={true}
                     {...PLACES_SOURCE}
                     // data="https://maplibre.org/maplibre-gl-js/docs/assets/earthquakes.geojson"
                 >
@@ -596,6 +601,13 @@ export default function MapComponent({ categories }: { categories: any }) {
             </Popover>
 
             <div>
+                <Button
+                    onClick={e =>
+                        flyToCoordinates(-123.11343223112543, 49.28339038044595)
+                    }
+                >
+                    Fly to Vancouver
+                </Button>
                 <Button
                     onClick={e => {
                         console.log(mapRef.current);
@@ -629,11 +641,19 @@ export default function MapComponent({ categories }: { categories: any }) {
                     Hide "Bar" layer
                 </Button>
                 <Button
-                    onClick={e =>
-                        flyToCoordinates(-123.11343223112543, 49.28339038044595)
-                    }
+                    onClick={e => {
+                        console.log(
+                            'Places endpoint: ',
+                            `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
+                                (mapBounds
+                                    ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
+                                    : [lon - 2, lat - 2, lon + 2, lat + 2].join(
+                                          ',',
+                                      )),
+                        );
+                    }}
                 >
-                    Fly to Vancouver
+                    Print places endpoint
                 </Button>
             </div>
         </>
