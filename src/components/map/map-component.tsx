@@ -23,7 +23,7 @@ import {
 
 // import RANDOM from "./.data/random.json";
 // import CITIES from "./.data/cities.json";
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import {
     Popover,
     PopoverContent,
@@ -130,14 +130,6 @@ export default function MapComponent({ categories }: { categories: any }) {
             mapRef.current?.getLayoutProperty(layer_id, 'visibility'),
         );
 
-        // fails with method not defined
-        // mapRef.current!.setPaintProperty(layer_id, "circle-radius", 0);
-        // fails with method not defined
-        // mapRef.current?.setLayoutProperty(
-        //   layer_id,
-        //   "visibility",
-        //   checked ? "visible" : "none"
-        // );
     };
 
     function onSubmit(data: z.infer<typeof CategorySelectorSchema>) {
@@ -287,9 +279,6 @@ export default function MapComponent({ categories }: { categories: any }) {
                                     category.name + ': ',
                                     ['get', 'name'],
                                 ],
-                                // "text-field": ["get","name", ["get","nestedobj"]],
-                                // "text-field": ["get","name", ["at", 0, ["get","arrayofobjects"]]],
-                                // "text-field": ["get","name", ["at", 0, ["get","arrayofobjects"]]],
                                 'text-size': [
                                     'interpolate',
                                     ['linear'],
@@ -309,45 +298,12 @@ export default function MapComponent({ categories }: { categories: any }) {
                                 category.id,
                                 ['to-string', ['get', 'category']],
                             ],
-                            // filter: ["==", "icon", category.name],
-                            // filter: [
-                            //   "==",
-                            //   [
-                            //     "get",
-                            //     "category_id",
-                            //     ["at", 0, "places"]],
-                            //   ],
-                            //   category.id,
-                            // ],
                         }}
                     />
                 );
             }),
         [],
     );
-
-    // Custom markers, independent from sources
-    // markers are drawn separtely next to
-    // const pins = useMemo(
-    //   () =>
-    //     CITIES.map((city, index) => (
-    //       <Marker
-    //         key={`marker-${index}`}
-    //         longitude={city.longitude}
-    //         latitude={city.latitude}
-    //         anchor="bottom"
-    //         onClick={(e) => {
-    //           // If we let the click event propagates to the map, it will immediately close the popup
-    //           // with `closeOnClick: true`
-    //           e.originalEvent.stopPropagation();
-    //           setPopupInfo(city);
-    //         }}
-    //       >
-    //         <Pin />
-    //       </Marker>
-    //     )),
-    //   []
-    // );
 
     const onMapLoad = useCallback(() => {
         console.log('onLoad() fired');
@@ -366,19 +322,6 @@ export default function MapComponent({ categories }: { categories: any }) {
 
                 // setMapBounds(mapRef.current?.getBounds())
             });
-
-            // TODO: check why onhover doesn't work here
-            // mapRef.current?.on("onMouseMove", unclusteredPointLayer.id, function (e) {
-            //   console.log("onMouseMove() fired")
-            //   if (e.features.length > 0) {
-            //     const fState = mapRef.current?.getFeatureState({
-            //       source: pointsLayerId,
-            //       sourceLayer: unclusteredPointLayer.id,
-            //       id: e.features[0].id,
-            //     });
-            //     console.log(fState);
-            //   }
-            // });
 
             // When a click event occurs on the clusters layer
             // zoom in to expand level
@@ -448,15 +391,6 @@ export default function MapComponent({ categories }: { categories: any }) {
                         'Unclusters onClick event properties: ',
                         properties,
                     );
-
-                    // new maplibregl.Popup()
-                    //   .setLngLat(coordinates)
-                    //   .setHTML(
-                    //     `click: ${e.features[0].id}<br>Was there a prop?: ${JSON.stringify(
-                    //       e.features[0].properties
-                    //     )}`
-                    //   )
-                    //   .addTo(mapRef.current);
                 }
             });
 
@@ -521,11 +455,6 @@ export default function MapComponent({ categories }: { categories: any }) {
         // update visual bounds
         setMapBounds(mapRef.current!.getBounds());
 
-        // console.dir(mapRef.current);
-        // console.dir(mapRef.current?.getSource(pointsLayerId));
-        // console.dir(mapRef.current?.getStyle());
-        // console.dir(mapRef.current?.getCanvas());
-
         // TODO: implement creation with crosshair.
         // get map's geographical centerpoint for later creation of place location.
         const { lng, lat }: { lng: number; lat: number } =
@@ -533,15 +462,6 @@ export default function MapComponent({ categories }: { categories: any }) {
 
         console.log("map's geographical centerpoint: ", lng, lat);
 
-        // Query the places layer visible in the map.
-        // Only onscreen features are returned.
-        // Use filter to collect only results
-        // with specific condition
-        // const visiblePlace = mapRef.current?.querySourceFeatures(pointsLayerId, {
-        //   sourceLayer: clusterLayer.id,
-        //   // filter: ["in", "COUNTY", feature.properties.COUNTY],
-        // });
-        // console.log(visiblePlace);
     };
 
     const debouncedMapOnMoveHandler = useMemo(
@@ -557,21 +477,6 @@ export default function MapComponent({ categories }: { categories: any }) {
         };
     }, []);
 
-    // useEffect hook runs AFTER the main component is rendered
-    // useful when refresh code changes need to reset the map
-    // useEffect(() => {
-    //   console.log("Component re-rendered: MapComponent ");
-    //   if (mapRef && mapRef.current) {
-    //     //map = mapRef.current;
-    //     // const pointsLayerId = "places";
-    //     console.log(
-    //       mapRef && mapRef.current
-    //         ? mapRef.current?.getStyle().sources
-    //         : "mapRef does not exist"
-    //     );
-    //   }
-    // });
-
     const flyToCoordinates = useCallback(
         (longitude: number, latitude: number) => {
             mapRef.current?.flyTo({
@@ -580,55 +485,9 @@ export default function MapComponent({ categories }: { categories: any }) {
                 //minZoom: minFlyToZoomLevel,
                 zoom: flyToZoomLevel,
             });
-            // mapRef.current?.setLayoutProperty(
-            //   layerID,
-            //   'visibility',
-            //   layerID.indexOf(value) > -1 ? 'visible' : 'none'
-            // );
         },
         [],
     );
-
-    // const onMouseMove = (event) => {
-    //   console.log(event);
-    //   if (event.features.length > 0) {
-    //     const fState = map.getFeatureState({
-    //       source: pointsLayerId,
-    //       sourceLayer: "unclusteredPointLayer",
-    //       id: event.features[0].id,
-    //     });
-    //     console.log("Feature State:", fState);
-    //   }
-    // };
-
-    // // Set an event listener that will fire
-    // // when a feature on the x layer of the map is clicked
-    // const onClick = (event) => {
-    //   console.log(event);
-    //   // When the map is clicked, get the geographic coordinate.
-    //   let coordinate = mapRef.current?.unproject(event.point);
-    //   // get first element clicked - for zooming in to cluster expand
-    //   const feature = event?.features[0];
-    //   // find out which cluster was clicked
-    //   const clusterId = feature && feature?.properties.cluster_id;
-
-    //   const mapSource = mapRef.current?.getSource(pointsLayerId);
-
-    //   mapSource &&
-    //     mapSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
-    //       if (err) {
-    //         return;
-    //       }
-
-    //       feature &&
-    //         mapRef.current?.easeTo({
-    //           center: feature.geometry.coordinates,
-    //           zoom,
-    //           duration: 500,
-    //         });
-    //     });
-    //   console.log("Click event coordinate: " + coordinate);
-    // };
 
     const [viewport, setViewport] = useState({
         latitude: lat,
@@ -645,22 +504,6 @@ export default function MapComponent({ categories }: { categories: any }) {
             (mapBounds
                 ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
                 : [lon - 2, lat - 2, lon + 2, lat + 2].join(',')),
-    };
-
-    const PLACES1_SOURCE = {
-        data: {
-            type: 'FeatureCollection',
-            features: [
-                // {
-                //   type: "Feature",
-                //   properties: {},
-                //   geometry: {
-                //     type: "Point",
-                //     coordinates: [-123.1447524165215, 49.25537637491234],
-                //   },
-                // },
-            ],
-        },
     };
 
     return (
