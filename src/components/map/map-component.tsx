@@ -107,8 +107,9 @@ export default function MapComponent({ categories }: { categories: any }) {
     const [mapStyle, setMapStyle] = useState(null);
 
     useEffect(() => {
+        console.log('VERCEL_ENV: ', process.env.VERCEL_ENV);
         console.log(
-            'Places endpoint: ',
+            'NEXT_PUBLIC_FEATURESERV_ENDPOINT: ',
             process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT,
         );
     }, []);
