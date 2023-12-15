@@ -8,8 +8,8 @@ import { NextResponse } from "next/server";
 export default withAuth(
   // 'withAuth' augments 'Request' with the user\s token.
   function middleware(request: NextRequestWithAuth) {
-    console.log("middleware() nextUrl: " + JSON.stringify(request.nextUrl));
-    console.log("middleware() nextauth: " + JSON.stringify(request.nextauth));
+    // console.log("middleware() nextUrl: " + JSON.stringify(request.nextUrl));
+    // console.log("middleware() nextauth: " + JSON.stringify(request.nextauth));
 
     if (
       request.nextUrl.pathname.startsWith("/requests") &&
@@ -27,7 +27,7 @@ export default withAuth(
     //     console.log("callback(jwt) token: " + JSON.stringify(token))
     //    return token?.role === "admin"
     // },
-  }
+  },
 );
 // More on how NextAuth.js middleware works: https://next-auth.js.org/configuration/nextjs#middleware
 // export default withAuth({

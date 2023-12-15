@@ -18,12 +18,11 @@ export default async function Index() {
   return (
     <>
       <div className="flex flex-col flex-grow h-screen">
-        
         <RequestReactForm
           categories={allCategoriesQuery.data.categories}
           updateDataCallback={refetchData}
         />
-      
+
         <MapComponent categories={allCategoriesQuery.data.categories} />
       </div>
     </>

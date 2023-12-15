@@ -5,7 +5,6 @@ const Privacy = () => {
   return (
     <>
       <main className="flex min-h-screen flex-col items-center justify-between p-24">
-        
         <Link href="/">Back</Link>
         <Link
           href="https://www.iubenda.com/privacy-policy/68260466"

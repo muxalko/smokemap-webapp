@@ -75,7 +75,7 @@ const tagVariants = cva(
       animation: "fadeIn",
       textStyle: "normal",
     },
-  }
+  },
 );
 
 export enum Delimiter {
@@ -272,7 +272,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
               "flex flex-wrap gap-2": direction === "row",
               "flex flex-col gap-2": direction === "column",
             },
-            { "mb-3": tags.length !== 0 }
+            { "mb-3": tags.length !== 0 },
           )}
         >
           {truncatedTags.map((tagObj) =>
@@ -280,7 +280,6 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
               customTagRenderer(tagObj)
             ) : (
               <span
-                key={tagObj.id}
                 className={cn(
                   tagVariants({
                     variant,
@@ -293,51 +292,52 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                     textStyle,
                   }),
                   {
-                    "justify-between": direction === "column",
-                  }
+                    'justify-between': direction === 'column',
+                  },
                 )}
+                key={tagObj.id}
                 onClick={() => onTagClick?.(tagObj)}
               >
                 {tagObj.text}
                 <Button
-                  type="button"
-                  variant="ghost"
+                  className={cn('py-1 px-3 h-full hover:bg-transparent')}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent event from bubbling up to the tag span
                     removeTag(tagObj.id);
                   }}
-                  className={cn("py-1 px-3 h-full hover:bg-transparent")}
+                  type="button"
+                  variant="ghost"
                 >
                   <X size={14} />
                 </Button>
               </span>
-            )
+            ),
           )}
         </div>
         {enableAutocomplete ? (
           <>
             <Command className="border mt-2 sm:min-w-[450px]">
               <CommandInput
+                disabled={maxTags !== undefined && tags.length >= maxTags}
+                onBlur={onBlur}
+                onFocus={onFocus}
                 placeholder={
                   maxTags !== undefined && tags.length >= maxTags
                     ? placeholderWhenFull
                     : placeholder
                 }
-                disabled={maxTags !== undefined && tags.length >= maxTags}
-                onFocus={onFocus}
-                onBlur={onBlur}
               />
               <CommandList>
                 <CommandEmpty>No results found.</CommandEmpty>
                 <CommandGroup heading="Suggestions">
                   {filteredAutocompleteOptions?.map((optionObj) => (
                     <CommandItem
-                      key={uuid()}
                       className={`${
                         maxTags !== undefined && tags.length >= maxTags
-                          ? "cursor-not-allowed"
-                          : "cursor-pointer"
+                          ? 'cursor-not-allowed'
+                          : 'cursor-pointer'
                       }`}
+                      key={uuid()}
                     >
                       <div
                         className={`w-full ${
@@ -350,7 +350,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                             optionObj.text &&
                             (allowDuplicates ||
                               !tags.some(
-                                (tag) => tag.text === optionObj.text
+                                (tag) => tag.text === optionObj.text,
                               )) &&
                             (maxTags === undefined || tags.length < maxTags)
                           ) {
@@ -378,23 +378,23 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
         ) : (
           <>
             <Input
-              ref={inputRef}
+              autoComplete={enableAutocomplete ? 'on' : 'off'}
+              className={className}
+              disabled={maxTags !== undefined && tags.length >= maxTags}
               id={id}
-              type="text"
+              list={enableAutocomplete ? 'autocomplete-options' : undefined}
+              onBlur={onBlur}
+              onChange={handleInputChange}
+              onFocus={onFocus}
+              onKeyDown={handleKeyDown}
               placeholder={
                 maxTags !== undefined && tags.length >= maxTags
                   ? placeholderWhenFull
                   : placeholder
               }
+              ref={inputRef}
+              type="text"
               value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              className={className}
-              autoComplete={enableAutocomplete ? "on" : "off"}
-              list={enableAutocomplete ? "autocomplete-options" : undefined}
-              disabled={maxTags !== undefined && tags.length >= maxTags}
             />
             {showCount && maxTags && (
               <div className="flex">
@@ -407,7 +407,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 TagInput.displayName = "TagInput";

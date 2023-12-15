@@ -1,22 +1,12 @@
 import * as React from "react";
 import debounce from "lodash.debounce";
-import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import { ALL_PLACES_QUERY } from "@/graphql/queries/place";
 // import { useSuspenseQuery } from "@apollo/experimental-nextjs-app-support/ssr";
 // import { lat2tile, lon2tile } from "@/gis-utils";
-import Map, {
-  Source,
-  Layer,
-  // Marker,
-  Popup,
-  // NavigationControl,
-  // FullscreenControl,
-  // ScaleControl,
-  // GeolocateControl,
-  AttributionControl,
-} from "react-map-gl/maplibre";
+import { Layer, Map, Source } from "react-map-gl/maplibre";
 // import ControlPanel from "@/components/control/panel";
-import maplibregl from "maplibre-gl";
+import { LngLat, LngLatBounds, LngLatLike } from "maplibre-gl";
 // need maplibre css for markers
 import "maplibre-gl/dist/maplibre-gl.css";
 //import ControlPanel from "./control-panel_cities";
@@ -24,10 +14,10 @@ import "maplibre-gl/dist/maplibre-gl.css";
 // TODO: investigate error when installing canvas - neeeded for SVG type of images
 //import MarkerIconSvg from "./../src/assets/icon-marker.svg";
 //import { Image } from "canvas";
-import Pin from "./pin";
+// import Pin from "./pin";
 import {
-  clusterLayer,
   clusterCountLayer,
+  clusterLayer,
   unclusteredPointLayer,
 } from "./layers";
 
@@ -40,11 +30,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import CustomOverlay from "./custom-overlay";
-import ControlPanel from "./control-panel";
-import electionData from "./.data/us-election-2016.json";
-import PieCharts from "./pie-chart";
 import Crosshair from "./crosshair";
-import { Checkbox } from "../ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -54,11 +41,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import type { CategoryType } from "@/graphql/__generated__/graphql";
+// import type { CategoryType } from "@/graphql/__generated__/graphql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "../ui/use-toast";
+import { MapRef } from "react-map-gl/maplibre";
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 //Starting point
 //Vacouver,BC
@@ -71,9 +59,9 @@ import { toast } from "../ui/use-toast";
 const lon = -77.01215461524441;
 const lat = 38.89630256339336;
 
-const southWest = new maplibregl.LngLat(lon - 2, lat + 2);
-const northEast = new maplibregl.LngLat(lon + 2, lat - 2);
-const boundingBox = new maplibregl.LngLatBounds(southWest, northEast);
+const southWest = new LngLat(lon - 2, lat + 2);
+const northEast = new LngLat(lon + 2, lat - 2);
+const boundingBox = new LngLatBounds(southWest, northEast);
 
 const initialZoom = 13;
 const pointsLayerId = "places";
@@ -85,18 +73,15 @@ const CategorySelectorSchema = z.object({
   }),
 });
 
-export default function MapComponent({
-  categories,
-}: {
-  categories: CategoryType[];
-}) {
+export default function MapComponent({ categories }: { categories: any }) {
   // Hooks
   // our map reference
   // const mapRef = useRef<MapLibreGL>();
   // I suspect that this is where I am presumably wrong.
   // I assume that 'maplibregl' type Map is the same as 'react-map-gl/maplibre' Map component ref={mapRef}
   // This is where I try to declare my mapRef following answer from here https://stackoverflow.com/questions/68368898/typescript-type-for-mapboxgljs-react-ref-hook
-  const mapRef = useRef<maplibregl.Map | null>(null);
+  // const mapRef = useRef<maplibregl.Map | null>(null);
+  const mapRef = useRef<MapRef>(null);
 
   // trying other approach from here  https://gis.stackexchange.com/questions/440274/how-to-make-map-ref-object-available-on-first-modal-window-render-launch
   // Basically, instead of useRef to use useState as follows, Map component then should be set to ref={(ref) => setMap(ref)}
@@ -104,7 +89,7 @@ export default function MapComponent({
   // Map component should be set to ref={(ref) => setMap(ref)}
 
   // save our bounding box for future requests of data points within a boundary
-  const [mapBounds, setMapBounds] = useState(boundingBox);
+  const [mapBounds, setMapBounds] = useState<LngLatBounds>(boundingBox);
 
   // popup with a place properties
   const [popupInfo, setPopupInfo] = useState(null);
@@ -124,7 +109,7 @@ export default function MapComponent({
   const categorySelectorForm = useForm<z.infer<typeof CategorySelectorSchema>>({
     resolver: zodResolver(CategorySelectorSchema),
     defaultValues: {
-      items: categories.map((category) => category.name),
+      items: categories.map((category: any) => category.name),
     },
   });
 
@@ -133,15 +118,15 @@ export default function MapComponent({
 
     console.log(
       "SO FAR, getLayer(" + layer_id + "):",
-      mapRef.current?.getLayer(layer_id)
+      mapRef.current?.getLayer(layer_id),
     );
     console.log(
       "SO FAR, getLayoutProperty():",
-      mapRef.current?.getLayoutProperty(layer_id, "visibility")
+      mapRef.current?.getLayoutProperty(layer_id, "visibility"),
     );
 
     // fails with method not defined
-    mapRef.current?.setPaintProperty(layer_id, "circle-radius", 0);
+    // mapRef.current!.setPaintProperty(layer_id, "circle-radius", 0);
     // fails with method not defined
     // mapRef.current?.setLayoutProperty(
     //   layer_id,
@@ -164,8 +149,8 @@ export default function MapComponent({
     () => (
       <Form {...categorySelectorForm}>
         <form
-          onSubmit={categorySelectorForm.handleSubmit(onSubmit)}
           className="space-y-8"
+          onSubmit={categorySelectorForm.handleSubmit(onSubmit)}
         >
           <FormField
             control={categorySelectorForm.control}
@@ -179,42 +164,42 @@ export default function MapComponent({
                   </FormDescription>
                 </div>
 
-                {categories.map((item) => (
+                {categories.map((item: any) => (
                   <FormField
-                    key={item.name}
                     control={categorySelectorForm.control}
+                    key={item.name}
                     name="items"
                     render={({ field }) => {
                       return (
                         <FormItem
-                          key={item.id}
                           className="flex flex-row items-start space-x-3 space-y-0"
+                          key={item.id}
                         >
                           <FormControl>
                             <Checkbox
                               checked={field.value?.includes(item.name)}
-                              onCheckedChange={async (checked) => {
+                              onCheckedChange={async (checked: boolean) => {
                                 if (
                                   mapRef &&
                                   mapRef.current &&
-                                  mapRef.current.isStyleLoaded()
+                                  mapRef.current?.isStyleLoaded()
                                 ) {
                                   const layer_id = `poi-${item.name.replace(
                                     / /g,
-                                    "-"
+                                    '-',
                                   )}`;
 
                                   return handleCategorySelectorChange(
                                     layer_id,
-                                    checked
+                                    checked,
                                   );
                                 }
                                 return checked
                                   ? field.onChange([...field.value, item.name])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.name
-                                      )
+                                        (value) => value !== item.name,
+                                      ),
                                     );
                               }}
                             />
@@ -235,11 +220,11 @@ export default function MapComponent({
         </form>
       </Form>
     ),
-    []
+    [],
   );
 
   function onCategorySelectorSubmit(
-    data: z.infer<typeof CategorySelectorSchema>
+    data: z.infer<typeof CategorySelectorSchema>,
   ) {
     toast({
       title: "You submitted the following values:",
@@ -253,7 +238,7 @@ export default function MapComponent({
 
   const testPlaces = useMemo(
     () =>
-      categories.map((category) => {
+      categories.map((category: any) => {
         // filtering implemented with layer visibility
         // each category is converted to a layer with name poi-{category}
         // Add a layer for this symbol type if it hasn't been added already.
@@ -307,7 +292,7 @@ export default function MapComponent({
           />
         );
       }),
-    []
+    [],
   );
 
   // Custom markers, independent from sources
@@ -339,7 +324,7 @@ export default function MapComponent({
     // make our map draggable + debounce map bounds update
     if (mapRef && mapRef.current) {
       // console.log("onMapLoad() =>  mapRef.current: ", mapRef.current);
-      mapRef.current.on("move", (evt) => {
+      mapRef.current?.on("move", (evt: any) => {
         // console.log("onMapMove() event: ", evt);
         setViewport({ ...evt.viewState });
 
@@ -348,14 +333,14 @@ export default function MapComponent({
           debouncedMapOnMoveHandler(evt);
         }
 
-        // setMapBounds(mapRef.current.getBounds())
+        // setMapBounds(mapRef.current?.getBounds())
       });
 
       // TODO: check why onhover doesn't work here
-      // mapRef.current.on("onMouseMove", unclusteredPointLayer.id, function (e) {
+      // mapRef.current?.on("onMouseMove", unclusteredPointLayer.id, function (e) {
       //   console.log("onMouseMove() fired")
       //   if (e.features.length > 0) {
-      //     const fState = mapRef.current.getFeatureState({
+      //     const fState = mapRef.current?.getFeatureState({
       //       source: pointsLayerId,
       //       sourceLayer: unclusteredPointLayer.id,
       //       id: e.features[0].id,
@@ -366,95 +351,105 @@ export default function MapComponent({
 
       // When a click event occurs on the clusters layer
       // zoom in to expand level
-      mapRef.current.on("click", "clusters", (e) => {
+      mapRef.current?.on("click", "clusters", (e) => {
         console.log(e);
         // When the map is clicked, get the geographic coordinate.
-        let coordinates = mapRef.current.unproject(e.point);
+        const coordinates = mapRef.current?.unproject(e.point);
         // get first element clicked - for zooming in to cluster expand
-        const feature = e?.features[0];
-        // find out which cluster was clicked
-        const clusterId = feature && feature?.properties.cluster_id;
+        if (e.features && e.features?.length > 0) {
+          const feature = e.features[0];
+          // find out which cluster was clicked
+          const clusterId = feature && feature?.properties?.cluster_id;
 
-        const mapSource = mapRef.current.getSource(pointsLayerId);
+          const mapSource: any = mapRef.current?.getSource(pointsLayerId);
 
-        mapSource &&
-          mapSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err) {
-              return;
-            }
+          mapSource &&
+            mapSource.getClusterExpansionZoom(
+              clusterId,
+              (err: any, zoom: any) => {
+                if (err) {
+                  return;
+                }
 
-            feature &&
-              mapRef.current.easeTo({
-                center: feature.geometry.coordinates,
-                zoom,
-                duration: 500,
-              });
-          });
-        console.log("Clusters onClick event coordinates: " + coordinates);
+                feature &&
+                  feature.geometry.type === "Point" &&
+                  mapRef.current?.easeTo({
+                    center: feature.geometry.coordinates as LngLatLike,
+                    zoom,
+                    duration: 500,
+                  });
+              },
+            );
+          console.log("Clusters onClick event coordinates: " + coordinates);
+        }
       });
 
       // When a click event occurs on a feature in
       // the unclustered-point layer, open a popup at
       // the location of the feature, with
       // description HTML from its properties.
-      mapRef.current.on("click", "unclustered-point", (e) => {
+      mapRef.current?.on("click", "unclustered-point", (e) => {
         console.log("Unclustered onClick event: ", e);
 
-        const coordinates = e.features[0].geometry.coordinates.slice();
+        if (e.features && e.features[0].geometry.type === "Point") {
+          const coordinates = e.features[0].geometry.coordinates.slice();
 
-        console.log("Unclusters onClick event coordinates: " + coordinates);
-        // Ensure that if the map is zoomed out such that
-        // multiple copies of the feature are visible, the
-        // popup appears over the copy being pointed to.
-        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          console.log("Unclusters onClick event coordinates: " + coordinates);
+          // Ensure that if the map is zoomed out such that
+          // multiple copies of the feature are visible, the
+          // popup appears over the copy being pointed to.
+          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          }
+
+          const properties = e.features[0].properties;
+
+          console.log("Unclusters onClick event properties: ", properties);
+
+          // new maplibregl.Popup()
+          //   .setLngLat(coordinates)
+          //   .setHTML(
+          //     `click: ${e.features[0].id}<br>Was there a prop?: ${JSON.stringify(
+          //       e.features[0].properties
+          //     )}`
+          //   )
+          //   .addTo(mapRef.current);
         }
-
-        const properties = e.features[0].properties;
-
-        console.log("Unclusters onClick event properties: ", properties);
-
-        // new maplibregl.Popup()
-        //   .setLngLat(coordinates)
-        //   .setHTML(
-        //     `click: ${e.features[0].id}<br>Was there a prop?: ${JSON.stringify(
-        //       e.features[0].properties
-        //     )}`
-        //   )
-        //   .addTo(mapRef.current);
       });
 
       // TODO: understand hover on touch devices
-      mapRef.current.on("mouseenter", unclusteredPointLayer.id, (e) => {
-        mapRef.current.getCanvas().style.cursor = "pointer";
+      mapRef.current?.on("mouseenter", unclusteredPointLayer.id ?? "", (e) => {
+        mapRef.current!.getCanvas().style.cursor = "pointer";
         console.log("Unclustered mouseenter event: ", e);
       });
-      mapRef.current.on("mouseleave", unclusteredPointLayer.id, () => {
-        mapRef.current.getCanvas().style.cursor = "";
+      mapRef.current?.on("mouseleave", unclusteredPointLayer.id ?? "", () => {
+        mapRef.current!.getCanvas().style.cursor = "";
       });
 
-      mapRef.current.on("mouseenter", clusterLayer.id, (e) => {
+      mapRef.current?.on("mouseenter", clusterLayer.id ?? "", (e) => {
         console.log("clusterLayer mouseenter event: ", e);
-        mapRef.current.getCanvas().style.cursor = "pointer";
+        mapRef.current!.getCanvas().style.cursor = "pointer";
 
-        const coordinates = e.features[0].geometry.coordinates.slice();
+        if (e.features && e.features[0].geometry.type === "Point") {
+          const coordinates = e.features[0].geometry.coordinates.slice();
 
-        console.log(
-          "clusterLayer mouseenter event coordinates: " + coordinates
-        );
-        // Ensure that if the map is zoomed out such that
-        // multiple copies of the feature are visible, the
-        // popup appears over the copy being pointed to.
-        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          console.log(
+            "clusterLayer mouseenter event coordinates: " + coordinates,
+          );
+          // Ensure that if the map is zoomed out such that
+          // multiple copies of the feature are visible, the
+          // popup appears over the copy being pointed to.
+          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          }
+
+          const properties = e.features[0].properties;
+
+          console.log("clusterLayer mouseenter event properties: ", properties);
         }
-
-        const properties = e.features[0].properties;
-
-        console.log("clusterLayer mouseenter event properties: ", properties);
       });
-      mapRef.current.on("mouseleave", clusterLayer.id, () => {
-        mapRef.current.getCanvas().style.cursor = "";
+      mapRef.current?.on("mouseleave", clusterLayer.id ?? "", () => {
+        mapRef.current!.getCanvas().style.cursor = "";
       });
     }
 
@@ -462,21 +457,22 @@ export default function MapComponent({
   }, []);
 
   // Prevent backend from overwhelming with the requests, hold for 300ms
-  const mapOnMoveHandler = (evt) => {
+  const mapOnMoveHandler = (evt: any) => {
     // feels chunky when dragging the map if used with debounce method
     //setViewport({ ...evt.viewState });
 
     // update visual bounds
-    setMapBounds(mapRef.current.getBounds());
+    setMapBounds(mapRef.current!.getBounds());
 
     // console.dir(mapRef.current);
-    // console.dir(mapRef.current.getSource(pointsLayerId));
-    // console.dir(mapRef.current.getStyle());
-    // console.dir(mapRef.current.getCanvas());
+    // console.dir(mapRef.current?.getSource(pointsLayerId));
+    // console.dir(mapRef.current?.getStyle());
+    // console.dir(mapRef.current?.getCanvas());
 
     // TODO: implement creation with crosshair.
     // get map's geographical centerpoint for later creation of place location.
-    let { lng, lat } = mapRef.current.getCenter();
+    const { lng, lat }: { lng: number; lat: number } =
+      mapRef.current!.getCenter();
 
     console.log("map's geographical centerpoint: ", lng, lat);
 
@@ -484,7 +480,7 @@ export default function MapComponent({
     // Only onscreen features are returned.
     // Use filter to collect only results
     // with specific condition
-    // const visiblePlace = mapRef.current.querySourceFeatures(pointsLayerId, {
+    // const visiblePlace = mapRef.current?.querySourceFeatures(pointsLayerId, {
     //   sourceLayer: clusterLayer.id,
     //   // filter: ["in", "COUNTY", feature.properties.COUNTY],
     // });
@@ -493,7 +489,7 @@ export default function MapComponent({
 
   const debouncedMapOnMoveHandler = useMemo(
     () => debounce(mapOnMoveHandler, 300),
-    []
+    [],
   );
 
   // Stop the invocation of the debounced function
@@ -513,25 +509,28 @@ export default function MapComponent({
   //     // const pointsLayerId = "places";
   //     console.log(
   //       mapRef && mapRef.current
-  //         ? mapRef.current.getStyle().sources
+  //         ? mapRef.current?.getStyle().sources
   //         : "mapRef does not exist"
   //     );
   //   }
   // });
 
-  const flyToCoordinates = useCallback((longitude, latitude) => {
-    mapRef.current?.flyTo({
-      center: [longitude, latitude],
-      duration: 2000,
-      //minZoom: minFlyToZoomLevel,
-      zoom: flyToZoomLevel,
-    });
-    // mapRef.current?.setLayoutProperty(
-    //   layerID,
-    //   'visibility',
-    //   layerID.indexOf(value) > -1 ? 'visible' : 'none'
-    // );
-  }, []);
+  const flyToCoordinates = useCallback(
+    (longitude: number, latitude: number) => {
+      mapRef.current?.flyTo({
+        center: [longitude, latitude],
+        duration: 2000,
+        //minZoom: minFlyToZoomLevel,
+        zoom: flyToZoomLevel,
+      });
+      // mapRef.current?.setLayoutProperty(
+      //   layerID,
+      //   'visibility',
+      //   layerID.indexOf(value) > -1 ? 'visible' : 'none'
+      // );
+    },
+    [],
+  );
 
   // const onMouseMove = (event) => {
   //   console.log(event);
@@ -550,13 +549,13 @@ export default function MapComponent({
   // const onClick = (event) => {
   //   console.log(event);
   //   // When the map is clicked, get the geographic coordinate.
-  //   let coordinate = mapRef.current.unproject(event.point);
+  //   let coordinate = mapRef.current?.unproject(event.point);
   //   // get first element clicked - for zooming in to cluster expand
   //   const feature = event?.features[0];
   //   // find out which cluster was clicked
   //   const clusterId = feature && feature?.properties.cluster_id;
 
-  //   const mapSource = mapRef.current.getSource(pointsLayerId);
+  //   const mapSource = mapRef.current?.getSource(pointsLayerId);
 
   //   mapSource &&
   //     mapSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
@@ -565,7 +564,7 @@ export default function MapComponent({
   //       }
 
   //       feature &&
-  //         mapRef.current.easeTo({
+  //         mapRef.current?.easeTo({
   //           center: feature.geometry.coordinates,
   //           zoom,
   //           duration: 500,
@@ -583,7 +582,8 @@ export default function MapComponent({
   });
 
   const PLACES_SOURCE = {
-    data: // our main points source
+    // our main points source
+    data:
       `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
       (mapBounds
         ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
@@ -629,19 +629,19 @@ export default function MapComponent({
         // disable map rotation using touch rotation gesture
         touchZoomRotate={false}
         //enable click on markers
-        interactiveLayerIds={[clusterLayer.id, unclusteredPointLayer.id]}
+        interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]}
         // onClick={onClick}
         onLoad={onMapLoad}
-        attributionControl={false}
+        // attributionControl={false}
       >
         {/* <FullscreenControl /> */}
         {/* <GeocoderControl position="top-left" /> */}
         {/* <ControlPanel onSelectRequest={onSelectRequest} /> */}
         {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
-        <AttributionControl
+        {/* <AttributionControl
           style={{
             //color: 'ff7c92',
-            "-webkit-text-size-adjust": "100%",
+            "text-size-adjust": "100%",
             "-webkit-tap-highlight-color": "rgb(0 0 0/0)",
             font: "12px/20px Helvetica Neue,Arial,Helvetica,sans-serif",
             "box-sizing": "border-box",
@@ -654,19 +654,19 @@ export default function MapComponent({
             margin: "0",
             padding: "0 0px",
           }}
-        />
+        /> */}
 
         {/*Adding source for places*/}
 
         <Source
+          clusterRadius={75} // cluster two points if less than stated pixels apart
           id={pointsLayerId}
-          type="geojson"
-          // tolerance={20}
-          cluster={true}
           maxzoom={15}
           // clusterMinPoints={2}
           clusterMaxZoom={14} // display all points individually from stated zoom up
-          clusterRadius={75} // cluster two points if less than stated pixels apart
+          type="geojson"
+          // tolerance={20}
+          cluster={true}
           {...PLACES_SOURCE}
           // data="https://maplibre.org/maplibre-gl-js/docs/assets/earthquakes.geojson"
         >
@@ -675,39 +675,9 @@ export default function MapComponent({
           <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} />
           {testPlaces}
         </Source>
-
-        {/* <GeolocateControl position="top-left" />
-        <FullscreenControl position="top-left" />
-        <NavigationControl position="top-left" />
-        <ScaleControl /> */}
         <CustomOverlay>
           <Crosshair />
-          {/* <PieCharts data={electionData} /> */}
         </CustomOverlay>
-        {/* {pins} */}
-        {popupInfo && (
-          <Popup
-            anchor="top"
-            longitude={Number(popupInfo.coordinates[0])}
-            latitude={Number(popupInfo.coordinates[1])}
-            closeOnMove={true}
-            closeOnClick={true}
-            maxWidth="300ch"
-            onClose={() => setPopupInfo(null)}
-          >
-            <div>
-              <h2>Properties:</h2>
-              <div>{JSON.stringify(popupInfo.properties, null, 4)}</div>
-              <ul>
-                {Object.entries(popupInfo.properties).forEach(([k, v]) => (
-                  <li key={k}>
-                    <p className="text-blue-600">{k}</p>=<p>{v}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Popup>
-        )}
       </Map>
       <Popover>
         <PopoverTrigger>Open</PopoverTrigger>
@@ -728,18 +698,12 @@ export default function MapComponent({
         </Button>
         <Button
           onClick={(e) => {
-            console.log(mapRef.current.getStyle());
+            console.log(mapRef.current?.getStyle());
           }}
         >
           Print map style
         </Button>
-        <Button
-          onClick={(e) => {
-            console.log("Places generate result: ", filteredPlaces);
-          }}
-        >
-          Print filteredPlaces
-        </Button>
+
         <Button
           onClick={(e) => {
             console.log("Test Places generate result: ", testPlaces);

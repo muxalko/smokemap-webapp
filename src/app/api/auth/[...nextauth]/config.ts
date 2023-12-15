@@ -20,16 +20,16 @@ export const options: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, req) {
-        console.log("req: " + JSON.stringify(req));
-        console.log("credentials: " + JSON.stringify(credentials));
+        console.log('req: ' + JSON.stringify(req));
+        console.log('credentials: ' + JSON.stringify(credentials));
         // Add logic here to look up the user from the credentials supplied
         const user = {
-          id: "1",
-          name: "J Smith",
-          email: "jsmith@example.com",
-          password: "12345678",
-          image: "/smokemap.svg",
-          role: "admin",
+          id: '1',
+          name: 'J Smith',
+          email: 'jsmith@example.com',
+          password: '12345678',
+          image: '/smokemap.svg',
+          role: 'admin',
         };
 
         if (
@@ -38,24 +38,24 @@ export const options: NextAuthOptions = {
         ) {
           // Any object returned will be saved in `user` property of the JWT
           return user;
-        } else {
-          // If you return null then an error will be displayed advising the user to check their details.
-          return null;
-
-          // You can also Reject this callback with an Error thus the user will be sent to the error page with the error message as a query parameter
         }
+        // If you return null then an error will be displayed advising the user to check their details.
+        return null;
+
+        // You can also Reject this callback with an Error thus the user will be sent to the error page with the error message as a query parameter
       },
     }),
     GithubProvider({
       profile(profile: GithubProfile) {
-        
         const augmented_profile = {
           ...profile,
           role: profile.role ?? "user",
           id: profile.id.toString(),
           image: profile.avatar_url,
         };
-        console.log("Github profile +changes: " + JSON.stringify(augmented_profile));
+        console.log(
+          "Github profile +changes: " + JSON.stringify(augmented_profile),
+        );
         return augmented_profile;
       },
       clientId: process.env.AUTH_GITHUB_ID as string,
@@ -70,7 +70,9 @@ export const options: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       //https://authjs.dev/guides/basics/role-based-access-control
-      if (user) token.role = user.role;
+      if (user) {
+        token.role = user.role;
+      }
       return token;
     },
     // for client components

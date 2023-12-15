@@ -105,7 +105,6 @@ export const APPROVE_REQUEST = gql`
   }
 `;
 
-
 export const DELETE_REQUEST = gql`
   mutation DeleteRequest($id: ID!) {
     deleteRequest(id: $id) {

@@ -19,16 +19,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-      <html lang="en">
-        <body className={inter.className}>
-          <ApolloWrapper>
-            {/* <Providers> */}
-            <Template>{children}</Template>
-            {/* {children} */}
-            {/* </Providers> */}
-          </ApolloWrapper>
-          <Toaster />
-        </body>
-      </html>
+    <html lang="en">
+      <body className={inter.className}>
+        <ApolloWrapper>
+          {/* <Providers> */}
+          <Template>{children}</Template>
+          {/* {children} */}
+          {/* </Providers> */}
+        </ApolloWrapper>
+        <Toaster />
+      </body>
+    </html>
   );
 }

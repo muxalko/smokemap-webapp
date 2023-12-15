@@ -1,7 +1,7 @@
 import NextAuth from "next-auth/next";
 import { options } from "./config";
 
-// something is wrong with auth.ts 
+// something is wrong with auth.ts
 //import { auth, config } from "auth";
 // const handler = NextAuth(config)
 

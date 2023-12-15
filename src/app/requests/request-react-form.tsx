@@ -11,11 +11,11 @@ import {
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectGroup,
+  SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
-  SelectLabel,
 } from "@/components/ui/select";
 import {
   Command,
@@ -62,7 +62,7 @@ import {
   NOT_APPROVED_REQUESTS_QUERY,
 } from "@/graphql/queries/request";
 import { ApolloError, useMutation } from "@apollo/client";
-import { RequestType, CategoryType } from "@/graphql/__generated__/graphql";
+import { CategoryType, RequestType } from "@/graphql/__generated__/graphql";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +91,7 @@ const FormSchema = z.object({
         .string()
         .min(minTagLength, "minimum tag length is " + minTagLength)
         .max(maxTagLength, "maximum tag length is " + maxTagLength),
-    })
+    }),
   ),
 });
 
@@ -99,8 +99,8 @@ export default function RequestReactForm({
   categories,
   updateDataCallback,
 }: {
-  categories: CategoryType[];
-  updateDataCallback;
+  categories: any;
+  updateDataCallback: any;
 }) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -240,15 +240,15 @@ export default function RequestReactForm({
         <div className="flex items-center space-x-2">
           <div className="grid flex-1 gap-2">
             <section className="z-10 max-w-5xl w-full flex flex-col items-center text-center gap-5">
-              <div id="try" className="w-full py-8">
+              <div className="w-full py-8" id="try">
                 <div className="w-full relative my-4 flex flex-col space-y-2">
                   <div className="preview flex min-h-[350px] w-full justify-center p-10 items-center mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 relative rounded-md border">
                     <Form {...form}>
                       <form
-                        onSubmit={form.handleSubmit(onSubmit)}
                         className="space-y-8 flex flex-col items-start"
+                        onSubmit={form.handleSubmit(onSubmit)}
                       >
-                        <Accordion type="multiple" className="w-full">
+                        <Accordion className="w-full" type="multiple">
                           <AccordionItem value="item-1">
                             <AccordionTrigger>
                               Provide name and select category
@@ -284,25 +284,25 @@ export default function RequestReactForm({
                                       Category
                                     </FormLabel>
                                     <Popover
-                                      open={comboopen}
                                       onOpenChange={setComboOpen}
+                                      open={comboopen}
                                     >
                                       <PopoverTrigger asChild>
                                         <FormControl>
                                           <Button
-                                            variant="outline"
-                                            role="combobox"
                                             aria-expanded={comboopen}
                                             className={cn(
-                                              "w-[200px] justify-between",
+                                              'w-[200px] justify-between',
                                               !field.value &&
-                                                "text-muted-foreground"
+                                                'text-muted-foreground',
                                             )}
+                                            role="combobox"
+                                            variant="outline"
                                           >
                                             {field.value
                                               ? categories.find(
-                                                  (item) =>
-                                                    item.id === field.value
+                                                  (item: any) =>
+                                                    item.id === field.value,
                                                 )?.name
                                               : "Select category"}
                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -313,24 +313,24 @@ export default function RequestReactForm({
                                       <PopoverContent className="w-[200px] p-0">
                                         <Command>
                                           <CommandInput
-                                            placeholder="Search ..."
                                             className="h-9"
+                                            placeholder="Search ..."
                                           />
                                           <CommandEmpty>
                                             No category found.
                                           </CommandEmpty>
                                           <CommandGroup>
-                                            {categories.map((item) => (
+                                            {categories.map((item: any) => (
                                               <CommandItem
-                                                value={item.name}
                                                 key={item.id}
                                                 onSelect={() => {
                                                   form.setValue(
-                                                    "category",
-                                                    item.id
+                                                    'category',
+                                                    item.id,
                                                   );
                                                   setComboOpen(false);
                                                 }}
+                                                value={item.name}
                                               >
                                                 {item.name}
                                                 <CheckIcon
@@ -338,7 +338,7 @@ export default function RequestReactForm({
                                                     "ml-auto h-4 w-4",
                                                     item.id === field.value
                                                       ? "opacity-100"
-                                                      : "opacity-0"
+                                                      : "opacity-0",
                                                   )}
                                                 />
                                               </CommandItem>
@@ -502,39 +502,39 @@ export default function RequestReactForm({
                                     <FormControl className="w-full">
                                       <TagInput
                                         {...field}
-                                        placeholder="Special characters are not allowed"
-                                        tags={tags}
-                                        textCase={"lowercase"}
-                                        validateTag={(tag) => {
-                                          var format =
-                                            /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
-                                          if (tag.match(format)) {
-                                            toast({
-                                              title: "Tag is not valid",
-                                              description:
-                                                "Please enter a tag without special characters",
-                                              variant: "destructive",
-                                            });
-                                            form.setError("tags", {
-                                              message:
-                                                "Tag is not valid, try without special characters",
-                                            });
-                                            return false;
-                                          }
-                                          form.clearErrors("tags");
-                                          // form.setError("tags", { message: "" });
-                                          return true;
-                                        }}
                                         className="sm:min-w-[300px] sm:max-w-[350px] "
                                         maxLength={maxTagLength}
-                                        minLength={minTagLength}
                                         maxTags={maxTagsAmount}
+                                        minLength={minTagLength}
+                                        placeholder="Special characters are not allowed"
                                         setTags={(newTags) => {
                                           setTags(newTags);
                                           setValue(
-                                            "tags",
-                                            newTags as [Tag, ...Tag[]]
+                                            'tags',
+                                            newTags as [Tag, ...Tag[]],
                                           );
+                                        }}
+                                        tags={tags}
+                                        textCase={'lowercase'}
+                                        validateTag={(tag) => {
+                                          const format =
+                                            /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
+                                          if (tag.match(format)) {
+                                            toast({
+                                              title: 'Tag is not valid',
+                                              description:
+                                                'Please enter a tag without special characters',
+                                              variant: 'destructive',
+                                            });
+                                            form.setError('tags', {
+                                              message:
+                                                'Tag is not valid, try without special characters',
+                                            });
+                                            return false;
+                                          }
+                                          form.clearErrors('tags');
+                                          // form.setError("tags", { message: "" });
+                                          return true;
                                         }}
                                       />
                                     </FormControl>
@@ -586,10 +586,10 @@ export default function RequestReactForm({
                         {/* {form && <pre className="text-left text-red-800">{JSON.stringify(form, null, 4)}</pre>} */}
 
                         <Button
-                          type="submit"
-                          variant={"default"}
                           className="bg-indigo-500"
                           disabled={form.formState.isValid}
+                          type="submit"
+                          variant={'default'}
                         >
                           {!loading && <p>Submit</p>}
 
@@ -597,9 +597,9 @@ export default function RequestReactForm({
                             <>
                               <svg
                                 className="motion-reduce:hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                                xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
                                 viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
                               >
                                 <circle
                                   className="opacity-25"
@@ -611,8 +611,8 @@ export default function RequestReactForm({
                                 ></circle>
                                 <path
                                   className="opacity-75"
-                                  fill="currentColor"
                                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  fill="currentColor"
                                 ></path>
                               </svg>
                               <p>Processing...</p>
