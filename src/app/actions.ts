@@ -4,7 +4,7 @@ import { getClient } from '@/lib/client';
 import {
     ApproveRequestMutation,
     DeleteRequestMutation,
-} from '@/graphql/__generated__/graphql';
+} from '@/graphql/__generated__/types';
 import { APPROVE_REQUEST, DELETE_REQUEST } from '@/graphql/queries/request';
 import { revalidatePath } from 'next/cache';
 
