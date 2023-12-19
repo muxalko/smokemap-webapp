@@ -23,6 +23,7 @@ export const options: NextAuthOptions = {
                 },
                 password: { label: 'Password', type: 'password' },
             },
+            // eslint-disable-next-line @typescript-eslint/require-await
             async authorize(credentials, req) {
                 console.log('req: ' + JSON.stringify(req));
                 console.log('credentials: ' + JSON.stringify(credentials));
@@ -53,7 +54,7 @@ export const options: NextAuthOptions = {
             profile(profile: GithubProfile) {
                 const augmented_profile = {
                     ...profile,
-                    role: profile.role ?? 'user',
+                    role: profile?.role as string ?? 'user' ,
                     id: profile.id.toString(),
                     image: profile.avatar_url,
                 };
@@ -73,6 +74,7 @@ export const options: NextAuthOptions = {
     ],
 
     callbacks: {
+        // eslint-disable-next-line @typescript-eslint/require-await
         async jwt({ token, user }) {
             //https://authjs.dev/guides/basics/role-based-access-control
             if (user) {

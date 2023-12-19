@@ -13,19 +13,18 @@ export default async function Index() {
     query: ALL_CATEGORIES_QUERY,
   });
 
-  // server action
-  const refetchData = async () => {
-    "use server";
-    revalidatePath("/");
-  };
-
   // console.log("Index page GOT THE DATA: " + JSON.stringify(allCategoriesQuery.data.categories));
   return (
     <>
       <div className="flex flex-col flex-grow h-screen">
         <RequestReactForm
           categories={allCategoriesQuery.data.categories as CategoryType[]}
-          updateDataCallback={() => refetchData}
+          // server action
+          updateDataCallback={async () => {
+            "use server";
+            revalidatePath("/");
+            return await new Promise(() => {});
+          }}
         />
 
         <MapComponent

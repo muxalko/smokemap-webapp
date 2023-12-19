@@ -5,5 +5,6 @@ import { options } from './config';
 //import { auth, config } from "auth";
 // const handler = NextAuth(config)
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const handler = NextAuth(options);
 export { handler as GET, handler as POST };

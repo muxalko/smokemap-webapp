@@ -108,7 +108,7 @@ export default function RequestReactForm({
   updateDataCallback,
 }: {
   categories: CategoryType[];
-  updateDataCallback: () => void;
+  updateDataCallback: () => unknown;
 }) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -661,8 +661,7 @@ export default function RequestReactForm({
                               submission_result.address.properties
                                 ?.addressString
                             }{" "}
-                            {submission_result.address.geometry.coordinates[0]},
-                            {submission_result.address.geometry.coordinates[1]}
+                            {submission_result.address.geometry.coordinates}
                           </p>
                         )}
                         {submission_error ? (
