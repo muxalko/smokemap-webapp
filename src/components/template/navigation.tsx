@@ -16,11 +16,7 @@ const navigation = [
   // { name: "Team", href: "#", current: false },
   // { name: "Projects", href: "#", current: false },
   { name: "About", href: "/about", current: false },
-  {
-    name: "Privacy",
-    href: "https://www.iubenda.com/privacy-policy/68260466",
-    current: false,
-  },
+  { name: "Privacy", href: "/privacy", current: false },
   { name: "Requests", href: "/requests", current: false },
 ];
 const userNavigation = [
@@ -35,7 +31,7 @@ function classNames(...classes: Array<string>) {
 
 export default function Navigation({ user }: { user: User }) {
   return (
-    <Disclosure as="nav" className="bg-gray-800">
+    <Disclosure as="nav" className="bg-gray-800 sticky top-0">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

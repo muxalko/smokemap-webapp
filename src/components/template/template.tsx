@@ -2,6 +2,7 @@ import { options } from "@/app/api/auth/[...nextauth]/config";
 import { getServerSession, User } from "next-auth";
 
 import Navigation from "./navigation";
+import Footer from "./footer";
 
 export default async function Template({
   children,
@@ -42,6 +43,7 @@ export default async function Template({
           {children}
           {/* </div> */}
         </main>
+        <Footer />
       </div>
     </>
   );
