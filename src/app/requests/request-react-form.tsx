@@ -9,15 +9,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -49,7 +40,7 @@ import {
 import { Tag, TagInput } from "@/components/tag-input";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
@@ -58,20 +49,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckIcon, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  CREATE_REQUEST,
-  NOT_APPROVED_REQUESTS_QUERY,
-} from "@/graphql/queries/request";
-import { ApolloError, useMutation } from "@apollo/client";
-import {
   CategoryType,
-  CreateRequestMutation,
   CreateRequestMutationVariables,
   InputMaybe,
   RequestInput,
   RequestType,
   useCreateRequestMutation,
 } from "@/graphql/__generated__/types";
-import Confetti from "@/components/confetti/confetti";
+import { ApolloError } from "@apollo/client";
 
 export const dynamic = "force-dynamic";
 
