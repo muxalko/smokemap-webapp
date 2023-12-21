@@ -23,3 +23,6 @@ coverage
 next-env.d.ts
 _tmp/*
 # next.config.js
+
+# don't lint graphql types generated with codegen
+src/graphql/__generated__/*
