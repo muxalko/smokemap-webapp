@@ -104,10 +104,14 @@ export default function MapComponent({
   const [mapBounds, setMapBounds] = useState<LngLatBounds>(boundingBox);
 
   // save central point of a map for creating a request without an address
-  const [crosshairLngLat, setCrosshairLngLat] = useState<LngLatLike>({
+  const [crosshairLngLat, setCrosshairLngLat] = useState({
     lng: 0,
     lat: 0,
   });
+
+  useEffect(() => {
+    console.log("crosshairLngLat updated: ", crosshairLngLat);
+  }, [crosshairLngLat]);
 
   // popup with a place properties
   // const [popupInfo, setPopupInfo] = useState(null);
@@ -384,11 +388,15 @@ export default function MapComponent({
 
     // TODO: implement creation with crosshair.
     // get map's geographical centerpoint for later creation of place location.
-    setCrosshairLngLat(mapRef.current!.getCenter());
+    const center = mapRef.current?.getCenter();
+    setCrosshairLngLat({
+      lng: center?.lng ?? 0,
+      lat: center?.lat ?? 0,
+    });
     // const { lng, lat }: { lng: number; lat: number } =
     //   mapRef.current!.getCenter();
 
-    console.log("map's geographical centerpoint: ", crosshairLngLat);
+    // console.log("map's geographical centerpoint: ", crosshairLngLat);
   };
 
   const debouncedMapOnMoveHandler = useMemo(
