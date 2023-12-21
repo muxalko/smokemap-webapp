@@ -10,6 +10,10 @@ import {
   Layer,
   ViewState,
   ViewStateChangeEvent,
+  NavigationControl,
+  FullscreenControl,
+  ScaleControl,
+  GeolocateControl,
 } from "react-map-gl/maplibre";
 // import ControlPanel from "@/components/control/panel";
 import { GeoJSONSource, LngLat, LngLatBounds, LngLatLike } from "maplibre-gl";
@@ -469,9 +473,11 @@ export default function MapComponent({
         onLoad={onMapLoad} // onClick={onClick}
         // attributionControl={false}
       >
-        {/* <FullscreenControl /> */}
-        {/* <GeocoderControl position="top-left" /> */}
-        {/* <ControlPanel onSelectRequest={onSelectRequest} /> */}
+        <GeolocateControl position="top-left" />
+        <FullscreenControl position="top-left" />
+        <NavigationControl position="top-left" />
+        <ScaleControl />
+
         {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
         {/* <AttributionControl
           style={{
@@ -492,7 +498,6 @@ export default function MapComponent({
         /> */}
 
         {/*Adding source for places*/}
-
         <Source
           clusterRadius={75} // cluster two points if less than stated pixels apart
           id={pointsLayerId}
