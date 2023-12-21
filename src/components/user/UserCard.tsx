@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { User } from "next-auth";
-import Hero from "../../app/requests/request-react-form";
 
 type Props = {
   user: User;
