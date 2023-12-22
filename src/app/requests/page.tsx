@@ -1,17 +1,17 @@
 import React from "react";
-import { getClient } from "@/client";
+import { getClient } from "@/lib/client";
 import { NOT_APPROVED_REQUESTS_QUERY } from "@/graphql/queries/request";
-import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 import {
+  CategoryType,
   GetAllCategoriesQuery,
   GetAllNotApprovedRequestsQuery,
-  // RequestType,
-} from "@/graphql/__generated__/graphql";
+} from "@/graphql/__generated__/types";
 export const dynamic = "force-dynamic";
 
-import { columns } from "./columns";
 import { DataTable } from "./data-table";
+import { columns } from "./columns";
 import RequestReactForm from "./request-react-form";
+import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 import { revalidatePath } from "next/cache";
 
 export default async function RequestsManager() {
@@ -23,7 +23,6 @@ export default async function RequestsManager() {
   const categories = await getClient().query<GetAllCategoriesQuery>({
     query: ALL_CATEGORIES_QUERY,
   });
-
   // const refetchData = async () => {
   //   "use server"
 
@@ -31,13 +30,11 @@ export default async function RequestsManager() {
   //     include: [NOT_APPROVED_REQUESTS_QUERY],
   //   });
   // };
-  const refetchData = async () => {
-    "use server";
-    revalidatePath("/requests");
-  };
+
   // const [approveRequest, { reset, error, loading }] =
   //   useMutation(APPROVE_REQUEST);
 
+  // TODO: find out how to trigger a function from column.actions
   // function onClickApproveHandler(value: string) {
   //   approveRequest({
   //     variables: {
@@ -56,23 +53,26 @@ export default async function RequestsManager() {
   // };
 
   // console.log("Cache:", getClient().getObservableQueries());
+  // prettier-ignore
   return (
     <>
       <div className="container mx-auto py-10">
         <RequestReactForm
-          categories={categories.data.categories}
-          updateDataCallback={refetchData}
+          categories={categories.data.categories as CategoryType[]}
+          // server action
+            updateDataCallback={async () => {
+              "use server";
+              console.log(
+                "server action fired from RequestReactForm.updateDataCallback() "
+              );
+              revalidatePath("/requests");
+              return await new Promise(() => {});
+            }}
         />
-        <DataTable columns={columns} data={data.data?.requestsToApprove} />
+        {
+          // @ts-expect-error: TS2322 because there is an issue with types for ColumnDef. See https://github.com/TanStack/table/issues/4241
+        } <DataTable columns={columns} data={data.data?.requestsToApprove} />
       </div>
-      {/* <Table
-        header={[
-          { name: "Place ID", prop: "id" },
-          { name: "Place name",
-          prop: "name" },
-        ]}
-        data={data}
-      /> */}
     </>
   );
 }

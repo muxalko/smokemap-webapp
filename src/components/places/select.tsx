@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
-import { CategoryType } from "@/graphql/__generated__/graphql";
+import { CategoryType } from "@/graphql/__generated__/types";
 
 // const items = [
 //   {
@@ -56,9 +56,7 @@ export function CategorySelection({
 }: {
   categories: CategoryType[];
 }) {
-
-
-//   console.log("CategorySelection:", categories);
+  //   console.log("CategorySelection:", categories);
   const categorySelectorForm = useForm<z.infer<typeof CategorySelectorSchema>>({
     resolver: zodResolver(CategorySelectorSchema),
     defaultValues: {
@@ -79,7 +77,10 @@ export function CategorySelection({
 
   return (
     <Form {...categorySelectorForm}>
-      <form onSubmit={categorySelectorForm.handleSubmit(onSubmit)} className="space-y-8">
+      <form
+        className="space-y-8"
+        onSubmit={() => categorySelectorForm.handleSubmit(onSubmit)}
+      >
         <FormField
           control={categorySelectorForm.control}
           name="items"
@@ -93,14 +94,14 @@ export function CategorySelection({
               </div>
               {categories.map((item) => (
                 <FormField
-                  key={item.id}
                   control={categorySelectorForm.control}
+                  key={item.id}
                   name="items"
                   render={({ field }) => {
                     return (
                       <FormItem
-                        key={item.id}
                         className="flex flex-row items-start space-x-3 space-y-0"
+                        key={item.id}
                       >
                         <FormControl>
                           <Checkbox

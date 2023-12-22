@@ -1,7 +1,11 @@
 "use client";
 
-import { AddressType, RequestType } from "@/graphql/__generated__/graphql";
-import { ColumnDef } from "@tanstack/react-table";
+import {
+  AddressType,
+  CategoryType,
+  RequestType,
+} from "@/graphql/__generated__/types";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,23 +17,55 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 import { approveRequest, deleteRequest } from "../actions";
+import { generateColumnHelper } from "@/lib/table-utils";
+
+// const columnHelper = createColumnHelper<RequestType>();
+const columnHelper = generateColumnHelper<RequestType>();
+
+// This is how the request response looks like:
+// id
+// name
+// category {
+//     name
+// }
+// address {
+//     properties {
+//         addressString
+//     }
+//     geometry {
+//         coordinates
+//     }
+// }
+// description
+// tags
+// dateCreated
+
+// example without columnHelper has issues with types
+// export const columns: ColumnDef<RequestType, unknown>[] = [
+//   {
+//     accessorKey: "id",
+//     header: "Id",
+//   }
+// ]
 
 export const columns: ColumnDef<RequestType>[] = [
-  {
-    accessorKey: "name",
+  columnHelper.accessor("id", {
+    header: "Id",
+    cell: (props) => props.getValue(),
+  }),
+  columnHelper.accessor("category", {
+    header: () => <div>Category</div>,
+    cell: ({ row }) => {
+      const category: CategoryType = row.getValue("category");
+      return <div className="text-right font-medium">{category?.name}</div>;
+    },
+  }),
+  columnHelper.accessor("name", {
     header: "Name",
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-  },
-  {
-    accessorKey: "dateCreated",
-    header: "Created at",
-  },
-  {
-    accessorKey: "address",
-    header: () => <div className="text-right">Address</div>,
+    cell: (props) => props.getValue(),
+  }),
+  columnHelper.accessor("address", {
+    header: () => <div>Address</div>,
     cell: ({ row }) => {
       const address: AddressType = row.getValue("address");
       // const formatted = new Intl.NumberFormat("en-US", {
@@ -39,81 +75,82 @@ export const columns: ColumnDef<RequestType>[] = [
 
       return (
         <div className="text-right font-medium">
-          {address.properties?.addressString} ({address.geometry.coordinates[0]}
-          ,{address.geometry.coordinates[1]})
+          {address?.properties?.addressString} {address.geometry.coordinates}
         </div>
       );
     },
-  },
-  {
-    accessorKey: "tags",
+  }),
+  columnHelper.accessor("dateCreated", {
+    header: "Created at",
+    cell: (props) => props.getValue(),
+  }),
+  columnHelper.accessor("description", {
+    header: "Description",
+    cell: (props) => props.getValue(),
+  }),
+  columnHelper.accessor("tags", {
     header: "Tags",
-  },
-  {
-    id: "actions",
+    cell: (props) => props.getValue(),
+  }),
+  columnHelper.display("actions", {
     cell: ({ row }) => {
       const request = row.original;
-      const onClickDeleteHandler = async (id: String) => {
-        console.log("Send delete request id=", id);
-        const response = await fetch('/api/request', {
-          method: 'DELETE',
-          body: JSON.stringify({id: id})
-        })
-     
-        // Handle response if necessary
-        const data = await response.json()
-        // ...
-        console.log("Got delete aprove response: ", data);
-      }
 
-      const onClickApproveHandler = async (id: String) => {
-        
-        console.log("Send approve request id=", id);
-        const response = await fetch('/api/request', {
-          method: 'POST',
-          body: JSON.stringify({id: id})
-        })
-     
-        // Handle response if necessary
-        const data = await response.json()
-        // ...
-        console.log("Got response: ", data);
-      };
       return (
         <>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick = { async () => {
-                const deleteRequestResult = await deleteRequest(request.id)
-                console.log("Got deleteRequest response: ", deleteRequestResult);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick = { async () => {
-                const approveRequestResult = await approveRequest(request.id)
-                console.log("Got approveRequest response: ", approveRequestResult);
-              }}
-            >
-              Approve
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {/* <DropdownMenuItem>View customer</DropdownMenuItem>
+          <Button
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            onClick={async () => {
+              const approveRequestResult = await approveRequest(request.id);
+              console.log(
+                "Got approveRequest response: ",
+                approveRequestResult
+              );
+            }}
+          >
+            Approve
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                onClick={async () => {
+                  const deleteRequestResult = await deleteRequest(request.id);
+                  console.log(
+                    "Got deleteRequest response: ",
+                    deleteRequestResult
+                  );
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                onClick={async () => {
+                  const approveRequestResult = await approveRequest(request.id);
+                  console.log(
+                    "Got approveRequest response: ",
+                    approveRequestResult
+                  );
+                }}
+              >
+                Approve
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {/* <DropdownMenuItem>View customer</DropdownMenuItem>
             <DropdownMenuItem>View payment details</DropdownMenuItem> */}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        {/* {request && <pre className="text-left text-red-800">{JSON.stringify(request, null, 4)}</pre>} */}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {/* {request && <pre className="text-left text-red-800">{JSON.stringify(request, null, 4)}</pre>} */}
         </>
       );
     },
-  },
-];
+  }),
+] as Array<ColumnDef<RequestType, unknown>>;

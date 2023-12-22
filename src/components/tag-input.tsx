@@ -196,7 +196,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
       if (
         delimiterList
           ? delimiterList.includes(e.key)
-          : e.key === delimiter || e.key === Delimiter.Enter
+          : e.key === delimiter.valueOf() || e.key === Delimiter.Enter.valueOf()
       ) {
         e.preventDefault();
         const newTagText = inputValue.trim();
@@ -280,7 +280,6 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
               customTagRenderer(tagObj)
             ) : (
               <span
-                key={tagObj.id}
                 className={cn(
                   tagVariants({
                     variant,
@@ -296,17 +295,20 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                     "justify-between": direction === "column",
                   }
                 )}
+                key={tagObj.id}
                 onClick={() => onTagClick?.(tagObj)}
+                role="button"
+                tabIndex={0}
               >
                 {tagObj.text}
                 <Button
-                  type="button"
-                  variant="ghost"
+                  className={cn("py-1 px-3 h-full hover:bg-transparent")}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent event from bubbling up to the tag span
                     removeTag(tagObj.id);
                   }}
-                  className={cn("py-1 px-3 h-full hover:bg-transparent")}
+                  type="button"
+                  variant="ghost"
                 >
                   <X size={14} />
                 </Button>
@@ -318,26 +320,26 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
           <>
             <Command className="border mt-2 sm:min-w-[450px]">
               <CommandInput
+                disabled={maxTags !== undefined && tags.length >= maxTags}
+                onBlur={onBlur}
+                onFocus={onFocus}
                 placeholder={
                   maxTags !== undefined && tags.length >= maxTags
                     ? placeholderWhenFull
                     : placeholder
                 }
-                disabled={maxTags !== undefined && tags.length >= maxTags}
-                onFocus={onFocus}
-                onBlur={onBlur}
               />
               <CommandList>
                 <CommandEmpty>No results found.</CommandEmpty>
                 <CommandGroup heading="Suggestions">
                   {filteredAutocompleteOptions?.map((optionObj) => (
                     <CommandItem
-                      key={uuid()}
                       className={`${
                         maxTags !== undefined && tags.length >= maxTags
                           ? "cursor-not-allowed"
                           : "cursor-pointer"
                       }`}
+                      key={uuid()}
                     >
                       <div
                         className={`w-full ${
@@ -359,6 +361,8 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                             setTagCount((prevTagCount) => prevTagCount + 1);
                           }
                         }}
+                        role="button"
+                        tabIndex={0}
                       >
                         {optionObj.text}
                       </div>
@@ -378,23 +382,23 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
         ) : (
           <>
             <Input
-              ref={inputRef}
+              autoComplete={enableAutocomplete ? "on" : "off"}
+              className={className}
+              disabled={maxTags !== undefined && tags.length >= maxTags}
               id={id}
-              type="text"
+              list={enableAutocomplete ? "autocomplete-options" : undefined}
+              onBlur={onBlur}
+              onChange={handleInputChange}
+              onFocus={onFocus}
+              onKeyDown={handleKeyDown}
               placeholder={
                 maxTags !== undefined && tags.length >= maxTags
                   ? placeholderWhenFull
                   : placeholder
               }
+              ref={inputRef}
+              type="text"
               value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              className={className}
-              autoComplete={enableAutocomplete ? "on" : "off"}
-              list={enableAutocomplete ? "autocomplete-options" : undefined}
-              disabled={maxTags !== undefined && tags.length >= maxTags}
             />
             {showCount && maxTags && (
               <div className="flex">

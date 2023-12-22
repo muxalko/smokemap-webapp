@@ -2,8 +2,8 @@ module.exports = {
   client: {
     service: {
       name: "smokemap",
-      url: "http://192.168.56.5:8000/graphql/",
+      url: "https://smokemap-django-backend-git-feature-recentchanges-muxalko.vercel.app/graphql",
     },
-    excludes: ['node_modules/**/*', "src/graphql/generated/*.ts"]
+    excludes: ['node_modules/**/*', "src/graphql/__generated__/*.ts"]
   },
 };

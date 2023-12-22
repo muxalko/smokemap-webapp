@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { User } from "next-auth";
-import Hero from "../../app/requests/request-react-form";
 
 type Props = {
   user: User;
@@ -24,12 +23,12 @@ export default function Card({ user, pagetype }: Props) {
 
   const userImage = user?.image ? (
     <Image
+      alt={user?.name ?? "Profile image"}
       className="border-4 border-black dark:border-slate-500 drop-shadow-xl shadow-black rounded-full mx-auto mt-8"
+      height={200}
+      priority={true}
       src={user?.image}
       width={200}
-      height={200}
-      alt={user?.name ?? "Profile image"}
-      priority={true}
     />
   ) : null;
 

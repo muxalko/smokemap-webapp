@@ -1,19 +1,14 @@
 import { options } from "@/app/api/auth/[...nextauth]/config";
-import { User, getServerSession } from "next-auth";
+import { getServerSession, User } from "next-auth";
 
 import Navigation from "./navigation";
+import Footer from "./footer";
 
-function classNames(...classes: any) {
-  return classes.filter(Boolean).join(" ");
-}
-
-export default async function Template(
-  {
-    children,
-  }: {
-    children: React.ReactNode;
-  }
-) {
+export default async function Template({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await getServerSession(options);
 
   let logged_user: User;
@@ -28,13 +23,13 @@ export default async function Template(
       role: "guest",
     };
   } else {
-    logged_user = session?.user
+    logged_user = session?.user;
   }
 
   return (
     <>
       <div className="min-h-full">
-        <Navigation user={logged_user}/>
+        <Navigation user={logged_user} />
 
         {/* <header className="bg-white shadow">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -45,9 +40,10 @@ export default async function Template(
         </header> */}
         <main>
           {/* <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8"> */}
-            {children}
+          {children}
           {/* </div> */}
         </main>
+        <Footer />
       </div>
     </>
   );
