@@ -202,10 +202,15 @@ export type GetAllCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetAllCategoriesQuery = { __typename?: 'Query', categories?: Array<{ __typename?: 'CategoryType', id: string, name: string, description?: string | null } | null> | null };
 
+export type GetAllRequestsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAllRequestsQuery = { __typename?: 'Query', requests?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null> | null };
+
 export type GetAllNotApprovedRequestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: any, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null> | null };
+export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: any, dateUpdated: any, dateApproved?: any | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null> | null };
 
 export type CreateRequestMutationVariables = Exact<{
   input: RequestInput;
@@ -271,6 +276,59 @@ export type GetAllCategoriesQueryHookResult = ReturnType<typeof useGetAllCategor
 export type GetAllCategoriesLazyQueryHookResult = ReturnType<typeof useGetAllCategoriesLazyQuery>;
 export type GetAllCategoriesSuspenseQueryHookResult = ReturnType<typeof useGetAllCategoriesSuspenseQuery>;
 export type GetAllCategoriesQueryResult = Apollo.QueryResult<GetAllCategoriesQuery, GetAllCategoriesQueryVariables>;
+export const GetAllRequestsDocument = gql`
+    query GetAllRequests {
+  requests {
+    id
+    name
+    category {
+      name
+    }
+    address {
+      properties {
+        addressString
+      }
+      geometry {
+        coordinates
+      }
+    }
+    description
+    tags
+  }
+}
+    `;
+
+/**
+ * __useGetAllRequestsQuery__
+ *
+ * To run a query within a React component, call `useGetAllRequestsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllRequestsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllRequestsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAllRequestsQuery(baseOptions?: Apollo.QueryHookOptions<GetAllRequestsQuery, GetAllRequestsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllRequestsQuery, GetAllRequestsQueryVariables>(GetAllRequestsDocument, options);
+      }
+export function useGetAllRequestsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllRequestsQuery, GetAllRequestsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllRequestsQuery, GetAllRequestsQueryVariables>(GetAllRequestsDocument, options);
+        }
+export function useGetAllRequestsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllRequestsQuery, GetAllRequestsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAllRequestsQuery, GetAllRequestsQueryVariables>(GetAllRequestsDocument, options);
+        }
+export type GetAllRequestsQueryHookResult = ReturnType<typeof useGetAllRequestsQuery>;
+export type GetAllRequestsLazyQueryHookResult = ReturnType<typeof useGetAllRequestsLazyQuery>;
+export type GetAllRequestsSuspenseQueryHookResult = ReturnType<typeof useGetAllRequestsSuspenseQuery>;
+export type GetAllRequestsQueryResult = Apollo.QueryResult<GetAllRequestsQuery, GetAllRequestsQueryVariables>;
 export const GetAllNotApprovedRequestsDocument = gql`
     query GetAllNotApprovedRequests {
   requestsToApprove {
@@ -290,6 +348,11 @@ export const GetAllNotApprovedRequestsDocument = gql`
     description
     tags
     dateCreated
+    dateUpdated
+    dateApproved
+    approved
+    approvedBy
+    approvedComment
   }
 }
     `;
