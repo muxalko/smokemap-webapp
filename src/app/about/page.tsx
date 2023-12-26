@@ -1,6 +1,9 @@
 import { options } from "@/app/api/auth/[...nextauth]/config";
 import { getServerSession } from "next-auth";
-import Card from "@/components/user/UserCard";
+import UserCard from "@/components/user/UserCard";
+
+// TODO: use environment vars, reading the whole package.json is unsecure.
+import packageJson from "./../../../package.json";
 
 export default async function About(): Promise<JSX.Element> {
   const session = await getServerSession(options);
@@ -12,9 +15,14 @@ export default async function About(): Promise<JSX.Element> {
   return (
     <>
       {session ? (
-        <Card pagetype={"About"} user={session?.user} />
+        <>
+          <UserCard pagetype={"About"} user={session?.user} />
+          <p className="text-2xl text-center">
+            Smokemap v{packageJson.version}
+          </p>
+        </>
       ) : (
-        <h1>Your session is not active</h1>
+        <p className="text-2xl text-center">Smokemap v{packageJson.version}</p>
       )}
     </>
   );

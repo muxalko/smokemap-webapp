@@ -6,8 +6,8 @@ type Props = {
   pagetype: string;
 };
 
-export default function Card({ user, pagetype }: Props) {
-  console.log("Card: user=" + JSON.stringify(user));
+export default function UserCard({ user, pagetype }: Props) {
+  console.log("UserCard: user=" + JSON.stringify(user));
 
   const greeting = user?.name ? (
     <div className="flex flex-col items-center p-6 bg-white rounded-lg font-bold text-5xl text-black">
