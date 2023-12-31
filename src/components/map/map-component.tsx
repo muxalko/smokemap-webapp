@@ -500,7 +500,7 @@ export default function MapComponent({
         onLoad={onMapLoad} // onClick={onClick}
         // attributionControl={false}
       >
-        <GeocoderControl position="top-right" />
+        <GeocoderControl position="top-left" />
         <GeolocateControl position="top-left" />
         <FullscreenControl position="top-left" />
         <NavigationControl position="top-left" />
