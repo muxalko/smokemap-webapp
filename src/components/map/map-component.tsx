@@ -19,8 +19,8 @@ import {
 import { GeoJSONSource, LngLat, LngLatBounds, LngLatLike } from "maplibre-gl";
 // need maplibre css for markers
 import "maplibre-gl/dist/maplibre-gl.css";
-//import ControlPanel from "./control-panel_cities";
-// import GeocoderControl from "./geocoder-control"
+import GeocoderControl from "./geocoder-control";
+
 // TODO: investigate error when installing canvas - neeeded for SVG type of images
 //import MarkerIconSvg from "./../src/assets/icon-marker.svg";
 //import { Image } from "canvas";
@@ -270,7 +270,6 @@ export default function MapComponent({
       // console.log("onMapLoad() =>  mapRef.current: ", mapRef.current);
       mapRef.current?.on("move", (evt: ViewStateChangeEvent) => {
         // console.log("onMapMove() event: ", evt);
-
         setViewport({ ...evt.viewState });
 
         if (mapRef && mapRef.current) {
@@ -501,6 +500,7 @@ export default function MapComponent({
         onLoad={onMapLoad} // onClick={onClick}
         // attributionControl={false}
       >
+        <GeocoderControl position="top-right" />
         <GeolocateControl position="top-left" />
         <FullscreenControl position="top-left" />
         <NavigationControl position="top-left" />
@@ -543,6 +543,7 @@ export default function MapComponent({
           <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} />
         </Source>
         <CustomOverlay>
+          {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
           <Crosshair />
         </CustomOverlay>
       </Map>

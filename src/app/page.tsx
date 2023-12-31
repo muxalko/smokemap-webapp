@@ -19,7 +19,6 @@ export default async function Index() {
         <RequestReactForm
           categories={allCategoriesQuery.data.categories as CategoryType[]}
         />
-
         <MapComponent
           categories={allCategoriesQuery.data.categories as CategoryType[]}
         />
