@@ -58,6 +58,7 @@ import * as z from "zod";
 import { toast } from "../ui/use-toast";
 import { MapRef } from "react-map-gl/maplibre";
 import { CategoryType } from "@/graphql/__generated__/types";
+import PlaceCard, { SimplePlaceType } from "../places/PlaceCard";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 //Starting point
@@ -336,9 +337,12 @@ export default function MapComponent({
             coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
           }
 
-          const properties = e.features[0].properties;
+          const properties: SimplePlaceType = e.features[0]
+            .properties as SimplePlaceType;
 
           console.log("Unclusters onClick event properties: ", properties);
+          setPlaceSelected(properties);
+          setPlacePopupOpen(true);
         }
       });
 
@@ -447,12 +451,36 @@ export default function MapComponent({
         : [lon - 2, lat - 2, lon + 2, lat + 2].join(",")),
   };
 
+  const [placeSelected, setPlaceSelected] = useState<SimplePlaceType>({
+    name: "Default",
+    category: 1,
+    description: "",
+    address: "",
+    tags: [],
+  });
+
+  const [placePopupOpen, setPlacePopupOpen] = useState(false);
   return (
     <>
       {/* {viewport && <h2>Zoom: {viewport.zoom}</h2>}
       {viewport && <h2>mapBounds: {JSON.stringify(mapBounds)}</h2>}
        {categorySelectorForm && <pre>{JSON.stringify(categorySelectorForm, null, 4)}</pre>}
        */}
+
+      <Popover
+        data-popover="popover-place"
+        onOpenChange={setPlacePopupOpen}
+        open={placePopupOpen}
+        data-popover-placement="{top}"
+      >
+        <PopoverTrigger></PopoverTrigger>
+
+        <PopoverContent>
+          {/* <ControlPanel categories={categories} onChange={setMapStyle} /> */}
+          {placeSelected && <PlaceCard place={placeSelected} />}
+          {/* {categoriesSelector} */}
+        </PopoverContent>
+      </Popover>
       <Map
         reuseMaps
         {...viewport}
@@ -518,15 +546,7 @@ export default function MapComponent({
           <Crosshair />
         </CustomOverlay>
       </Map>
-      <Popover>
-        <PopoverTrigger>Open</PopoverTrigger>
-
-        <PopoverContent>
-          {/* <ControlPanel categories={categories} onChange={setMapStyle} /> */}
-          {categoriesSelector}
-        </PopoverContent>
-      </Popover>
-
+      {/* 
       <div>
         <Button
           onClick={(e) =>
@@ -569,7 +589,7 @@ export default function MapComponent({
         >
           Print places endpoint
         </Button>
-      </div>
+      </div> */}
     </>
   );
 }
