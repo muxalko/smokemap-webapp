@@ -1,3 +1,4 @@
+/* eslint-disable */
 import * as React from "react";
 import { useState } from "react";
 import {
@@ -8,30 +9,30 @@ import {
 } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 // import MapboxGeocoder, { GeocoderOptions } from "@mapbox/mapbox-gl-geocoder";
-import MaplibreGeocoder, {
-  GeocoderOptions,
-} from "@maplibre/maplibre-gl-geocoder";
+import MaplibreGeocoder from "@maplibre/maplibre-gl-geocoder";
 import "@maplibre/maplibre-gl-geocoder/dist/maplibre-gl-geocoder.css";
-type GeocoderControlProps = Omit<
-  GeocoderOptions,
-  "accessToken" | "mapboxgl" | "marker"
-> & {
-  //   mapboxAccessToken: string;
-  marker?: boolean | Omit<MarkerProps, "longitude" | "latitude">;
+type GeocoderControlProps =
+  // Omit<
+  //   GeocoderOptions,
+  //   "accessToken" | "mapboxgl" | "marker"
+  // > &
+  {
+    //   mapboxAccessToken: string;
+    marker?: boolean | Omit<MarkerProps, "longitude" | "latitude">;
 
-  position: ControlPosition;
+    position: ControlPosition;
 
-  onLoading?: (e: object) => void;
-  onResults?: (e: object) => void;
-  onResult?: (e: object) => void;
-  onError?: (e: object) => void;
-};
+    onLoading?: (e: object) => void;
+    onResults?: (e: object) => void;
+    onResult?: (e: object) => void;
+    onError?: (e: object) => void;
+  };
 /* eslint-disable complexity,max-statements */
 export default function GeocoderControl(props: GeocoderControlProps) {
-  const [marker, setMarker] = useState(null);
+  const [marker, setMarker] = useState<React.ReactElement | null>(null);
 
   const geocoderApi = {
-    forwardGeocode: async (config) => {
+    forwardGeocode: async (config: { query: any }) => {
       const features = [];
       try {
         const request = `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1`;
@@ -66,9 +67,9 @@ export default function GeocoderControl(props: GeocoderControlProps) {
     },
   };
 
-  const geocoder = useControl<MaplibreGeocoder>(
+  const geocoder = useControl<typeof MaplibreGeocoder>(
     () => {
-      const ctrl: MaplibreGeocoder = new MaplibreGeocoder(geocoderApi, {
+      const ctrl: typeof MaplibreGeocoder = new MaplibreGeocoder(geocoderApi, {
         ...props,
         marker: false,
         // accessToken: props.mapboxAccessToken,
@@ -76,8 +77,8 @@ export default function GeocoderControl(props: GeocoderControlProps) {
 
       ctrl.on("loading", props.onLoading);
       ctrl.on("results", props.onResults);
-      ctrl.on("result", (evt) => {
-        props.onResult(evt);
+      ctrl.on("result", (evt: any) => {
+        props.onResult!(evt);
 
         const { result } = evt;
         const location =
@@ -87,7 +88,7 @@ export default function GeocoderControl(props: GeocoderControlProps) {
         if (location && props.marker) {
           setMarker(
             <Marker
-              {...props.marker}
+              {...(props.marker as {})}
               longitude={location[0]}
               latitude={location[1]}
             />
