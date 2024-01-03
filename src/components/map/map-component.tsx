@@ -485,17 +485,16 @@ export default function MapComponent({
         {...viewport}
         ref={mapRef}
         // style={{ width: "100vw", height: "100vh", display: "flex" }}
-        //mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
-        // simple demo style -> caution!! breaks cluster style
+        // Caution!! simple demo style breaks cluster style
         // mapStyle="https://demotiles.maplibre.org/style.json"
         mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
         // mapStyle={mapStyle && mapStyle.toJS()}
         //mapStyle={process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN ? "https://api.maptiler.com/maps/basic-v2/style.json?key="+process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN:process.env.NEXT_PUBLIC_MAP_STYLE}
         //maxZoom={20}
-        interactive={true} // Enables zoom with scroll
-        dragPan={true} // Enables panning
-        dragRotate={false} // disable map rotation using right click + drag
-        touchZoomRotate={false} // disable map rotation using touch rotation gesture
+        // interactive={true} // Enables zoom with scroll
+        // dragPan={false} // disable panning
+        // dragRotate={false} // disable map rotation using right click + drag
+        // touchZoomRotate={false} // disable map rotation using touch rotation gesture
         interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
         onLoad={onMapLoad} // onClick={onClick}
         // attributionControl={false}
