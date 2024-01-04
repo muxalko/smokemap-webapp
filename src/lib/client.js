@@ -24,6 +24,7 @@ export const { getClient } = registerApolloClient(() => {
         cache: new NextSSRInMemoryCache(),
         link: new HttpLink({
             uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
+            fetchOptions: { cache: "no-store" }
         }),
     });
 });
