@@ -257,8 +257,8 @@ export default function RequestReactForm({
             <DialogTitle>Create a new request</DialogTitle>
             <DialogDescription>
               This action will create a request for a place to be added to the
-              map. Your request will be reviewed and confirmed by Admin in 3-5
-              days.
+              map. Your request will be reviewed and confirmed by an
+              administrator in 3-5 days.
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2">
@@ -515,7 +515,7 @@ export default function RequestReactForm({
                             </AccordionItem>
                             <AccordionItem value="item-3">
                               <AccordionTrigger>
-                                What do you knw about this place?
+                                What do you know about this place?
                               </AccordionTrigger>
                               <AccordionContent>
                                 <FormField
