@@ -4,7 +4,7 @@ const config: CodegenConfig = {
   overwrite: true,
   schema: "http://192.168.56.5:8000/graphql/",
   documents: "src/graphql/queries/**/*.(ts|js|graphql)",
-  generates: {
+  generates: { 
     // "./src/graphql/__generated__/": {
     //   preset: "client",
     //   presetConfig: {
@@ -17,6 +17,17 @@ const config: CodegenConfig = {
         "typescript-operations",
         "typescript-react-apollo"
       ],
+      config: { 
+        scalars: {
+           ID: {
+             input: 'string',
+             output: 'string'
+           },
+           DateTime: 'Date',
+           JSON: '{ [key: string]: any }',
+           Upload: 'File'
+         },
+      },
     },
   },
   // still generate output even if no documents found

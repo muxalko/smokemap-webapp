@@ -56,14 +56,24 @@ import {
   RequestType,
   useCreateRequestMutation,
 } from "@/graphql/__generated__/types";
-import { ApolloError } from "@apollo/client";
+import { gql, useMutation, ApolloError } from "@apollo/client";
+import UploadComponent from "@/components/upload/upload-component";
 
 export const dynamic = "force-dynamic";
 
-const minTagLength = 3;
-const maxTagLength = 50;
-const maxTagsAmount = 10;
+const MIN_TAG_LENGTH = 3;
+const MAX_TAG_LENGTH = 50;
+const MAX_TAGS_AMOUNT = 10;
+const MAX_IMAGES_TO_UPLOAD = 3;
+const MAX_FILE_SIZE = 5000000;
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
 
+// form validation schema
 const FormSchema = z.object({
   name: z
     .string()
@@ -83,10 +93,22 @@ const FormSchema = z.object({
       id: z.string(),
       text: z
         .string()
-        .min(minTagLength, "minimum tag length is " + minTagLength)
-        .max(maxTagLength, "maximum tag length is " + maxTagLength),
+        .min(MIN_TAG_LENGTH, "minimum tag length is " + MIN_TAG_LENGTH)
+        .max(MAX_TAG_LENGTH, "maximum tag length is " + MAX_TAG_LENGTH),
     })
   ),
+  images: z
+    .any()
+    // To not allow empty files
+    .refine((files) => files?.length >= 1, { message: "Image is required." })
+    // To not allow files other than images
+    .refine((files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type), {
+      message: ".jpg, .jpeg, .png and .webp files are accepted.",
+    })
+    // To not allow files larger than 5MB
+    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, {
+      message: `Max file size is 5MB.`,
+    }),
 });
 
 export default function RequestReactForm({
@@ -96,6 +118,7 @@ export default function RequestReactForm({
   categories: CategoryType[];
   updateDataCallback?: () => unknown;
 }) {
+  // default form values
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -104,6 +127,7 @@ export default function RequestReactForm({
       addressString: "",
       description: "",
       tags: [],
+      images: [],
     },
   });
 
@@ -151,8 +175,11 @@ export default function RequestReactForm({
           addressString: "",
           description: "",
           tags: [],
+          images: [],
         });
+
         form.setValue("tags", []);
+        form.setValue("images", []);
 
         toast({
           title: "Submission result:",
@@ -232,6 +259,10 @@ export default function RequestReactForm({
       name: submission.name,
       description: submission.description,
       tags: submission.tags as unknown as string[],
+      images: submission.images as File[],
+      // images: (submission.images as File[]).forEach((file) => ({
+      //   [file.name]: file,
+      // })),
     };
 
     // Override and reformat tags as simple String[] and lowercase them
@@ -252,7 +283,7 @@ export default function RequestReactForm({
         <DialogTrigger asChild>
           <Button variant="outline">+ SPOT</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-scroll max-h-screen">
           <DialogHeader>
             <DialogTitle>Create a new request</DialogTitle>
             <DialogDescription>
@@ -530,9 +561,9 @@ export default function RequestReactForm({
                                         <TagInput
                                           {...field}
                                           className="sm:min-w-[300px] sm:max-w-[350px] "
-                                          maxLength={maxTagLength}
-                                          maxTags={maxTagsAmount}
-                                          minLength={minTagLength}
+                                          maxLength={MAX_TAG_LENGTH}
+                                          maxTags={MAX_TAGS_AMOUNT}
+                                          minLength={MIN_TAG_LENGTH}
                                           placeholder="Special characters are not allowed"
                                           setTags={(newTags) => {
                                             setTags(newTags);
@@ -566,14 +597,8 @@ export default function RequestReactForm({
                                         />
                                       </FormControl>
                                       <FormDescription className="text-left">
-                                        {/* {tags && (
-                          <p className="text-blue-700">
-                            {JSON.stringify(tags)}
-                          </p>
-                        )}
-                        <br /> */}
-                                        Enter up to {maxTagsAmount} features for
-                                        the place you are adding.
+                                        Enter up to {MAX_TAGS_AMOUNT} features
+                                        for the place you are adding.
                                         <br />
                                         Use enter or comma to separate each
                                         feature.
@@ -587,10 +612,41 @@ export default function RequestReactForm({
                                 />
                                 <FormField
                                   control={form.control}
+                                  name="images"
+                                  render={({ field }) => (
+                                    <FormItem className="flex flex-col items-start">
+                                      <FormLabel className="text-left py-2">
+                                        Images
+                                      </FormLabel>
+                                      <FormControl className="w-full">
+                                        <UploadComponent
+                                          setCallbackHandler={(
+                                            uploadedFiles: File[]
+                                          ) =>
+                                            form.setValue(
+                                              "images",
+                                              uploadedFiles
+                                            )
+                                          }
+                                        />
+                                      </FormControl>
+                                      <FormDescription className="text-left">
+                                        Upload up to {MAX_IMAGES_TO_UPLOAD}{" "}
+                                        images for the place you are adding.
+                                        <br />
+                                        Only *.jpg or *.png format is accepted.
+                                        Up to 2MB per file.
+                                      </FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
                                   name="description"
                                   render={({ field }) => (
                                     <FormItem className="flex flex-col items-start">
-                                      <FormLabel className="text-left">
+                                      <FormLabel className="text-left py-2">
                                         Description
                                       </FormLabel>
                                       <FormControl className="w-full">
@@ -611,7 +667,6 @@ export default function RequestReactForm({
                             </AccordionItem>
                           </Accordion>
                           {/* {form && <pre className="text-left text-red-800">{JSON.stringify(form, null, 4)}</pre>} */}
-
                           <Button
                             className="bg-indigo-500"
                             // disabled={!form.formState.isValid}
@@ -650,9 +705,8 @@ export default function RequestReactForm({
                           {submission_result && (
                             <>
                               <p className="text-green-700">
-                                Success! Place created with ID:{" "}
-                                {submission_result.id}, Name:{" "}
-                                {submission_result.name}, Address:{" "}
+                                Success! Request ID: {submission_result.id},
+                                Name: {submission_result.name}, Address:{" "}
                                 {
                                   submission_result.address.properties
                                     ?.addressString

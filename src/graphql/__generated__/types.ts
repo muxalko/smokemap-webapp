@@ -15,8 +15,9 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  DateTime: { input: any; output: any; }
+  DateTime: { input: Date; output: Date; }
   GenericScalar: { input: any; output: any; }
+  Upload: { input: File; output: File; }
 };
 
 export type AddressProperties = {
@@ -83,6 +84,8 @@ export type Mutation = {
   deleteRequest?: Maybe<DeleteRequest>;
   updateCategory?: Maybe<UpdateCategory>;
   updateRequest?: Maybe<UpdateRequest>;
+  uploadFile?: Maybe<UploadFile>;
+  uploadFiles?: Maybe<UploadFiles>;
 };
 
 
@@ -118,6 +121,16 @@ export type MutationUpdateCategoryArgs = {
 export type MutationUpdateRequestArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
   input: RequestInput;
+};
+
+
+export type MutationUploadFileArgs = {
+  file: Scalars['Upload']['input'];
+};
+
+
+export type MutationUploadFilesArgs = {
+  files?: InputMaybe<Array<InputMaybe<Scalars['Upload']['input']>>>;
 };
 
 export type PlaceType = {
@@ -161,6 +174,7 @@ export type RequestInput = {
   addressString?: InputMaybe<Scalars['String']['input']>;
   category?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  images?: InputMaybe<Array<InputMaybe<Scalars['Upload']['input']>>>;
   name?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -197,6 +211,16 @@ export type UpdateRequest = {
   request?: Maybe<RequestType>;
 };
 
+export type UploadFile = {
+  __typename?: 'UploadFile';
+  success?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type UploadFiles = {
+  __typename?: 'UploadFiles';
+  success?: Maybe<Scalars['Boolean']['output']>;
+};
+
 export type GetAllCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -210,14 +234,14 @@ export type GetAllRequestsQuery = { __typename?: 'Query', requests?: Array<{ __t
 export type GetAllNotApprovedRequestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: any, dateUpdated: any, dateApproved?: any | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null> | null };
+export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null> | null };
 
 export type CreateRequestMutationVariables = Exact<{
   input: RequestInput;
 }>;
 
 
-export type CreateRequestMutation = { __typename?: 'Mutation', createRequest?: { __typename?: 'CreateRequest', request?: { __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: any, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null } | null };
+export type CreateRequestMutation = { __typename?: 'Mutation', createRequest?: { __typename?: 'CreateRequest', request?: { __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: Date, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null } | null };
 
 export type ApproveRequestMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -225,7 +249,7 @@ export type ApproveRequestMutationVariables = Exact<{
 }>;
 
 
-export type ApproveRequestMutation = { __typename?: 'Mutation', approveRequest?: { __typename?: 'ApproveRequest', request?: { __typename?: 'RequestType', id: string, name: string, description: string, dateCreated: any, dateUpdated: any, dateApproved?: any | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, tags: Array<string | null>, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null } | null };
+export type ApproveRequestMutation = { __typename?: 'Mutation', approveRequest?: { __typename?: 'ApproveRequest', request?: { __typename?: 'RequestType', id: string, name: string, description: string, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, tags: Array<string | null>, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null } | null };
 
 export type DeleteRequestMutationVariables = Exact<{
   id: Scalars['ID']['input'];
