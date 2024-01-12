@@ -9,6 +9,13 @@ const nextConfig = {
         port: "",
         pathname: "/u/**",
       },
+      {
+        protocol: "https",
+        hostname: "smokemap-static-images-staging.s3.amazonaws.com",
+        port: "",
+        pathname: "/**",
+      },
+
     ],
   },
   experimental: {

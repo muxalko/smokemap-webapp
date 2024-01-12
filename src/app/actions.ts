@@ -5,7 +5,7 @@ import {
     ApproveRequestMutation,
     DeleteRequestMutation,
 } from '@/graphql/__generated__/types';
-import { APPROVE_REQUEST, DELETE_REQUEST } from '@/graphql/queries/request';
+import { APPROVE_REQUEST, DELETE_REQUEST, GET_S3_PRESIGNED_URL } from '@/graphql/queries/request';
 import { revalidatePath } from 'next/cache';
 
 export async function deleteRequest(id: string) {
@@ -20,6 +20,16 @@ export async function deleteRequest(id: string) {
 
     revalidatePath('/requests');
     return request;
+}
+
+export async function getS3PresignedUrl() {
+    console.log('getS3PresignedUrl()');
+    const url = await getClient().query({
+        fetchPolicy: 'no-cache',
+        query: GET_S3_PRESIGNED_URL
+    });
+    
+    return url;
 }
 
 // TODO: check what does it take to use string as an id

@@ -38,6 +38,11 @@ export const NOT_APPROVED_REQUESTS_QUERY = gql`
                     coordinates
                 }
             }
+            imageSet {
+                id
+                name
+                url
+            }
             description
             tags
             dateCreated
@@ -46,6 +51,7 @@ export const NOT_APPROVED_REQUESTS_QUERY = gql`
             approved
             approvedBy
             approvedComment
+
         }
     }
 `;
@@ -110,5 +116,48 @@ export const DELETE_REQUEST = gql`
         deleteRequest(id: $id) {
             ok
         }
+    }
+`;
+
+export const GET_S3_PRESIGNED_URL = gql`
+    query GetS3PresignedUrl {
+        s3PresignedUrl
+    }
+`;
+
+export const CREATE_IMAGE = gql`
+    mutation CreateImage($input: ImageInput!) {
+        createImage(input: $input) {
+            image {
+                name
+                url
+            }
+        }
+    }
+`;
+
+export const GET_PLACE_BY_ID = gql`
+    query GetPlaceById($id: ID!) {
+        placeById(id: $id) {
+            id
+            name
+            description
+            address {
+                    properties {
+                        addressString
+                    }
+                    geometry {
+                        coordinates
+                    }
+                }
+            category {
+                    name
+                }
+            imageSet {
+                    id
+                    url
+                    name
+                }
+            }
     }
 `;

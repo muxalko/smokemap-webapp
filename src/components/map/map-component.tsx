@@ -340,6 +340,7 @@ export default function MapComponent({
             .properties as SimplePlaceType;
 
           console.log("Unclusters onClick event properties: ", properties);
+
           setPlaceSelected(properties);
           setPlacePopupOpen(true);
         }
@@ -456,6 +457,7 @@ export default function MapComponent({
     description: "",
     address: "",
     tags: [],
+    images: [],
   });
 
   const [placePopupOpen, setPlacePopupOpen] = useState(false);

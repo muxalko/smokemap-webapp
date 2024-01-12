@@ -1,17 +1,19 @@
 import React, { useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, FileWithPath } from "react-dropzone";
 import "./style.css"; // Import the CSS file for styling
 
 const UploadComponent = ({
   setCallbackHandler,
 }: {
-  setCallbackHandler: (files: File[]) => void;
+  setCallbackHandler: (files: FileWithPath[]) => void;
 }) => {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<FileWithPath[]>([]);
 
-  const handleDrop = (acceptedFiles: File[]) => {
+  const handleDrop = (acceptedFiles: FileWithPath[]) => {
     // Logic for handling the dropped files
     setUploadedFiles(acceptedFiles);
+
+    // callback to update the files input of the createRequest form and send
     setCallbackHandler(acceptedFiles);
   };
 
@@ -47,7 +49,7 @@ const UploadComponent = ({
         <h3>Uploaded File:</h3>
         {uploadedFiles.length > 0 ? (
           <ul>
-            {uploadedFiles.map((file: File, index: number) => (
+            {uploadedFiles.map((file: FileWithPath, index: number) => (
               <li key={index}>
                 <span>{file.name}</span>
               </li>

@@ -3,6 +3,7 @@
 import {
   AddressType,
   CategoryType,
+  ImageType,
   RequestType,
 } from "@/graphql/__generated__/types";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 import { approveRequest, deleteRequest } from "../actions";
 import { generateColumnHelper } from "@/lib/table-utils";
+import Image from "next/image";
 
 // const columnHelper = createColumnHelper<RequestType>();
 const columnHelper = generateColumnHelper<RequestType>();
@@ -76,6 +78,27 @@ export const columns: ColumnDef<RequestType>[] = [
       return (
         <div className="text-right font-medium">
           {address?.properties?.addressString} {address.geometry.coordinates}
+        </div>
+      );
+    },
+  }),
+  columnHelper.accessor("imageSet", {
+    header: () => <div>Images</div>,
+    cell: ({ row }) => {
+      const images: ImageType[] = row.getValue("imageSet");
+
+      return (
+        <div className="text-right font-medium">
+          {images &&
+            images.map((image) => (
+              <Image
+                key={image.id}
+                src={image.url}
+                width={500}
+                height={500}
+                alt={image.name}
+              />
+            ))}
         </div>
       );
     },

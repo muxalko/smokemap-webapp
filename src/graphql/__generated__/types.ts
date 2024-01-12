@@ -17,6 +17,7 @@ export type Scalars = {
   Float: { input: number; output: number; }
   DateTime: { input: Date; output: Date; }
   GenericScalar: { input: any; output: any; }
+  JSONString: { input: any; output: any; }
   Upload: { input: File; output: File; }
 };
 
@@ -53,6 +54,11 @@ export type CreateCategory = {
   category?: Maybe<CategoryType>;
 };
 
+export type CreateImage = {
+  __typename?: 'CreateImage';
+  image?: Maybe<ImageType>;
+};
+
 export type CreateRequest = {
   __typename?: 'CreateRequest';
   request?: Maybe<RequestType>;
@@ -76,10 +82,27 @@ export type GeometryObjectType = {
   type?: Maybe<Scalars['String']['output']>;
 };
 
+export type ImageInput = {
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  requestId?: InputMaybe<Scalars['String']['input']>;
+  url?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ImageType = {
+  __typename?: 'ImageType';
+  id: Scalars['ID']['output'];
+  metadata?: Maybe<Scalars['JSONString']['output']>;
+  name: Scalars['String']['output'];
+  request?: Maybe<RequestType>;
+  url: Scalars['String']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   approveRequest?: Maybe<ApproveRequest>;
   createCategory?: Maybe<CreateCategory>;
+  createImage?: Maybe<CreateImage>;
   createRequest?: Maybe<CreateRequest>;
   deleteRequest?: Maybe<DeleteRequest>;
   updateCategory?: Maybe<UpdateCategory>;
@@ -98,6 +121,11 @@ export type MutationApproveRequestArgs = {
 export type MutationCreateCategoryArgs = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
+};
+
+
+export type MutationCreateImageArgs = {
+  input: ImageInput;
 };
 
 
@@ -139,6 +167,7 @@ export type PlaceType = {
   category: CategoryType;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  imageSet: Array<ImageType>;
   name: Scalars['String']['output'];
   tags: Array<TagType>;
 };
@@ -147,16 +176,24 @@ export type Query = {
   __typename?: 'Query';
   addresses?: Maybe<Array<Maybe<AddressType>>>;
   categories?: Maybe<Array<Maybe<CategoryType>>>;
+  images?: Maybe<Array<Maybe<ImageType>>>;
+  placeById?: Maybe<PlaceType>;
   places?: Maybe<Array<Maybe<PlaceType>>>;
+  requestById?: Maybe<RequestType>;
   requests?: Maybe<Array<Maybe<RequestType>>>;
-  requestsById?: Maybe<RequestType>;
   requestsByName?: Maybe<RequestType>;
   requestsToApprove?: Maybe<Array<Maybe<RequestType>>>;
+  s3PresignedUrl?: Maybe<Scalars['GenericScalar']['output']>;
   tags?: Maybe<Array<Maybe<TagType>>>;
 };
 
 
-export type QueryRequestsByIdArgs = {
+export type QueryPlaceByIdArgs = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryRequestByIdArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -174,7 +211,6 @@ export type RequestInput = {
   addressString?: InputMaybe<Scalars['String']['input']>;
   category?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
-  images?: InputMaybe<Array<InputMaybe<Scalars['Upload']['input']>>>;
   name?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -191,6 +227,7 @@ export type RequestType = {
   dateUpdated: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  imageSet: Array<ImageType>;
   name: Scalars['String']['output'];
   tags: Array<Maybe<Scalars['String']['output']>>;
 };
@@ -234,7 +271,7 @@ export type GetAllRequestsQuery = { __typename?: 'Query', requests?: Array<{ __t
 export type GetAllNotApprovedRequestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null> | null };
+export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, imageSet: Array<{ __typename?: 'ImageType', id: string, name: string, url: string }> } | null> | null };
 
 export type CreateRequestMutationVariables = Exact<{
   input: RequestInput;
@@ -257,6 +294,25 @@ export type DeleteRequestMutationVariables = Exact<{
 
 
 export type DeleteRequestMutation = { __typename?: 'Mutation', deleteRequest?: { __typename?: 'DeleteRequest', ok?: boolean | null } | null };
+
+export type GetS3PresignedUrlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetS3PresignedUrlQuery = { __typename?: 'Query', s3PresignedUrl?: any | null };
+
+export type CreateImageMutationVariables = Exact<{
+  input: ImageInput;
+}>;
+
+
+export type CreateImageMutation = { __typename?: 'Mutation', createImage?: { __typename?: 'CreateImage', image?: { __typename?: 'ImageType', name: string, url: string } | null } | null };
+
+export type GetPlaceByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetPlaceByIdQuery = { __typename?: 'Query', placeById?: { __typename?: 'PlaceType', id: string, name: string, description?: string | null, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, category: { __typename?: 'CategoryType', name: string }, imageSet: Array<{ __typename?: 'ImageType', id: string, url: string, name: string }> } | null };
 
 
 export const GetAllCategoriesDocument = gql`
@@ -368,6 +424,11 @@ export const GetAllNotApprovedRequestsDocument = gql`
       geometry {
         coordinates
       }
+    }
+    imageSet {
+      id
+      name
+      url
     }
     description
     tags
@@ -551,3 +612,134 @@ export function useDeleteRequestMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteRequestMutationHookResult = ReturnType<typeof useDeleteRequestMutation>;
 export type DeleteRequestMutationResult = Apollo.MutationResult<DeleteRequestMutation>;
 export type DeleteRequestMutationOptions = Apollo.BaseMutationOptions<DeleteRequestMutation, DeleteRequestMutationVariables>;
+export const GetS3PresignedUrlDocument = gql`
+    query GetS3PresignedUrl {
+  s3PresignedUrl
+}
+    `;
+
+/**
+ * __useGetS3PresignedUrlQuery__
+ *
+ * To run a query within a React component, call `useGetS3PresignedUrlQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetS3PresignedUrlQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetS3PresignedUrlQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetS3PresignedUrlQuery(baseOptions?: Apollo.QueryHookOptions<GetS3PresignedUrlQuery, GetS3PresignedUrlQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetS3PresignedUrlQuery, GetS3PresignedUrlQueryVariables>(GetS3PresignedUrlDocument, options);
+      }
+export function useGetS3PresignedUrlLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetS3PresignedUrlQuery, GetS3PresignedUrlQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetS3PresignedUrlQuery, GetS3PresignedUrlQueryVariables>(GetS3PresignedUrlDocument, options);
+        }
+export function useGetS3PresignedUrlSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetS3PresignedUrlQuery, GetS3PresignedUrlQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetS3PresignedUrlQuery, GetS3PresignedUrlQueryVariables>(GetS3PresignedUrlDocument, options);
+        }
+export type GetS3PresignedUrlQueryHookResult = ReturnType<typeof useGetS3PresignedUrlQuery>;
+export type GetS3PresignedUrlLazyQueryHookResult = ReturnType<typeof useGetS3PresignedUrlLazyQuery>;
+export type GetS3PresignedUrlSuspenseQueryHookResult = ReturnType<typeof useGetS3PresignedUrlSuspenseQuery>;
+export type GetS3PresignedUrlQueryResult = Apollo.QueryResult<GetS3PresignedUrlQuery, GetS3PresignedUrlQueryVariables>;
+export const CreateImageDocument = gql`
+    mutation CreateImage($input: ImageInput!) {
+  createImage(input: $input) {
+    image {
+      name
+      url
+    }
+  }
+}
+    `;
+export type CreateImageMutationFn = Apollo.MutationFunction<CreateImageMutation, CreateImageMutationVariables>;
+
+/**
+ * __useCreateImageMutation__
+ *
+ * To run a mutation, you first call `useCreateImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createImageMutation, { data, loading, error }] = useCreateImageMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateImageMutation(baseOptions?: Apollo.MutationHookOptions<CreateImageMutation, CreateImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateImageMutation, CreateImageMutationVariables>(CreateImageDocument, options);
+      }
+export type CreateImageMutationHookResult = ReturnType<typeof useCreateImageMutation>;
+export type CreateImageMutationResult = Apollo.MutationResult<CreateImageMutation>;
+export type CreateImageMutationOptions = Apollo.BaseMutationOptions<CreateImageMutation, CreateImageMutationVariables>;
+export const GetPlaceByIdDocument = gql`
+    query GetPlaceById($id: ID!) {
+  placeById(id: $id) {
+    id
+    name
+    description
+    address {
+      properties {
+        addressString
+      }
+      geometry {
+        coordinates
+      }
+    }
+    category {
+      name
+    }
+    imageSet {
+      id
+      url
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetPlaceByIdQuery__
+ *
+ * To run a query within a React component, call `useGetPlaceByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPlaceByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPlaceByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetPlaceByIdQuery(baseOptions: Apollo.QueryHookOptions<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>(GetPlaceByIdDocument, options);
+      }
+export function useGetPlaceByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>(GetPlaceByIdDocument, options);
+        }
+export function useGetPlaceByIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>(GetPlaceByIdDocument, options);
+        }
+export type GetPlaceByIdQueryHookResult = ReturnType<typeof useGetPlaceByIdQuery>;
+export type GetPlaceByIdLazyQueryHookResult = ReturnType<typeof useGetPlaceByIdLazyQuery>;
+export type GetPlaceByIdSuspenseQueryHookResult = ReturnType<typeof useGetPlaceByIdSuspenseQuery>;
+export type GetPlaceByIdQueryResult = Apollo.QueryResult<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>;

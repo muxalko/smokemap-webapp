@@ -39,6 +39,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "cmdk": "^0.2.0",
+    "crypto": "^1.0.1",
     "d3-shape": "^3.2.0",
     "graphql": "^16.8.1",
     "jest": "^29.7.0",

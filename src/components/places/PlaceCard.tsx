@@ -1,13 +1,21 @@
+"use client";
+import {
+  ImageType,
+  PlaceType,
+  useGetPlaceByIdQuery,
+} from "@/graphql/__generated__/types";
+import { GET_PLACE_BY_ID } from "@/graphql/queries/request";
+import { useQuery } from "@apollo/client";
 import Image from "next/image";
-import type { User } from "next-auth";
-import { PlaceType } from "@/graphql/__generated__/types";
 
 export type SimplePlaceType = {
+  place_id: number;
   name: string;
   category: number;
   description: string;
   address: string;
-  tags: string[];
+  tags: [];
+  images: [];
 };
 
 type Props = {
@@ -15,7 +23,12 @@ type Props = {
 };
 
 export default function PlaceCard({ place }: Props) {
-  console.log("PlaceCard: okace=" + JSON.stringify(place));
+  const { data, loading, error } = useQuery(GET_PLACE_BY_ID, {
+    fetchPolicy: "cache-first",
+    variables: { id: place.place_id.toString() },
+  });
+
+  console.log("PlaceCard: ", place);
 
   const placeNameDisplay = place?.name ? (
     <div className="flex flex-col items-center p-6 bg-white rounded-lg font-bold text-5xl text-black">
@@ -50,18 +63,35 @@ export default function PlaceCard({ place }: Props) {
     </>
   ) : null;
 
+  if (loading) return "Loading...";
+  if (error) return `Error! ${error.message}`;
+
   return (
     <div className="card lg:card-side bg-base-100 shadow-xl">
-      <figure>
-        <img src="/vercel.svg" alt={place?.name} />
-      </figure>
       <div className="card-body">
-        <h2 className="card-title">{place?.name}</h2>
-        <div className="flex flex-col items-center p-6 bg-white rounded-lg font-bold text-5xl text-black">
-          {place?.address}
+        <div className="flex flex-col items-center p-5 bg-white rounded-lg font-bold text-2xl text-black">
+          {data?.placeById?.category?.name}
         </div>
-        <p>{place?.description}</p>
-        <p>{place?.category}</p>
+        <h2 className="card-title font-bold text-2xl">
+          {data?.placeById?.name}
+        </h2>
+
+        <figure>
+          {data?.placeById?.imageSet &&
+            data?.placeById?.imageSet.map((image: ImageType) => {
+              return (
+                <Image
+                  key={image.id}
+                  src={image.url}
+                  width={500}
+                  height={500}
+                  alt={image.name}
+                />
+              );
+            })}
+        </figure>
+        <p>{data?.placeById?.description}</p>
+        <p>{data?.placeById?.address?.properties?.addressString}</p>
         <div className="card-actions justify-end">
           <button className="btn btn-primary">Close</button>
         </div>

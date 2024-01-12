@@ -19,7 +19,8 @@ export default async function Template({
       id: "-1",
       name: "Guest",
       email: "",
-      image: "/smokemap.svg",
+      image:
+        "https://smokemap-static-images-staging.s3.ca-central-1.amazonaws.com/guest.png",
       role: "guest",
     };
   } else {
