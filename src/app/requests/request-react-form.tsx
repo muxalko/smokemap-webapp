@@ -312,7 +312,7 @@ export default function RequestReactForm({
         (form.getValues("images") as FileWithPath[]).forEach((file) => {
           console.log("Images left to upload ", files2upload);
           // replace target filename with our own
-          const extention = path.extname(file.name as string);
+          const extention = path.extname(file.name);
           const filename = randomBytes(16).toString("hex") + extention;
           formUpload.set("file", file, filename);
 
