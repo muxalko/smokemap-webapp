@@ -27,9 +27,30 @@ type GeocoderControlProps =
     onResult?: (e: object) => void;
     onError?: (e: object) => void;
   };
-/* eslint-disable complexity,max-statements */
+
+const noop = () => {};
+
+const defaultProps = {
+  marker: true,
+  position: "top-left",
+  onLoading: noop,
+  onResults: noop,
+  onResult: noop,
+  onError: noop,
+};
+
 export default function GeocoderControl(props: GeocoderControlProps) {
-  const [marker, setMarker] = useState<React.ReactElement | null>(null);
+  const {
+    marker = true,
+    position = "top-left",
+    onLoading = noop,
+    onResults = noop,
+    onResult = noop,
+    onError = noop,
+  } = { ...defaultProps, ...props };
+
+  const [markerComponent, setMarkerComponent] =
+    useState<React.ReactElement | null>(null);
 
   const geocoderApi = {
     forwardGeocode: async (config: { query: any }) => {
@@ -75,33 +96,33 @@ export default function GeocoderControl(props: GeocoderControlProps) {
         // accessToken: props.mapboxAccessToken,
       });
 
-      ctrl.on("loading", props.onLoading);
-      ctrl.on("results", props.onResults);
+      ctrl.on("loading", onLoading);
+      ctrl.on("results", onResults);
       ctrl.on("result", (evt: any) => {
-        props.onResult!(evt);
+        onResult!(evt);
 
         const { result } = evt;
         const location =
           result &&
           (result.center ||
             (result.geometry?.type === "Point" && result.geometry.coordinates));
-        if (location && props.marker) {
-          setMarker(
+        if (location && marker) {
+          setMarkerComponent(
             <Marker
-              {...(props.marker as {})}
+              {...(marker as {})}
               longitude={location[0]}
               latitude={location[1]}
             />
           );
         } else {
-          setMarker(null);
+          setMarkerComponent(null);
         }
       });
-      ctrl.on("error", props.onError);
+      ctrl.on("error", onError);
       return ctrl;
     },
     {
-      position: props.position,
+      position: position,
     }
   );
 
@@ -175,15 +196,13 @@ export default function GeocoderControl(props: GeocoderControlProps) {
   //   //   geocoder.setWorldview(props.worldview);
   //   // }
   // }
-  return marker;
+  return markerComponent;
 }
 
-const noop = () => {};
-
-GeocoderControl.defaultProps = {
-  marker: true,
-  onLoading: noop,
-  onResults: noop,
-  onResult: noop,
-  onError: noop,
-};
+// GeocoderControl.defaultProps = {
+//   marker: true,
+//   onLoading: noop,
+//   onResults: noop,
+//   onResult: noop,
+//   onError: noop,
+// };
