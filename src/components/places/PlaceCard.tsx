@@ -20,9 +20,10 @@ export type SimplePlaceType = {
 
 type Props = {
   place: SimplePlaceType;
+  closeHandler: () => void;
 };
 
-export default function PlaceCard({ place }: Props) {
+export default function PlaceCard({ place, closeHandler }: Props) {
   const { data, loading, error } = useQuery(GET_PLACE_BY_ID, {
     fetchPolicy: "cache-first",
     variables: { id: place.place_id.toString() },
@@ -93,7 +94,9 @@ export default function PlaceCard({ place }: Props) {
         <p>{data?.placeById?.description}</p>
         <p>{data?.placeById?.address?.properties?.addressString}</p>
         <div className="card-actions justify-end">
-          <button className="btn btn-primary">Close</button>
+          <button className="btn btn-primary" onClick={closeHandler}>
+            Close
+          </button>
         </div>
       </div>
     </div>

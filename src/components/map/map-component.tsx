@@ -479,7 +479,12 @@ export default function MapComponent({
 
         <PopoverContent>
           {/* <ControlPanel categories={categories} onChange={setMapStyle} /> */}
-          {placeSelected && <PlaceCard place={placeSelected} />}
+          {placeSelected && (
+            <PlaceCard
+              place={placeSelected}
+              closeHandler={() => setPlacePopupOpen(false)}
+            />
+          )}
           {/* {categoriesSelector} */}
         </PopoverContent>
       </Popover>
