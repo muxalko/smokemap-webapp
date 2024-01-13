@@ -452,8 +452,9 @@ export default function MapComponent({
   };
 
   const [placeSelected, setPlaceSelected] = useState<SimplePlaceType>({
-    name: "Default",
-    category: 1,
+    place_id: -1,
+    name: "None",
+    category: -1,
     description: "",
     address: "",
     tags: [],
