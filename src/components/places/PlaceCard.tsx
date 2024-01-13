@@ -68,7 +68,7 @@ export default function PlaceCard({ place }: Props) {
 
   return (
     <div className="card lg:card-side bg-base-100 shadow-xl">
-      <div className="card-body">
+      <div className="card-body overflow-y-scroll max-h-screen">
         <div className="flex flex-col items-center p-5 bg-white rounded-lg font-bold text-2xl text-black">
           {data?.placeById?.category?.name}
         </div>
