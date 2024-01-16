@@ -438,7 +438,12 @@ export default function RequestReactForm({
     <>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline">+ SPOT</Button>
+          <Button
+            variant="outline"
+            className="absolute top-20 right-4 z-10 text-2xl"
+          >
+            +
+          </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md overflow-y-scroll max-h-screen">
           <DialogHeader>

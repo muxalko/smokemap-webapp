@@ -161,3 +161,29 @@ export const GET_PLACE_BY_ID = gql`
             }
     }
 `;
+
+export const GET_PLACES_STARTWITH_NAME = gql`
+    query GetPlacesStartwithName($name: String!) {
+        placesStartwithName(name: $name) {
+            id
+            name
+            description
+            address {
+                    properties {
+                        addressString
+                    }
+                    geometry {
+                        coordinates
+                    }
+                }
+            category {
+                    name
+                }
+            imageSet {
+                    id
+                    url
+                    name
+                }
+            }
+    }
+`;

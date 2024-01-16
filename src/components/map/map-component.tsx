@@ -59,6 +59,8 @@ import { toast } from "../ui/use-toast";
 import { MapRef } from "react-map-gl/maplibre";
 import { CategoryType } from "@/graphql/__generated__/types";
 import PlaceCard, { SimplePlaceType } from "../places/PlaceCard";
+import PlaceList from "../places/PlaceList";
+import Search from "../places/Search";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 //Starting point
@@ -78,7 +80,7 @@ const boundingBox = new LngLatBounds(southWest, northEast);
 
 const initialZoom = 13;
 const pointsLayerId = "places";
-const flyToZoomLevel = 12;
+const flyToZoomLevel = 16;
 
 const CategorySelectorSchema = z.object({
   items: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -421,17 +423,16 @@ export default function MapComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const flyToCoordinates = useCallback(
-    (longitude: number, latitude: number) => {
-      mapRef.current?.flyTo({
-        center: [longitude, latitude],
-        duration: 2000,
-        //minZoom: minFlyToZoomLevel,
-        zoom: flyToZoomLevel,
-      });
-    },
-    []
-  );
+  const flyToCoordinates = useCallback((coordinates: Array<number>) => {
+    const longitude: number = coordinates[0];
+    const latitude: number = coordinates[1];
+    mapRef.current?.flyTo({
+      center: [longitude, latitude],
+      duration: 2000,
+      //minZoom: minFlyToZoomLevel,
+      zoom: flyToZoomLevel,
+    });
+  }, []);
 
   const [viewport, setViewport] = useState<ViewState>({
     latitude: lat,
@@ -462,13 +463,16 @@ export default function MapComponent({
   });
 
   const [placePopupOpen, setPlacePopupOpen] = useState(false);
+  const [placeListPopupOpen, setPlaceListPopupOpen] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
   return (
     <>
       {/* {viewport && <h2>Zoom: {viewport.zoom}</h2>}
       {viewport && <h2>mapBounds: {JSON.stringify(mapBounds)}</h2>}
        {categorySelectorForm && <pre>{JSON.stringify(categorySelectorForm, null, 4)}</pre>}
        */}
-
       <Popover
         data-popover="popover-place"
         onOpenChange={setPlacePopupOpen}
@@ -488,6 +492,36 @@ export default function MapComponent({
           {/* {categoriesSelector} */}
         </PopoverContent>
       </Popover>
+      <Search
+        placeholder="Find place by name"
+        searchHandler={(term) => {
+          setSearchTerm(term);
+          setPlaceListPopupOpen(true);
+        }}
+      />
+      <Popover
+        data-popover="popover-placelist"
+        onOpenChange={setPlaceListPopupOpen}
+        open={placeListPopupOpen}
+        data-popover-placement="{right}"
+      >
+        <PopoverTrigger>
+          <div className="absolute top-2/4">TEST</div>
+        </PopoverTrigger>
+
+        <PopoverContent>
+          {/* <ControlPanel categories={categories} onChange={setMapStyle} /> */}
+          {searchTerm && (
+            <PlaceList
+              query={searchTerm}
+              flytoHandler={(coordinates) => flyToCoordinates(coordinates)}
+              closeHandler={() => setPlaceListPopupOpen(false)}
+            />
+          )}
+          {/* {categoriesSelector} */}
+        </PopoverContent>
+      </Popover>
+
       <Map
         reuseMaps
         {...viewport}

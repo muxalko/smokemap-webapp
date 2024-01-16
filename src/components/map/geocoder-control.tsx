@@ -26,18 +26,20 @@ type GeocoderControlProps =
     onResults?: (e: object) => void;
     onResult?: (e: object) => void;
     onError?: (e: object) => void;
+    placeholder?: string;
   };
 
 const noop = () => {};
 
-const defaultProps = {
-  marker: true,
-  position: "top-left",
-  onLoading: noop,
-  onResults: noop,
-  onResult: noop,
-  onError: noop,
-};
+// const defaultProps = {
+//   marker: true,
+//   position: "top-left",
+//   onLoading: noop,
+//   onResults: noop,
+//   onResult: noop,
+//   onError: noop,
+//   placeholder: "Search for address",
+// };
 
 export default function GeocoderControl(props: GeocoderControlProps) {
   const {
@@ -47,7 +49,8 @@ export default function GeocoderControl(props: GeocoderControlProps) {
     onResults = noop,
     onResult = noop,
     onError = noop,
-  } = { ...defaultProps, ...props };
+    placeholder = "Search for address",
+  } = { ...props };
 
   const [markerComponent, setMarkerComponent] =
     useState<React.ReactElement | null>(null);
@@ -126,6 +129,14 @@ export default function GeocoderControl(props: GeocoderControlProps) {
     }
   );
 
+  if (geocoder._map) {
+    if (
+      geocoder?.getPlaceholder() !== placeholder &&
+      placeholder !== undefined
+    ) {
+      geocoder.setPlaceholder(placeholder);
+    }
+  }
   // // @ts-ignore (TS2339) private member
   // if (geocoder._map) {
   //   if (
