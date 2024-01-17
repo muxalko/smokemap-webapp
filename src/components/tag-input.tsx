@@ -399,6 +399,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
               ref={inputRef}
               type="text"
               value={inputValue}
+              enterKeyHint="enter"
             />
             {showCount && maxTags && (
               <div className="flex">

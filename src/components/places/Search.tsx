@@ -14,7 +14,7 @@ export default function Search({ placeholder, searchHandler }: Props) {
   }
 
   return (
-    <div className="absolute flex flex-1 flex-shrink-0 z-10 top-20 right-8">
+    <div className="absolute flex flex-1 flex-shrink-0 z-10 bottom-24 right-3">
       <label htmlFor="search" className="sr-only">
         Search
       </label>

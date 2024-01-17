@@ -6,8 +6,8 @@ export default function Crosshair({ map }: { map?: MapboxMap }) {
   const width = map?.getContainer().clientWidth;
   const height = map?.getContainer().clientHeight;
   const centroid = {
-    x: (width || 400) / 2 - 50,
-    y: (height || 300) / 2 - 50,
+    x: (width || 400) / 2 - 34,
+    y: (height || 300) / 2 - 46,
   }; //map.project([width, height]);
   const scale = 1; //2 ** Math.max(0, map.getZoom() - 6);
 

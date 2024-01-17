@@ -31,7 +31,7 @@ function classNames(...classes: Array<string>) {
 
 export default function Navigation({ user }: { user: User }) {
   return (
-    <Disclosure as="nav" className="bg-gray-800 sticky top-0">
+    <Disclosure as="nav" className="bg-gray-800 p-0 z-10">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

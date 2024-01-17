@@ -80,7 +80,7 @@ const boundingBox = new LngLatBounds(southWest, northEast);
 
 const initialZoom = 13;
 const pointsLayerId = "places";
-const flyToZoomLevel = 16;
+const flyToZoomLevel = 19;
 
 const CategorySelectorSchema = z.object({
   items: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -506,7 +506,7 @@ export default function MapComponent({
         data-popover-placement="{right}"
       >
         <PopoverTrigger>
-          <div className="absolute top-2/4">TEST</div>
+          {/* <div className="absolute top-0 left-0 ml-auto mr-auto">Test</div> */}
         </PopoverTrigger>
 
         <PopoverContent>
@@ -526,7 +526,7 @@ export default function MapComponent({
         reuseMaps
         {...viewport}
         ref={mapRef}
-        // style={{ width: "100vw", height: "100vh", display: "flex" }}
+        // style={{ width: "100%", height: "100%", display: "flex" }}
         // Caution!! simple demo style breaks cluster style
         // mapStyle="https://demotiles.maplibre.org/style.json"
         mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}

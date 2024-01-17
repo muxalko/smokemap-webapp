@@ -29,7 +29,7 @@ export default async function Template({
 
   return (
     <>
-      <div className="min-h-full">
+      <div className="!h-auto min-h-full">
         <Navigation user={logged_user} />
         {/* <header className="bg-white shadow">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -38,12 +38,12 @@ export default async function Template({
             </h1>
           </div>
         </header> */}
-        <main>
+        <main className="h">
           {/* <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8"> */}
           {children}
           {/* </div> */}
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </>
   );
