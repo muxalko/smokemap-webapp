@@ -26,6 +26,7 @@ export default function Search({ placeholder, searchHandler }: Props) {
             handleSearch(e.currentTarget.value);
           }
         }}
+        enterKeyHint="enter"
         // onChange={(e) => {
         //   handleSearch(e.target.value);
         // }}
