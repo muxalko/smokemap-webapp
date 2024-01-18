@@ -15,15 +15,13 @@ export default async function Index() {
   // console.log("Index page GOT THE DATA: " + JSON.stringify(allCategoriesQuery.data.categories));
   return (
     <>
-      <div className="flex flex-col flex-grow h-full">
-        {/* <div className="h-full"> */}
-        <RequestReactForm
-          categories={allCategoriesQuery.data.categories as CategoryType[]}
-        />
-        <MapComponent
-          categories={allCategoriesQuery.data.categories as CategoryType[]}
-        />
-      </div>
+      {/* <div className="h-full"> */}
+      <RequestReactForm
+        categories={allCategoriesQuery.data.categories as CategoryType[]}
+      />
+      <MapComponent
+        categories={allCategoriesQuery.data.categories as CategoryType[]}
+      />
     </>
   );
 }

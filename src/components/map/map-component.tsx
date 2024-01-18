@@ -526,7 +526,7 @@ export default function MapComponent({
         reuseMaps
         {...viewport}
         ref={mapRef}
-        // style={{ width: "100%", height: "100%", display: "flex" }}
+        style={{ width: "100%", height: "100%", display: "inline-block" }}
         // Caution!! simple demo style breaks cluster style
         // mapStyle="https://demotiles.maplibre.org/style.json"
         mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
@@ -541,12 +541,15 @@ export default function MapComponent({
         onLoad={onMapLoad} // onClick={onClick}
         // attributionControl={false}
       >
-        <GeocoderControl position="top-left" />
-        <GeolocateControl position="top-left" />
-        <FullscreenControl position="top-left" />
-        <NavigationControl position="top-left" />
+        <GeocoderControl position="bottom-left" placeholder="Address search" />
+        <GeolocateControl position="bottom-left" />
+        <FullscreenControl position="bottom-left" />
+        <NavigationControl position="bottom-left" />
         <ScaleControl />
-
+        <CustomOverlay>
+          {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
+          <Crosshair />
+        </CustomOverlay>
         {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
         {/* <AttributionControl
           style={{
@@ -583,10 +586,6 @@ export default function MapComponent({
           <Layer {...{ source: pointsLayerId, ...clusterCountLayer }} />
           <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} />
         </Source>
-        <CustomOverlay>
-          {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
-          <Crosshair />
-        </CustomOverlay>
       </Map>
       {/* 
       <div>
