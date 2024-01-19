@@ -51,7 +51,6 @@
     "next": "13.5.4",
     "next-auth": "^4.24.5",
     "prettier": "^3.1.1",
-    "prettier-plugin-tailwindcss": "^0.5.6",
     "react": "^18",
     "react-dom": "^18",
     "react-dropzone": "^14.2.3",
@@ -93,6 +92,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "graphql-codegen-typescript-common": "^0.18.2",
     "postcss": "^8",
+    "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
