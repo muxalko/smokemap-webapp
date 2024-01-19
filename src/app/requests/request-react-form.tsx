@@ -62,6 +62,8 @@ import { FileWithPath } from "react-dropzone";
 
 import { randomBytes } from "crypto";
 import path from "path";
+import { Checkbox } from "@/components/ui/checkbox";
+import { omit } from "lodash";
 export const dynamic = "force-dynamic";
 
 const MIN_TAG_LENGTH = 3;
@@ -91,6 +93,12 @@ const FormSchema = z.object({
     .string()
     .max(255, "maximum description length is reached")
     .optional(),
+  consent: z.literal<boolean>(true, {
+    errorMap: () => ({
+      message:
+        "Please, check the aggreement. You must agree to the terms in order form to be processed.",
+    }),
+  }),
   tags: z.array(
     z.object({
       id: z.string(),
@@ -129,6 +137,7 @@ export default function RequestReactForm({
       category: "-1",
       addressString: "",
       description: "",
+      consent: false,
       tags: [],
       images: [],
     },
@@ -155,6 +164,7 @@ export default function RequestReactForm({
       category: "-1",
       addressString: "",
       description: "",
+      consent: false,
       tags: [],
       images: [],
     });
@@ -195,10 +205,13 @@ export default function RequestReactForm({
       title: "Submission result:",
       description: (
         <pre className="mt-2 w-auto rounded-md bg-slate-950 p-4">
-          <p className="text-green-700">
+          <p className="text-wrap text-green-700">
             Success! created with ID: {newRequest?.id}, Name: {newRequest?.name}
-            , Address: {newRequest?.address.properties?.addressString}{" "}
-            {newRequest?.address.geometry.coordinates}
+            , Address: {newRequest?.address.properties?.addressString}
+            {"["}
+            {(newRequest?.address.geometry.coordinates as Array<number>).at(0)},
+            {(newRequest?.address.geometry.coordinates as Array<number>).at(1)}
+            {"]"}
           </p>
         </pre>
       ),
@@ -217,8 +230,8 @@ export default function RequestReactForm({
       toast({
         title: "Image upload error:",
         description: (
-          <pre className="mt-2 inline-block rounded-md bg-slate-950 p-4 overflow-auto">
-            <p className="text-red-700 w-auto">
+          <pre className="mt-2 inline-block overflow-auto rounded-md bg-slate-950 p-4">
+            <p className="w-auto text-red-700">
               {JSON.stringify(error.message)}
             </p>
           </pre>
@@ -251,8 +264,8 @@ export default function RequestReactForm({
       toast({
         title: "Submission result:",
         description: (
-          <pre className="mt-2 inline-block rounded-md bg-slate-950 p-4 overflow-auto">
-            <p className="text-red-700 w-auto">
+          <pre className="mt-2 inline-block overflow-auto rounded-md bg-slate-950 p-4">
+            <p className="w-auto text-red-700">
               {JSON.stringify(error.message)}
             </p>
           </pre>
@@ -417,6 +430,7 @@ export default function RequestReactForm({
       category: submission.category,
       name: submission.name,
       description: submission.description,
+      // TODO: send consent to server + user + IP
       tags: submission.tags as unknown as string[],
       // instead of uploading images to our backend, we will upload directly to s3
       // images: submission.images as File[],
@@ -440,12 +454,12 @@ export default function RequestReactForm({
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="absolute top-5 right-3 z-30 text-2xl"
+            className="absolute right-3 top-5 z-30 text-2xl"
           >
             +
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md overflow-y-scroll max-h-screen">
+        <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create a new request</DialogTitle>
             <DialogDescription>
@@ -456,13 +470,13 @@ export default function RequestReactForm({
           </DialogHeader>
           <div className="flex items-center space-x-2">
             <div className="grid flex-1 gap-2">
-              <section className="z-10 max-w-5xl w-full flex flex-col items-center text-center gap-5">
+              <section className="z-10 flex w-full max-w-5xl flex-col items-center gap-5 text-center">
                 <div className="w-full py-8" id="try">
-                  <div className="w-full relative my-4 flex flex-col space-y-2">
-                    <div className="preview flex min-h-[350px] w-full justify-center p-10 items-center mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 relative rounded-md border">
+                  <div className="relative my-4 flex w-full flex-col space-y-2">
+                    <div className="preview relative mt-2 flex min-h-[350px] w-full items-center justify-center rounded-md border p-10 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                       <Form {...form}>
                         <form
-                          className="space-y-8 flex flex-col items-start"
+                          className="flex flex-col items-start space-y-8"
                           // eslint-disable-next-line @typescript-eslint/no-misused-promises
                           onSubmit={form.handleSubmit(onSubmit)}
                         >
@@ -777,7 +791,7 @@ export default function RequestReactForm({
                                   name="images"
                                   render={({ field }) => (
                                     <FormItem className="flex flex-col items-start">
-                                      <FormLabel className="text-left py-2">
+                                      <FormLabel className="py-2 text-left">
                                         Images
                                       </FormLabel>
                                       <FormControl className="w-full">
@@ -808,7 +822,7 @@ export default function RequestReactForm({
                                   name="description"
                                   render={({ field }) => (
                                     <FormItem className="flex flex-col items-start">
-                                      <FormLabel className="text-left py-2">
+                                      <FormLabel className="py-2 text-left">
                                         Description
                                       </FormLabel>
                                       <FormControl className="w-full">
@@ -828,10 +842,60 @@ export default function RequestReactForm({
                               </AccordionContent>
                             </AccordionItem>
                           </Accordion>
-                          {/* {form && <pre className="text-left text-red-800">{JSON.stringify(form, null, 4)}</pre>} */}
+                          <FormField
+                            control={form.control}
+                            name="consent"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col items-start">
+                                <FormLabel className="py-2 text-left">
+                                  I have read the{" "}
+                                  <a
+                                    className="text-blue-950 hover:underline"
+                                    data-what="privacy"
+                                    href="/privacy"
+                                    target="_blank"
+                                  >
+                                    privacy policy
+                                  </a>{" "}
+                                  and agree to the storage of my form data.
+                                </FormLabel>
+                                <FormControl className="w-full">
+                                  <div className="items-top flex space-x-2">
+                                    <Checkbox
+                                      id="terms1"
+                                      // {...omit(field, "value")}
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      // value="true"
+                                      // onCheckedChange={(checked: boolean) => {
+                                      //   console.log(checked);
+                                      //   form.setValue("consent", checked);
+                                      //   return checked;
+                                      // }}
+                                    />
+                                    <div className="grid gap-1.5 leading-none">
+                                      <label
+                                        htmlFor="terms1"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        Accept terms and conditions
+                                      </label>
+                                    </div>
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          {form && (
+                            <pre className="text-left text-red-800">
+                              {JSON.stringify(form, null, 4)}
+                            </pre>
+                          )}
+
                           <Button
                             className="bg-indigo-500"
-                            // disabled={!form.formState.isValid}
+                            disabled={!form.formState.isValid}
                             type="submit"
                             variant={"default"}
                           >
@@ -840,7 +904,7 @@ export default function RequestReactForm({
                             {loading_createRequest && (
                               <>
                                 <svg
-                                  className="motion-reduce:hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                  className="-ml-1 mr-3 h-5 w-5 animate-spin text-white motion-reduce:hidden"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                   xmlns="http://www.w3.org/2000/svg"
