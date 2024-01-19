@@ -440,7 +440,7 @@ export default function RequestReactForm({
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className="absolute top-3 left-1/3 z-30 text-2xl"
+            className="absolute top-5 right-3 z-30 text-2xl"
           >
             +
           </Button>

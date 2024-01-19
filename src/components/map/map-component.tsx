@@ -493,7 +493,7 @@ export default function MapComponent({
         </PopoverContent>
       </Popover>
       <Search
-        placeholder="Find place by name"
+        placeholder="Find a place"
         searchHandler={(term) => {
           setSearchTerm(term);
           setPlaceListPopupOpen(true);
@@ -541,7 +541,7 @@ export default function MapComponent({
         onLoad={onMapLoad} // onClick={onClick}
         // attributionControl={false}
       >
-        <GeocoderControl position="bottom-left" placeholder="Address search" />
+        <GeocoderControl position="bottom-right" placeholder="Address search" />
         <GeolocateControl position="bottom-left" />
         <FullscreenControl position="bottom-left" />
         <NavigationControl position="bottom-left" />
