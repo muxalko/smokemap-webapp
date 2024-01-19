@@ -541,10 +541,10 @@ export default function MapComponent({
         onLoad={onMapLoad} // onClick={onClick}
         // attributionControl={false}
       >
-        <GeocoderControl position="bottom-right" placeholder="Address search" />
-        <GeolocateControl position="bottom-left" />
-        <FullscreenControl position="bottom-left" />
-        <NavigationControl position="bottom-left" />
+        {/* <GeocoderControl position="bottom-right" placeholder="Address search" /> */}
+        <GeolocateControl position="bottom-right" />
+        {/* <FullscreenControl position="bottom-left" /> */}
+        <NavigationControl position="bottom-right" />
         <ScaleControl />
         <CustomOverlay>
           {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
