@@ -39,6 +39,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import CustomOverlay from "./custom-overlay";
 import Crosshair from "./crosshair";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -344,7 +350,8 @@ export default function MapComponent({
           console.log("Unclusters onClick event properties: ", properties);
 
           setPlaceSelected(properties);
-          setPlacePopupOpen(true);
+          // setPlacePopupOpen(true);
+          setPlaceDialogOpen(true);
         }
       });
 
@@ -463,6 +470,7 @@ export default function MapComponent({
   });
 
   const [placePopupOpen, setPlacePopupOpen] = useState(false);
+  const [placeDialogOpen, setPlaceDialogOpen] = useState(false);
   const [placeListPopupOpen, setPlaceListPopupOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -473,25 +481,18 @@ export default function MapComponent({
       {viewport && <h2>mapBounds: {JSON.stringify(mapBounds)}</h2>}
        {categorySelectorForm && <pre>{JSON.stringify(categorySelectorForm, null, 4)}</pre>}
        */}
-      <Popover
-        data-popover="popover-place"
-        onOpenChange={setPlacePopupOpen}
-        open={placePopupOpen}
-        data-popover-placement="{top}"
-      >
-        <PopoverTrigger></PopoverTrigger>
+      <Dialog open={placeDialogOpen} onOpenChange={setPlaceDialogOpen}>
+        <DialogTrigger></DialogTrigger>
+        <DialogContent>
+          {placeSelected && <PlaceCard place={placeSelected} />}
+          <DialogFooter>
+            <Button type="button" onClick={() => setPlaceDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <PopoverContent>
-          {/* <ControlPanel categories={categories} onChange={setMapStyle} /> */}
-          {placeSelected && (
-            <PlaceCard
-              place={placeSelected}
-              closeHandler={() => setPlacePopupOpen(false)}
-            />
-          )}
-          {/* {categoriesSelector} */}
-        </PopoverContent>
-      </Popover>
       <Search
         placeholder="Find a place"
         searchHandler={(term) => {
