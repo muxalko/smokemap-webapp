@@ -887,11 +887,11 @@ export default function RequestReactForm({
                               </FormItem>
                             )}
                           />
-                          {form && (
+                          {/* {form && (
                             <pre className="text-left text-red-800">
                               {JSON.stringify(form, null, 4)}
                             </pre>
-                          )}
+                          )} */}
 
                           <Button
                             className="bg-indigo-500"
@@ -958,9 +958,9 @@ export default function RequestReactForm({
               </section>
             </div>
           </div>
-          <DialogFooter className="sm:justify-start">
+          <DialogFooter className="sm:justify-end">
             <DialogClose asChild>
-              <Button type="button" variant="secondary">
+              <Button type="button" variant="default">
                 Close
               </Button>
             </DialogClose>

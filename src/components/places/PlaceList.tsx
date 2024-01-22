@@ -4,6 +4,7 @@ import { GET_PLACES_STARTWITH_NAME } from "@/graphql/queries/request";
 import { useQuery } from "@apollo/client";
 import * as React from "react";
 import { useState } from "react";
+import { Button } from "../ui/button";
 
 type Props = {
   query: string;
@@ -26,9 +27,9 @@ export default function PlaceList({
   if (data && data.placesStartwithName && data.placesStartwithName.length < 1)
     return <p>Found none</p>;
   return (
-    <div className="relative rounded-xl overflow-auto">
+    <div className="relative overflow-auto rounded-xl">
       <div className="px-4">
-        <ul className="mx-auto max-w-md bg-white p-2 shadow">
+        <ul className="mx-auto max-w-3xl bg-white p-2 shadow">
           {data &&
             data.placesStartwithName &&
             data.placesStartwithName?.map((item: PlaceType) => (
@@ -82,10 +83,10 @@ export default function PlaceList({
               </li>
             ))}
         </ul>
-        <div className="card-actions justify-end">
-          <button className="btn btn-primary" onClick={closeHandler}>
+        <div className="flex flex-col-reverse py-2 sm:flex-row sm:justify-end sm:space-x-2">
+          <Button type="button" variant="default" onClick={closeHandler}>
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </div>

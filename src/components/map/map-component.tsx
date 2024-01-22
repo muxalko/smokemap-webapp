@@ -515,7 +515,9 @@ export default function MapComponent({
           {searchTerm && (
             <PlaceList
               query={searchTerm}
-              flytoHandler={(coordinates) => flyToCoordinates(coordinates)}
+              flytoHandler={(coordinates: Array<number>) =>
+                flyToCoordinates(coordinates)
+              }
               closeHandler={() => setPlaceListPopupOpen(false)}
             />
           )}
