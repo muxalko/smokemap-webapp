@@ -56,7 +56,7 @@ export default function PlaceCard({ place }: Props) {
   console.log("PlaceCard: ", place);
 
   const [imageOpen, setImageOpen] = useState(false);
-  const [currentImage, stCurrentImage] = useState<ImageType>();
+  const [currentImage, setCurrentImage] = useState<ImageType>();
 
   if (loading) return "Loading...";
   if (error) return `Error! ${error.message}`;
@@ -68,6 +68,9 @@ export default function PlaceCard({ place }: Props) {
         <DialogContent className="max-h-fit w-full max-w-full">
           {currentImage && (
             <Image
+              onClick={(e) => {
+                setImageOpen(false);
+              }}
               src={currentImage.url}
               width={500}
               height={500}
@@ -101,7 +104,7 @@ export default function PlaceCard({ place }: Props) {
                     <CarouselItem className="basis-2/3" key={image.id}>
                       <Image
                         onClick={(e) => {
-                          stCurrentImage(image);
+                          setCurrentImage(image);
                           setImageOpen(true);
                         }}
                         src={image.url}
