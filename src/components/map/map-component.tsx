@@ -483,7 +483,7 @@ export default function MapComponent({
        */}
       <Dialog open={placeDialogOpen} onOpenChange={setPlaceDialogOpen}>
         <DialogTrigger></DialogTrigger>
-        <DialogContent>
+        <DialogContent className="h-fit">
           {placeSelected && <PlaceCard place={placeSelected} />}
           <DialogFooter>
             <Button type="button" onClick={() => setPlaceDialogOpen(false)}>

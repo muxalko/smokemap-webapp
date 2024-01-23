@@ -459,7 +459,7 @@ export default function RequestReactForm({
             +
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-md">
+        <DialogContent className="h-dvh max-h-screen overflow-y-scroll sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create a new request</DialogTitle>
             <DialogDescription>
@@ -471,9 +471,9 @@ export default function RequestReactForm({
           <div className="flex items-center space-x-2">
             <div className="grid flex-1 gap-2">
               <section className="z-10 flex w-full max-w-5xl flex-col items-center gap-5 text-center">
-                <div className="w-full py-8" id="try">
-                  <div className="relative my-4 flex w-full flex-col space-y-2">
-                    <div className="preview relative mt-2 flex min-h-[350px] w-full items-center justify-center rounded-md border p-10 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <div className="w-full py-0" id="try">
+                  <div className="relative my-0 flex w-full flex-col space-y-2">
+                    <div className="preview relative mt-2 flex min-h-[350px] w-full items-center justify-center rounded-md border p-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                       <Form {...form}>
                         <form
                           className="flex flex-col items-start space-y-8"

@@ -29,8 +29,8 @@ export default async function Template({
 
   return (
     <>
-      <div className="h-dvh flex flex-col">
-        <div className="absolute top-0 left-3 z-50">
+      <div className="flex h-dvh flex-col">
+        <div className="absolute left-3 top-0 z-50">
           <a className="cursor-default" href={"/"} key={"a-logo-image"}>
             <img
               alt="Smokemap"

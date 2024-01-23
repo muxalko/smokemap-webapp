@@ -80,19 +80,18 @@ export default function PlaceCard({ place }: Props) {
           )}
         </DialogContent>
       </Dialog>
-      <Card className="max-h-fit max-w-xl">
+      <Card className="h-fit max-h-fit max-w-xl">
         <CardHeader>
           <CardTitle>{data?.placeById?.name}</CardTitle>
-          <CardDescription>
-            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-              {data?.placeById?.category?.name}
-            </p>
-            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-              {data?.placeById?.description}
-            </p>
-            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-              {data?.placeById?.address?.properties?.addressString}
-            </p>
+
+          <CardDescription className="mb-3 font-bold text-gray-700 dark:text-gray-400">
+            {data?.placeById?.category?.name}
+          </CardDescription>
+          <CardDescription className="mb-3 font-normal text-gray-700 dark:text-gray-400">
+            {data?.placeById?.description}
+          </CardDescription>
+          <CardDescription className="mb-3 font-thin italic text-gray-700 dark:text-gray-400">
+            {data?.placeById?.address?.properties?.addressString}
           </CardDescription>
         </CardHeader>
         <CardContent>
