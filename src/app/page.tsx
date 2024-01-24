@@ -5,7 +5,6 @@ import {
   GetAllCategoriesQuery,
 } from "@/graphql/__generated__/types";
 import { getClient } from "@/lib/client";
-import RequestReactForm from "./requests/request-react-form";
 
 export default async function Index() {
   const allCategoriesQuery = await getClient().query<GetAllCategoriesQuery>({
@@ -14,14 +13,8 @@ export default async function Index() {
 
   // console.log("Index page GOT THE DATA: " + JSON.stringify(allCategoriesQuery.data.categories));
   return (
-    <>
-      {/* <div className="h-full"> */}
-      <RequestReactForm
-        categories={allCategoriesQuery.data.categories as CategoryType[]}
-      />
-      <MapComponent
-        categories={allCategoriesQuery.data.categories as CategoryType[]}
-      />
-    </>
+    <MapComponent
+      categories={allCategoriesQuery.data.categories as CategoryType[]}
+    />
   );
 }

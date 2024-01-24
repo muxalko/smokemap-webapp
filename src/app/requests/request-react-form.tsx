@@ -125,9 +125,13 @@ const FormSchema = z.object({
 export default function RequestReactForm({
   categories,
   updateDataCallback,
+  enableTracking,
+  crosshairPosition,
 }: {
   categories: CategoryType[];
   updateDataCallback?: () => unknown;
+  enableTracking: (value: boolean) => void;
+  crosshairPosition: Array<number>;
 }) {
   // default form values
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -153,7 +157,19 @@ export default function RequestReactForm({
   const [submission_error, setSubmissionError] = useState<ApolloError>();
   const [submission_result, setSubmissionResult] = useState<RequestType>();
 
+  // main form dialog open/close control
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // when address is unknown (user pressed track with crosshair button )
+  // we will pass geolocation [lng,lat] in form.addressString
+  const [noAddressMode, setNoAddressMode] = useState(false);
+  useEffect(() => {
+    if (noAddressMode)
+      form.setValue(
+        "addressString",
+        `[${crosshairPosition.at(0)},${crosshairPosition.at(1)}]`
+      );
+  }, [crosshairPosition]);
 
   const clearFormData = () => {
     console.log("--- Clearing form data ---");
@@ -450,6 +466,26 @@ export default function RequestReactForm({
 
   return (
     <>
+      {/* {crosshairPosition && (
+        <div className="absolute left-1/2 top-1/2 z-10 text-xl">
+          [{crosshairPosition.at(0)},{crosshairPosition.at(1)}]
+        </div>
+      )} */}
+      {noAddressMode && (
+        <Button
+          type="button"
+          variant="ghost"
+          className="absolute left-1/2 top-1/2 z-10 -translate-x-[16px] -translate-y-[27px] hover:bg-transparent  hover:text-red-600"
+          onClick={() => {
+            enableTracking(false);
+            setNoAddressMode(false);
+            setDialogOpen(true);
+          }}
+          // className={`"translate-x-[${centroid.x}] translate-y-[${centroid.y}] scale-[${scale}]"`}
+        >
+          +
+        </Button>
+      )}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
           <Button
@@ -711,9 +747,19 @@ export default function RequestReactForm({
                                           {...field}
                                         />
                                       </FormControl>
-                                      {/* <FormDescription className="text-left">
-                        Provide a name.
-                      </FormDescription> */}
+                                      <FormDescription className="text-left">
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          onClick={() => {
+                                            enableTracking(true);
+                                            setNoAddressMode(true);
+                                            setDialogOpen(false);
+                                          }}
+                                        >
+                                          +
+                                        </Button>
+                                      </FormDescription>
                                       <FormMessage />
                                     </FormItem>
                                   )}

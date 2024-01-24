@@ -67,6 +67,7 @@ import { CategoryType } from "@/graphql/__generated__/types";
 import PlaceCard, { SimplePlaceType } from "../places/PlaceCard";
 import PlaceList from "../places/PlaceList";
 import Search from "../places/Search";
+import RequestReactForm from "@/app/requests/request-react-form";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
 //Starting point
@@ -116,11 +117,15 @@ export default function MapComponent({
   // save our bounding box for future requests of data points within a boundary
   const [mapBounds, setMapBounds] = useState<LngLatBounds>(boundingBox);
 
+  // enable crosshair tracking
+  const [trackCrosshair, setTrackCrosshair] = useState(false);
+
   // save central point of a map for creating a request without an address
-  const [crosshairLngLat, setCrosshairLngLat] = useState({
-    lng: 0,
-    lat: 0,
-  });
+  const [crosshairLngLat, setCrosshairLngLat] = useState<Array<number>>([0, 0]);
+  // = useState({
+  //   lng: 0,
+  //   lat: 0,
+  // });
 
   useEffect(() => {
     console.log("crosshairLngLat updated: ", crosshairLngLat);
@@ -406,16 +411,23 @@ export default function MapComponent({
     // TODO: implement creation with crosshair.
     // get map's geographical centerpoint for later creation of place location.
     const center = mapRef.current?.getCenter();
-    setCrosshairLngLat({
-      lng: center?.lng ?? 0,
-      lat: center?.lat ?? 0,
-    });
+    // setCrosshairLngLat({
+    //   lng: center?.lng ?? 0,
+    //   lat: center?.lat ?? 0,
+    // });
+
+    setCrosshairLngLat([center?.lng ?? 0, center?.lat ?? 0]);
     // const { lng, lat }: { lng: number; lat: number } =
     //   mapRef.current!.getCenter();
 
+    // !!! REMEMBER !!!
+    // state is not updated immediately -it might take some time
+    // for the value to update
     // console.log("map's geographical centerpoint: ", crosshairLngLat);
   };
 
+  // when useMemo is in use, remeber that it will remember the initial state of the app
+  // hence, no changes will be reflected in the function
   const debouncedMapOnMoveHandler = useMemo(
     () => debounce(mapOnMoveHandler, 300),
     []
@@ -469,7 +481,6 @@ export default function MapComponent({
     images: [],
   });
 
-  const [placePopupOpen, setPlacePopupOpen] = useState(false);
   const [placeDialogOpen, setPlaceDialogOpen] = useState(false);
   const [placeListPopupOpen, setPlaceListPopupOpen] = useState(false);
 
@@ -524,6 +535,14 @@ export default function MapComponent({
           {/* {categoriesSelector} */}
         </PopoverContent>
       </Popover>
+      {/* //crosshairPositionHandler: () => Array<number>; </> */}
+      <RequestReactForm
+        categories={categories}
+        enableTracking={(value: boolean) => {
+          setTrackCrosshair(value);
+        }}
+        crosshairPosition={crosshairLngLat}
+      />
 
       <Map
         reuseMaps
@@ -549,10 +568,14 @@ export default function MapComponent({
         {/* <FullscreenControl position="bottom-left" /> */}
         <NavigationControl position="bottom-right" />
         <ScaleControl />
-        <CustomOverlay>
-          {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
-          <Crosshair />
-        </CustomOverlay>
+
+        {trackCrosshair && (
+          <CustomOverlay>
+            {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
+            <Crosshair />
+          </CustomOverlay>
+        )}
+
         {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
         {/* <AttributionControl
           style={{

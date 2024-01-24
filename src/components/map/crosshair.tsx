@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useMemo, useState } from "react";
 import type { MapboxMap } from "react-map-gl";
 
 export default function Crosshair({ map }: { map?: MapboxMap }) {
