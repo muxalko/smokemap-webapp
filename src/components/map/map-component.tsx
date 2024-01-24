@@ -89,6 +89,7 @@ const initialZoom = 13;
 const pointsLayerId = "places";
 const flyToZoomLevel = 19;
 
+// for Category filter selector
 const CategorySelectorSchema = z.object({
   items: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one item.",
@@ -101,6 +102,7 @@ export default function MapComponent({
   categories: CategoryType[];
 }) {
   // Hooks
+
   // our map reference
   // const mapRef = useRef<MapLibreGL>();
   // I suspect that this is where I am presumably wrong.
@@ -126,10 +128,6 @@ export default function MapComponent({
   //   lng: 0,
   //   lat: 0,
   // });
-
-  useEffect(() => {
-    console.log("crosshairLngLat updated: ", crosshairLngLat);
-  }, [crosshairLngLat]);
 
   // popup with a place properties
   // const [popupInfo, setPopupInfo] = useState(null);
@@ -327,7 +325,7 @@ export default function MapComponent({
                   });
               }
             );
-          console.log("Clusters onClick event coordinates: " + coordinates);
+          // console.log("Clustered onClick event coordinates: " + coordinates);
         }
       });
 
@@ -336,7 +334,7 @@ export default function MapComponent({
       // the location of the feature, with
       // description HTML from its properties.
       mapRef.current?.on("click", "unclustered-point", (e) => {
-        console.log("Unclustered onClick event: ", e);
+        // console.log("Unclustered onClick event: ", e);
 
         if (e.features && e.features[0].geometry.type === "Point") {
           const coordinates = e.features[0].geometry.coordinates.slice();
@@ -352,7 +350,7 @@ export default function MapComponent({
           const properties: SimplePlaceType = e.features[0]
             .properties as SimplePlaceType;
 
-          console.log("Unclusters onClick event properties: ", properties);
+          // console.log("Unclusters onClick event properties: ", properties);
 
           setPlaceSelected(properties);
           // setPlacePopupOpen(true);
@@ -363,14 +361,14 @@ export default function MapComponent({
       // TODO: understand hover on touch devices
       mapRef.current?.on("mouseenter", unclusteredPointLayer.id ?? "", (e) => {
         mapRef.current!.getCanvas().style.cursor = "pointer";
-        console.log("Unclustered mouseenter event: ", e);
+        // console.log("Unclustered mouseenter event: ", e);
       });
       mapRef.current?.on("mouseleave", unclusteredPointLayer.id ?? "", () => {
         mapRef.current!.getCanvas().style.cursor = "";
       });
 
       mapRef.current?.on("mouseenter", clusterLayer.id ?? "", (e) => {
-        console.log("clusterLayer mouseenter event: ", e);
+        // console.log("clusterLayer mouseenter event: ", e);
         mapRef.current!.getCanvas().style.cursor = "pointer";
 
         if (e.features && e.features[0].geometry.type === "Point") {
@@ -388,7 +386,7 @@ export default function MapComponent({
 
           const properties = e.features[0].properties;
 
-          console.log("clusterLayer mouseenter event properties: ", properties);
+          // console.log("clusterLayer mouseenter event properties: ", properties);
         }
       });
       mapRef.current?.on("mouseleave", clusterLayer.id ?? "", () => {
