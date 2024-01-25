@@ -57,18 +57,6 @@ export default async function RequestsManager() {
   return (
     <>
       <div className="container mx-auto py-10">
-        <RequestReactForm
-          categories={categories.data.categories as CategoryType[]}
-          // server action
-            updateDataCallback={async () => {
-              "use server";
-              console.log(
-                "server action fired from RequestReactForm.updateDataCallback() "
-              );
-              revalidatePath("/requests");
-              return await new Promise(() => {});
-            }}
-        />
         {
           // @ts-expect-error: TS2322 because there is an issue with types for ColumnDef. See https://github.com/TanStack/table/issues/4241
         } <DataTable columns={columns} data={data.data?.requestsToApprove} />
