@@ -748,6 +748,9 @@ export default function RequestReactForm({
                                         />
                                       </FormControl>
                                       <FormDescription className="text-left">
+                                        If you do not know the address, or it is
+                                        not resolved correctly, you can manually
+                                        specify the location with crosshair.
                                         <Button
                                           type="button"
                                           variant="ghost"
@@ -757,7 +760,7 @@ export default function RequestReactForm({
                                             setDialogOpen(false);
                                           }}
                                         >
-                                          +
+                                          crosshair tracking
                                         </Button>
                                       </FormDescription>
                                       <FormMessage />
