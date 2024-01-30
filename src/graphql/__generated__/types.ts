@@ -180,6 +180,7 @@ export type Query = {
   placeById?: Maybe<PlaceType>;
   places?: Maybe<Array<Maybe<PlaceType>>>;
   placesByName?: Maybe<Array<Maybe<PlaceType>>>;
+  placesNames?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   placesStartwithName?: Maybe<Array<Maybe<PlaceType>>>;
   requestById?: Maybe<RequestType>;
   requests?: Maybe<Array<Maybe<RequestType>>>;
@@ -332,6 +333,11 @@ export type GetPlacesStartwithNameQueryVariables = Exact<{
 
 
 export type GetPlacesStartwithNameQuery = { __typename?: 'Query', placesStartwithName?: Array<{ __typename?: 'PlaceType', id: string, name: string, description?: string | null, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, category: { __typename?: 'CategoryType', name: string }, imageSet: Array<{ __typename?: 'ImageType', id: string, url: string, name: string }> } | null> | null };
+
+export type GetAllPlacesNamesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAllPlacesNamesQuery = { __typename?: 'Query', placesNames?: Array<string | null> | null };
 
 
 export const GetAllCategoriesDocument = gql`
@@ -820,3 +826,40 @@ export type GetPlacesStartwithNameQueryHookResult = ReturnType<typeof useGetPlac
 export type GetPlacesStartwithNameLazyQueryHookResult = ReturnType<typeof useGetPlacesStartwithNameLazyQuery>;
 export type GetPlacesStartwithNameSuspenseQueryHookResult = ReturnType<typeof useGetPlacesStartwithNameSuspenseQuery>;
 export type GetPlacesStartwithNameQueryResult = Apollo.QueryResult<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>;
+export const GetAllPlacesNamesDocument = gql`
+    query GetAllPlacesNames {
+  placesNames
+}
+    `;
+
+/**
+ * __useGetAllPlacesNamesQuery__
+ *
+ * To run a query within a React component, call `useGetAllPlacesNamesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllPlacesNamesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllPlacesNamesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAllPlacesNamesQuery(baseOptions?: Apollo.QueryHookOptions<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>(GetAllPlacesNamesDocument, options);
+      }
+export function useGetAllPlacesNamesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>(GetAllPlacesNamesDocument, options);
+        }
+export function useGetAllPlacesNamesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>(GetAllPlacesNamesDocument, options);
+        }
+export type GetAllPlacesNamesQueryHookResult = ReturnType<typeof useGetAllPlacesNamesQuery>;
+export type GetAllPlacesNamesLazyQueryHookResult = ReturnType<typeof useGetAllPlacesNamesLazyQuery>;
+export type GetAllPlacesNamesSuspenseQueryHookResult = ReturnType<typeof useGetAllPlacesNamesSuspenseQuery>;
+export type GetAllPlacesNamesQueryResult = Apollo.QueryResult<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>;
