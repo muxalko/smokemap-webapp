@@ -12,7 +12,7 @@ export default async function Index() {
     query: ALL_CATEGORIES_QUERY,
   });
 
-  // console.log("Index page GOT THE DATA: " + JSON.stringify(allCategoriesQuery.data.categories));
+  // //console.log("Index page GOT THE DATA: " + JSON.stringify(allCategoriesQuery.data.categories));
   return (
     <MapComponent
       categories={allCategoriesQuery.data.categories as CategoryType[]}

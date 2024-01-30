@@ -125,10 +125,10 @@ export const columns: ColumnDef<RequestType>[] = [
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onClick={async () => {
               const approveRequestResult = await approveRequest(request.id);
-              console.log(
-                "Got approveRequest response: ",
-                approveRequestResult
-              );
+              // console.log(
+              //   "Got approveRequest response: ",
+              //   approveRequestResult
+              // );
             }}
           >
             Approve
@@ -146,10 +146,10 @@ export const columns: ColumnDef<RequestType>[] = [
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 onClick={async () => {
                   const deleteRequestResult = await deleteRequest(request.id);
-                  console.log(
-                    "Got deleteRequest response: ",
-                    deleteRequestResult
-                  );
+                  //console.log(
+                  //   "Got deleteRequest response: ",
+                  //   deleteRequestResult
+                  // );
                 }}
               >
                 Delete
@@ -158,10 +158,10 @@ export const columns: ColumnDef<RequestType>[] = [
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 onClick={async () => {
                   const approveRequestResult = await approveRequest(request.id);
-                  console.log(
-                    "Got approveRequest response: ",
-                    approveRequestResult
-                  );
+                  //console.log(
+                  //   "Got approveRequest response: ",
+                  //   approveRequestResult
+                  // );
                 }}
               >
                 Approve

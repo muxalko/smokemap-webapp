@@ -44,7 +44,7 @@ export default async function RequestsManager() {
   //   });
   // }
 
-  //console.log(JSON.stringify(data));
+  ////console.log(JSON.stringify(data));
 
   // const [newRequest, setNewRequest] = useState({});
 
@@ -52,7 +52,7 @@ export default async function RequestsManager() {
   //   setNewRequest(data);
   // };
 
-  // console.log("Cache:", getClient().getObservableQueries());
+  // //console.log("Cache:", getClient().getObservableQueries());
   // prettier-ignore
   return (
     <>

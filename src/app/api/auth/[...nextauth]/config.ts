@@ -25,8 +25,8 @@ export const options: NextAuthOptions = {
             },
             // eslint-disable-next-line @typescript-eslint/require-await
             async authorize(credentials, req) {
-                console.log('req: ' + JSON.stringify(req));
-                console.log('credentials: ' + JSON.stringify(credentials));
+                //console.log('req: ' + JSON.stringify(req));
+                //console.log('credentials: ' + JSON.stringify(credentials));
                 // Add logic here to look up the user from the credentials supplied
                 const user = {
                     id: '1',
@@ -58,10 +58,10 @@ export const options: NextAuthOptions = {
                     id: profile.id.toString(),
                     image: profile.avatar_url,
                 };
-                console.log(
-                    'Github profile +changes: ' +
-                        JSON.stringify(augmented_profile),
-                );
+                //console.log(
+                //     'Github profile +changes: ' +
+                //         JSON.stringify(augmented_profile),
+                // );
                 return augmented_profile;
             },
             clientId: process.env.AUTH_GITHUB_ID as string,

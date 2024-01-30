@@ -53,7 +53,7 @@ export default function PlaceCard({ place }: Props) {
     variables: { id: place.place_id.toString() },
   });
 
-  // console.log("PlaceCard: ", place);
+  // //console.log("PlaceCard: ", place);
 
   const [imageOpen, setImageOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<ImageType>();

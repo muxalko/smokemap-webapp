@@ -139,18 +139,18 @@ export default function MapComponent({
 
   // const { categories } = data;
 
-  // console.log("MapComponent GOT THE DATA: " + JSON.stringify(categories));
+  // //console.log("MapComponent GOT THE DATA: " + JSON.stringify(categories));
 
-  // console.log("CategorySelection:", categories);
+  // //console.log("CategorySelection:", categories);
   const [mapStyle, setMapStyle] = useState(null);
 
-  useEffect(() => {
-    console.log("VERCEL_ENV: ", process.env.VERCEL_ENV);
-    console.log(
-      "NEXT_PUBLIC_FEATURESERV_ENDPOINT: ",
-      process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT
-    );
-  }, []);
+  // useEffect(() => {
+  //   console.log("VERCEL_ENV: ", process.env.VERCEL_ENV);
+  //   console.log(
+  //     "NEXT_PUBLIC_FEATURESERV_ENDPOINT: ",
+  //     process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT
+  //   );
+  // }, []);
 
   const categorySelectorForm = useForm<z.infer<typeof CategorySelectorSchema>>({
     resolver: zodResolver(CategorySelectorSchema),
@@ -160,14 +160,14 @@ export default function MapComponent({
   });
 
   const handleCategorySelectorChange = (layer_id: string, checked: boolean) => {
-    console.log("CURRENT MAP:", mapRef.current);
+    //console.log("CURRENT MAP:", mapRef.current);
 
     console.log(
-      "SO FAR, getLayer(" + layer_id + "):",
+      "getLayer(" + layer_id + "):",
       mapRef.current?.getLayer(layer_id)
     );
     console.log(
-      "SO FAR, getLayoutProperty():",
+      "getLayoutProperty():",
       mapRef.current?.getLayoutProperty(layer_id, "visibility")
     );
   };
@@ -274,17 +274,17 @@ export default function MapComponent({
   }
 
   const onMapLoad = useCallback(() => {
-    console.log("onLoad() fired");
+    //console.log("onLoad() fired");
 
     // make our map draggable + debounce map bounds update
     if (mapRef && mapRef.current) {
-      // console.log("onMapLoad() =>  mapRef.current: ", mapRef.current);
+      // //console.log("onMapLoad() =>  mapRef.current: ", mapRef.current);
       mapRef.current?.on("move", (evt: ViewStateChangeEvent) => {
-        // console.log("onMapMove() event: ", evt);
+        // //console.log("onMapMove() event: ", evt);
         setViewport({ ...evt.viewState });
 
         if (mapRef && mapRef.current) {
-          // console.log("onMapMove() => mapRef.current: ", mapRef.current);
+          // //console.log("onMapMove() => mapRef.current: ", mapRef.current);
           debouncedMapOnMoveHandler();
         }
 
@@ -294,7 +294,7 @@ export default function MapComponent({
       // When a click event occurs on the clusters layer
       // zoom in to expand level
       mapRef.current?.on("click", "clusters", (e) => {
-        console.log(e);
+        //console.log(e);
         // When the map is clicked, get the geographic coordinate.
         const coordinates = mapRef.current?.unproject(e.point);
         // get first element clicked - for zooming in to cluster expand
@@ -325,7 +325,7 @@ export default function MapComponent({
                   });
               }
             );
-          // console.log("Clustered onClick event coordinates: " + coordinates);
+          // //console.log("Clustered onClick event coordinates: " + coordinates);
         }
       });
 
@@ -334,12 +334,12 @@ export default function MapComponent({
       // the location of the feature, with
       // description HTML from its properties.
       mapRef.current?.on("click", "unclustered-point", (e) => {
-        // console.log("Unclustered onClick event: ", e);
+        // //console.log("Unclustered onClick event: ", e);
 
         if (e.features && e.features[0].geometry.type === "Point") {
           const coordinates = e.features[0].geometry.coordinates.slice();
 
-          console.log("Unclusters onClick event coordinates: " + coordinates);
+          //console.log("Unclusters onClick event coordinates: " + coordinates);
           // Ensure that if the map is zoomed out such that
           // multiple copies of the feature are visible, the
           // popup appears over the copy being pointed to.
@@ -350,7 +350,7 @@ export default function MapComponent({
           const properties: SimplePlaceType = e.features[0]
             .properties as SimplePlaceType;
 
-          // console.log("Unclusters onClick event properties: ", properties);
+          // //console.log("Unclusters onClick event properties: ", properties);
 
           setPlaceSelected(properties);
           // setPlacePopupOpen(true);
@@ -361,7 +361,7 @@ export default function MapComponent({
       // TODO: understand hover on touch devices
       mapRef.current?.on("mouseenter", unclusteredPointLayer.id ?? "", (e) => {
         mapRef.current!.getCanvas().style.cursor = "pointer";
-        // console.log("Unclustered mouseenter event: ", e);
+        // //console.log("Unclustered mouseenter event: ", e);
       });
       mapRef.current?.on("mouseleave", unclusteredPointLayer.id ?? "", () => {
         mapRef.current!.getCanvas().style.cursor = "";
@@ -374,9 +374,9 @@ export default function MapComponent({
         if (e.features && e.features[0].geometry.type === "Point") {
           const coordinates = e.features[0].geometry.coordinates.slice();
 
-          console.log(
-            "clusterLayer mouseenter event coordinates: " + coordinates
-          );
+          //console.log(
+          //   "clusterLayer mouseenter event coordinates: " + coordinates
+          // );
           // Ensure that if the map is zoomed out such that
           // multiple copies of the feature are visible, the
           // popup appears over the copy being pointed to.
@@ -394,7 +394,7 @@ export default function MapComponent({
       });
     }
 
-    console.log("Map onLoad() ended");
+    //console.log("Map onLoad() ended");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -421,7 +421,7 @@ export default function MapComponent({
     // !!! REMEMBER !!!
     // state is not updated immediately -it might take some time
     // for the value to update
-    // console.log("map's geographical centerpoint: ", crosshairLngLat);
+    // //console.log("map's geographical centerpoint: ", crosshairLngLat);
   };
 
   // when useMemo is in use, remeber that it will remember the initial state of the app
@@ -622,14 +622,14 @@ export default function MapComponent({
         </Button>
         <Button
           onClick={(e) => {
-            console.log(mapRef.current);
+            //console.log(mapRef.current);
           }}
         >
           Print mapRef.current
         </Button>
         <Button
           onClick={(e) => {
-            console.log(mapRef.current?.getStyle());
+            //console.log(mapRef.current?.getStyle());
           }}
         >
           Print map style
@@ -643,7 +643,7 @@ export default function MapComponent({
         </Button>
         <Button
           onClick={(e) => {
-            console.log(
+            //console.log(
               "Places endpoint: ",
               `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
                 (mapBounds

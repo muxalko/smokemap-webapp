@@ -172,7 +172,7 @@ export default function RequestReactForm({
   }, [crosshairPosition]);
 
   const clearFormData = () => {
-    console.log("--- Clearing form data ---");
+    //console.log("--- Clearing form data ---");
     setDialogOpen(false);
     form.clearErrors();
     form.reset({
@@ -215,7 +215,7 @@ export default function RequestReactForm({
   };
 
   const postCreateRequest = (newRequest: RequestType) => {
-    console.log("--- Show submission results ---");
+    //console.log("--- Show submission results ---");
 
     toast({
       title: "Submission result:",
@@ -255,7 +255,7 @@ export default function RequestReactForm({
       });
     },
     onCompleted: (data) => {
-      console.log("CreateImage response:", data);
+      //console.log("CreateImage response:", data);
     },
   });
 
@@ -289,10 +289,10 @@ export default function RequestReactForm({
       });
     },
     onCompleted: (createRequestResponse_data) => {
-      console.log(
-        "Update backend images with created request ",
-        JSON.stringify(createRequestResponse_data)
-      );
+      //console.log(
+      //   "Update backend images with created request ",
+      //   JSON.stringify(createRequestResponse_data)
+      // );
       // count files to upload
       let files2upload = (form.getValues("images") as FileWithPath[]).length;
       const filesCount = files2upload;
@@ -301,7 +301,7 @@ export default function RequestReactForm({
       // iterate over each file and get temporary S3 URL for uploading an image
       (form.getValues("images") as File[]).forEach((file) => {
         const s3Post = getS3PresignedUrl().then((response) => {
-          console.log("getS3PresignedUrl() response:", response);
+          //console.log("getS3PresignedUrl() response:", response);
           //build formData
           const token = response.data.s3PresignedUrl;
           const formUpload = new FormData();
@@ -316,11 +316,11 @@ export default function RequestReactForm({
             method: "POST",
             body: formUpload,
           }).then((data) => {
-            console.log("upload response data:", data);
+            //console.log("upload response data:", data);
             return data;
           });
 
-          console.log("uploadStatus: ", uploadStatus);
+          //console.log("uploadStatus: ", uploadStatus);
           return uploadStatus;
         }); // getS3PresignedUrl promise
       }); // forEach file
@@ -328,7 +328,7 @@ export default function RequestReactForm({
 
       // V2: Each file upload uses same s3 url
       const uploadStatus = getS3PresignedUrl().then((response) => {
-        console.log("getS3PresignedUrl() response:", response);
+        //console.log("getS3PresignedUrl() response:", response);
         //build formData
         const token = response.data.s3PresignedUrl;
         const formUpload = new FormData();
@@ -339,7 +339,7 @@ export default function RequestReactForm({
 
         // iterate over each file and get temporary S3 URL for uploading an image
         (form.getValues("images") as FileWithPath[]).forEach((file) => {
-          console.log("Images left to upload ", files2upload);
+          //console.log("Images left to upload ", files2upload);
           // replace target filename with our own
           const extention = path.extname(file.name);
           const filename = randomBytes(16).toString("hex") + extention;
@@ -353,7 +353,7 @@ export default function RequestReactForm({
             // },
             body: formUpload,
           }).then((data) => {
-            console.log("S3 upload response:", data);
+            //console.log("S3 upload response:", data);
             const newRequest = createRequestResponse_data?.createRequest
               ?.request as RequestType;
             if (files2upload >= 1) {
@@ -378,7 +378,7 @@ export default function RequestReactForm({
 
             // detect last iteration
             if (files2upload <= 0) {
-              console.log("Uploaded all images");
+              //console.log("Uploaded all images");
               clearFormData();
               postCreateRequest(newRequest);
             }
@@ -397,7 +397,7 @@ export default function RequestReactForm({
     //     "GetAllNotApprovedRequests", // Query name
     //   ],
     // update(cache, { data: { createRequest } }) {
-    //   console.log("Update function for createRequest: " + cache)
+    //   //console.log("Update function for createRequest: " + cache)
     //   cache.modify({
     //     fields: {
     //       requests(existingRequests = []) {
@@ -425,18 +425,18 @@ export default function RequestReactForm({
     // },
   });
 
-  useEffect(() => {
-    if (createRequestResponse != undefined) {
-      console.log(
-        "createRequestResponse updated: " +
-          JSON.stringify(createRequestResponse)
-      );
-    }
-  }, [createRequestResponse]);
+  // useEffect(() => {
+  //   if (createRequestResponse != undefined) {
+  //     console.log(
+  //       "createRequestResponse updated: " +
+  //         JSON.stringify(createRequestResponse)
+  //     );
+  //   }
+  // }, [createRequestResponse]);
 
   async function onSubmit(submission: z.infer<typeof FormSchema>) {
-    console.log("Form control: ", form.control);
-    console.log("Submission: ", submission);
+    //console.log("Form control: ", form.control);
+    //console.log("Submission: ", submission);
     setSubmissionError(undefined); // Reset the error state before making the mutation
     setSubmissionResult(undefined);
 
@@ -917,7 +917,7 @@ export default function RequestReactForm({
                                       onCheckedChange={field.onChange}
                                       // value="true"
                                       // onCheckedChange={(checked: boolean) => {
-                                      //   console.log(checked);
+                                      //   //console.log(checked);
                                       //   form.setValue("consent", checked);
                                       //   return checked;
                                       // }}

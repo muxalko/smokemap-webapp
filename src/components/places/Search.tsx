@@ -16,7 +16,7 @@ export default function Search({ placeholder, searchHandler }: Props) {
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // console.log("Search term changed:", searchString);
+    // //console.log("Search term changed:", searchString);
 
     async function fetchPlacesNames() {
       setLoading(true);
@@ -30,12 +30,8 @@ export default function Search({ placeholder, searchHandler }: Props) {
     void fetchPlacesNames();
   }, [searchString]);
 
-  useEffect(() => {
-    console.log("Places Names:", placesNames);
-  }, [placesNames]);
-
   function handleSearch(term: string) {
-    console.log(term);
+    //console.log(term);
     searchHandler(term);
   }
 
@@ -59,8 +55,8 @@ export default function Search({ placeholder, searchHandler }: Props) {
         onChange={(e) => setSearchString(e.currentTarget.value)}
         // onChange={(e) => {
         //   const placesFound = search(e.target.value);
-        //   console.log("returned with search:", placesFound);
-        //   await placesFound.then((data) => console.log("then:", data));
+        //   //console.log("returned with search:", placesFound);
+        //   await placesFound.then((data) => //console.log("then:", data));
         // }}
       />
       <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
@@ -76,7 +72,7 @@ export default function Search({ placeholder, searchHandler }: Props) {
                 key={index}
                 value={item ?? ""}
                 onClick={(e) => {
-                  console.log((e.target as HTMLInputElement).value);
+                  //console.log((e.target as HTMLInputElement).value);
                   setSearchString((e.target as HTMLInputElement).value);
                   setPlacesNames([]);
                   searchRef.current?.focus();

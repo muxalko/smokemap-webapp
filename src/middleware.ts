@@ -24,7 +24,7 @@ export default withAuth(
             authorized: ({ token }) => !!token,
         },
         //   authorized: ({ token }) => {
-        //     console.log("callback(jwt) token: " + JSON.stringify(token))
+        //     //console.log("callback(jwt) token: " + JSON.stringify(token))
         //    return token?.role === "admin"
         // },
     },
@@ -33,7 +33,7 @@ export default withAuth(
 // export default withAuth({
 //   callbacks: {
 //     authorized({ req, token }) {
-//       console.log("withAuth(req,token): " + JSON.stringify(req)+", " + JSON.stringify(token));
+//       //console.log("withAuth(req,token): " + JSON.stringify(req)+", " + JSON.stringify(token));
 //       // `/admin` requires admin role
 //       if (req.nextUrl.pathname === "/admin") {
 //         return token?.userRole === "admin";

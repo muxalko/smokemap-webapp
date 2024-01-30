@@ -8,16 +8,16 @@ type Props = {
 };
 
 export default function Card({ user, pagetype }: Props) {
-  console.log("Card: user=" + JSON.stringify(user));
+  //console.log("Card: user=" + JSON.stringify(user));
 
   const greeting = user?.name ? (
-    <div className="flex flex-col items-center p-6 bg-white rounded-lg font-bold text-5xl text-black">
+    <div className="flex flex-col items-center rounded-lg bg-white p-6 text-5xl font-bold text-black">
       Hello {user?.name}!
     </div>
   ) : null;
 
   const emailDisplay = user?.email ? (
-    <div className="flex flex-col items-center p-6 bg-white rounded-lg font-bold text-5xl text-black">
+    <div className="flex flex-col items-center rounded-lg bg-white p-6 text-5xl font-bold text-black">
       {user?.email}
     </div>
   ) : null;
@@ -25,7 +25,7 @@ export default function Card({ user, pagetype }: Props) {
   const userImage = user?.image ? (
     <Image
       alt={user?.name ?? "Profile image"}
-      className="border-4 border-black dark:border-slate-500 drop-shadow-xl shadow-black rounded-full mx-auto mt-8"
+      className="mx-auto mt-8 rounded-full border-4 border-black shadow-black drop-shadow-xl dark:border-slate-500"
       height={200}
       priority={true}
       src={user?.image}
@@ -38,8 +38,8 @@ export default function Card({ user, pagetype }: Props) {
       {greeting}
       {emailDisplay}
       {userImage}
-      <p className="text-2xl text-center">{pagetype} Page</p>
-      <p className="text-2xl text-center">Role: {user.role}</p>
+      <p className="text-center text-2xl">{pagetype} Page</p>
+      <p className="text-center text-2xl">Role: {user.role}</p>
     </section>
   );
 }

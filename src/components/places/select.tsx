@@ -56,7 +56,7 @@ export function CategorySelection({
 }: {
   categories: CategoryType[];
 }) {
-  //   console.log("CategorySelection:", categories);
+  //   //console.log("CategorySelection:", categories);
   const categorySelectorForm = useForm<z.infer<typeof CategorySelectorSchema>>({
     resolver: zodResolver(CategorySelectorSchema),
     defaultValues: {

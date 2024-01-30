@@ -10,7 +10,7 @@ export default function Crosshair({ map }: { map?: MapboxMap }) {
   }; //map.project([width, height]);
   const scale = 1; //2 ** Math.max(0, map.getZoom() - 6);
 
-  // console.log("width/height:", width, height);
+  // //console.log("width/height:", width, height);
   return (
     <>
       <svg
