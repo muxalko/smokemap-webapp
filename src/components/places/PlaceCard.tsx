@@ -28,7 +28,7 @@ import {
   PlaceType,
   useGetPlaceByIdQuery,
 } from "@/graphql/__generated__/types";
-import { GET_PLACE_BY_ID } from "@/graphql/queries/request";
+import { GET_PLACE_BY_ID } from "@/graphql/queries/gql";
 import { useQuery } from "@apollo/client";
 import Image from "next/image";
 import { Button } from "../ui/button";
@@ -53,7 +53,7 @@ export default function PlaceCard({ place }: Props) {
     variables: { id: place.place_id.toString() },
   });
 
-  console.log("PlaceCard: ", place);
+  // console.log("PlaceCard: ", place);
 
   const [imageOpen, setImageOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<ImageType>();
@@ -100,7 +100,7 @@ export default function PlaceCard({ place }: Props) {
               {data?.placeById?.imageSet &&
                 data?.placeById?.imageSet.map((image: ImageType) => {
                   return (
-                    <CarouselItem className="basis-2/3" key={image.id}>
+                    <CarouselItem className="basis-full" key={image.id}>
                       <Image
                         onClick={(e) => {
                           setCurrentImage(image);

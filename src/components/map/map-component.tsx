@@ -1,7 +1,7 @@
 import * as React from "react";
 import debounce from "lodash.debounce";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-// import { ALL_PLACES_QUERY } from "@/graphql/queries/place";
+// import { ALL_PLACES_QUERY } from "@/graphql/queries/gql";
 // import { useSuspenseQuery } from "@apollo/experimental-nextjs-app-support/ssr";
 // import { lat2tile, lon2tile } from "@/gis-utils";
 import {
@@ -69,7 +69,7 @@ import PlaceList from "../places/PlaceList";
 import Search from "../places/Search";
 import RequestReactForm from "@/app/requests/request-react-form";
 
-// import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
+// import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
 //Vacouver,BC
 // const lon = -123.11343223112543;

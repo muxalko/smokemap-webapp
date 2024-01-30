@@ -1,5 +1,5 @@
 import { MapComponent } from "@/components/map";
-import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
+import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 import {
   CategoryType,
   GetAllCategoriesQuery,
@@ -8,6 +8,7 @@ import { getClient } from "@/lib/client";
 
 export default async function Index() {
   const allCategoriesQuery = await getClient().query<GetAllCategoriesQuery>({
+    // fetchPolicy: "cache-first",
     query: ALL_CATEGORIES_QUERY,
   });
 

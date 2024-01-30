@@ -1,6 +1,6 @@
 "use client";
 import { PlaceType } from "@/graphql/__generated__/types";
-import { GET_PLACES_STARTWITH_NAME } from "@/graphql/queries/request";
+import { GET_PLACES_STARTWITH_NAME } from "@/graphql/queries/gql";
 import { useQuery } from "@apollo/client";
 import * as React from "react";
 import { useState } from "react";
@@ -37,25 +37,6 @@ export default function PlaceList({
                 key={item.id}
                 className="group/item relative flex items-center justify-between rounded-xl p-4 hover:bg-slate-100"
               >
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <img
-                      className="h-12 w-12 rounded-full"
-                      src={item.imageSet.at(0)?.url}
-                      alt={item.imageSet.at(0)?.name}
-                    />
-                  </div>
-                  <div className="w-full text-sm leading-6">
-                    <a href="#" className="font-semibold text-slate-900">
-                      <span
-                        className="absolute inset-0 rounded-xl"
-                        aria-hidden="true"
-                      ></span>
-                      {item.name}
-                    </a>
-                    <div className="text-slate-500">{item.category.name}</div>
-                  </div>
-                </div>
                 <a
                   href="#"
                   onClick={() =>
@@ -63,9 +44,29 @@ export default function PlaceList({
                       item.address.geometry.coordinates as Array<number>
                     )
                   }
-                  className="group/edit invisible relative flex items-center whitespace-nowrap rounded-full py-1 pl-4 pr-3 text-sm text-slate-500 transition hover:bg-slate-200 group-hover/item:visible"
+                  // className="group/edit invisible relative flex items-center whitespace-nowrap rounded-full py-1 pl-4 pr-3 text-sm text-slate-500 transition hover:bg-slate-200 group-hover/item:visible"
                 >
-                  <span className="font-semibold transition group-hover/edit:text-gray-700">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0">
+                      <img
+                        className="h-12 w-12 rounded-full"
+                        src={item.imageSet.at(0)?.url}
+                        alt={item.imageSet.at(0)?.name}
+                      />
+                    </div>
+                    <div className="w-full text-sm leading-6">
+                      <p className="font-semibold text-slate-900">
+                        <span
+                          className="absolute inset-0 rounded-xl"
+                          aria-hidden="true"
+                        ></span>
+                        {item.name}
+                      </p>
+                      <div className="text-slate-500">{item.category.name}</div>
+                    </div>
+                  </div>
+
+                  {/* <span className="font-semibold transition group-hover/edit:text-gray-700">
                     Flyto
                   </span>
                   <svg
@@ -78,7 +79,7 @@ export default function PlaceList({
                       d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
                       clipRule="evenodd"
                     ></path>
-                  </svg>
+                  </svg> */}
                 </a>
               </li>
             ))}

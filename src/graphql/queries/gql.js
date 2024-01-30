@@ -1,5 +1,15 @@
 import { gql } from '@apollo/client';
 
+export const ALL_CATEGORIES_QUERY = gql`
+    query GetAllCategories {
+        categories {
+            id
+            name
+            description
+        }
+    }
+`;
+
 export const ALL_REQUESTS_QUERY = gql`
     query GetAllRequests {
         requests {
@@ -185,5 +195,11 @@ export const GET_PLACES_STARTWITH_NAME = gql`
                     name
                 }
             }
+    }
+`;
+
+export const ALL_PLACES_NAMES_QUERY = gql`
+    query GetAllPlacesNames {
+        placesNames
     }
 `;

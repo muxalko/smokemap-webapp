@@ -1,6 +1,6 @@
 import React from "react";
 import { getClient } from "@/lib/client";
-import { NOT_APPROVED_REQUESTS_QUERY } from "@/graphql/queries/request";
+import { NOT_APPROVED_REQUESTS_QUERY } from "@/graphql/queries/gql";
 import {
   CategoryType,
   GetAllCategoriesQuery,
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
 import RequestReactForm from "./request-react-form";
-import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/category";
+import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 import { revalidatePath } from "next/cache";
 
 export default async function RequestsManager() {
