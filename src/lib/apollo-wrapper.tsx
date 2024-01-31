@@ -19,10 +19,10 @@ function makeClient() {
     uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
     // you can disable result caching here if you want to
     // (this does not work if you are rendering your page with `export const dynamic = "force-static"`)
-    fetchOptions: {
-      cache: "no-store",
-      //mode: "no-cors", // no-cors, *cors, same-origin
-    },
+    // fetchOptions: {
+    // cache: "no-store",
+    //mode: "no-cors", // no-cors, *cors, same-origin
+    // },
   });
 
   return new NextSSRApolloClient({
