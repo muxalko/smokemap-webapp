@@ -25,23 +25,40 @@ export const options: NextAuthOptions = {
             },
             // eslint-disable-next-line @typescript-eslint/require-await
             async authorize(credentials, req) {
-                //console.log('req: ' + JSON.stringify(req));
+                // console.log('req: ' + JSON.stringify(req));
                 //console.log('credentials: ' + JSON.stringify(credentials));
                 // Add logic here to look up the user from the credentials supplied
-                const user = {
-                    id: '1',
-                    name: 'J Smith',
-                    email: 'jsmith@example.com',
-                    password: '12345678',
-                    image: '/smokemap.svg',
-                    role: 'admin',
-                };
+                // const user = {
+                //     id: '1',
+                //     name: 'J Smith',
+                //     email: 'jsmith@example.com',
+                //     password: '12345678',
+                //     image: '/smokemap.svg',
+                //     role: 'admin',
+                // };
 
+                const login_result = await fetch(process.env.NEXT_PUBLIC_BACKEND+"/login/",{
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                username: credentials?.username,
+                password: credentials?.password
+            }),
+          })
+
+        //   console.log("Login status:", login_result.status)
                 if (
-                    credentials?.username === user.email &&
-                    credentials?.password === user.password
+                    // credentials?.username === user.email &&
+                    // credentials?.password === user.password
+                    login_result.status == 202
+
                 ) {
                     // Any object returned will be saved in `user` property of the JWT
+                    // return user;
+                    const user = await login_result.json();
+                    // console.log("Got response:",user)
                     return user;
                 }
                 // If you return null then an error will be displayed advising the user to check their details.
