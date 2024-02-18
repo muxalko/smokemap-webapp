@@ -19,8 +19,7 @@ export default async function Template({
       id: "-1",
       name: "Guest",
       email: "",
-      image:
-        "https://smokemap-static-images-staging.s3.ca-central-1.amazonaws.com/guest.png",
+      image: "/guest.svg",
       role: "guest",
     };
   } else {
@@ -30,17 +29,19 @@ export default async function Template({
   return (
     <>
       <div className="flex h-dvh flex-col">
-        <div className="absolute left-3 top-0 z-50">
-          <a className="cursor-default" href={"/"} key={"a-logo-image"}>
-            <img
-              alt="Smokemap"
-              className="h-16 w-auto blur-[1px] hover:blur-[2px]"
-              src="/smokemap.svg"
-            />
-          </a>
-        </div>
-
-        {/* <Navigation user={logged_user} /> */}
+        {(logged_user && logged_user.role == "admin" && (
+          <Navigation user={logged_user} />
+        )) || (
+          <div className="absolute left-3 top-0 z-50">
+            <a className="cursor-default" href={"/"} key={"a-logo-image"}>
+              <img
+                alt="Smokemap"
+                className="h-16 w-auto blur-[1px] hover:blur-[2px]"
+                src="/smokemap.svg"
+              />
+            </a>
+          </div>
+        )}
         {/* <header className="bg-white shadow">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">
