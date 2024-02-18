@@ -8,11 +8,9 @@ import { getClient } from "@/lib/client";
 
 export default async function Index() {
   const allCategoriesQuery = await getClient().query<GetAllCategoriesQuery>({
-    // fetchPolicy: "cache-first",
     query: ALL_CATEGORIES_QUERY,
   });
 
-  // //console.log("Index page GOT THE DATA: " + JSON.stringify(allCategoriesQuery.data.categories));
   return (
     <MapComponent
       categories={allCategoriesQuery.data.categories as CategoryType[]}

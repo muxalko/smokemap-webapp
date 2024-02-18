@@ -68,6 +68,7 @@ import PlaceCard, { SimplePlaceType } from "../places/PlaceCard";
 import PlaceList from "../places/PlaceList";
 import Search from "../places/Search";
 import RequestReactForm from "@/app/requests/request-react-form";
+import clogger from "@/lib/clogger";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
@@ -139,18 +140,23 @@ export default function MapComponent({
 
   // const { categories } = data;
 
-  // //console.log("MapComponent GOT THE DATA: " + JSON.stringify(categories));
-
   // //console.log("CategorySelection:", categories);
   const [mapStyle, setMapStyle] = useState(null);
 
-  // useEffect(() => {
-  //   console.log("VERCEL_ENV: ", process.env.VERCEL_ENV);
-  //   console.log(
-  //     "NEXT_PUBLIC_FEATURESERV_ENDPOINT: ",
-  //     process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT
-  //   );
-  // }, []);
+  useEffect(() => {
+    clogger.debug(
+      {
+        version: process.env.NEXT_PUBLIC_VERSION,
+        base_url: process.env.NEXT_PUBLIC_BASE_URL,
+        backend_url: process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT,
+        log_level: process.env.NEXT_PUBLIC_LOG_LEVEL,
+        environment: process.env.NEXT_PUBLIC_ENVIRONMENT,
+      },
+      "App is started!"
+    );
+
+    clogger.trace({ categories: categories }, "Retreive data from backend");
+  }, []);
 
   const categorySelectorForm = useForm<z.infer<typeof CategorySelectorSchema>>({
     resolver: zodResolver(CategorySelectorSchema),
@@ -162,13 +168,12 @@ export default function MapComponent({
   const handleCategorySelectorChange = (layer_id: string, checked: boolean) => {
     //console.log("CURRENT MAP:", mapRef.current);
 
-    console.log(
-      "getLayer(" + layer_id + "):",
-      mapRef.current?.getLayer(layer_id)
+    clogger.trace(
+      "getLayer(" + layer_id + "):" + mapRef.current?.getLayer(layer_id)
     );
-    console.log(
-      "getLayoutProperty():",
-      mapRef.current?.getLayoutProperty(layer_id, "visibility")
+    clogger.trace(
+      "getLayoutProperty():" +
+        mapRef.current?.getLayoutProperty(layer_id, "visibility")
     );
   };
 
@@ -274,17 +279,15 @@ export default function MapComponent({
   }
 
   const onMapLoad = useCallback(() => {
-    //console.log("onLoad() fired");
+    clogger.trace("onLoad() fired");
 
     // make our map draggable + debounce map bounds update
     if (mapRef && mapRef.current) {
-      // //console.log("onMapLoad() =>  mapRef.current: ", mapRef.current);
+      clogger.trace({ data: mapRef.current }, "onMapLoad() =>  mapRef.current");
       mapRef.current?.on("move", (evt: ViewStateChangeEvent) => {
-        // //console.log("onMapMove() event: ", evt);
         setViewport({ ...evt.viewState });
 
         if (mapRef && mapRef.current) {
-          // //console.log("onMapMove() => mapRef.current: ", mapRef.current);
           debouncedMapOnMoveHandler();
         }
 
@@ -294,7 +297,7 @@ export default function MapComponent({
       // When a click event occurs on the clusters layer
       // zoom in to expand level
       mapRef.current?.on("click", "clusters", (e) => {
-        //console.log(e);
+        clogger.trace({ data: e }, "clustered mapRef.current.onClick event");
         // When the map is clicked, get the geographic coordinate.
         const coordinates = mapRef.current?.unproject(e.point);
         // get first element clicked - for zooming in to cluster expand
@@ -325,7 +328,10 @@ export default function MapComponent({
                   });
               }
             );
-          // //console.log("Clustered onClick event coordinates: " + coordinates);
+          clogger.trace(
+            { data: coordinates },
+            "Clustered onClick event coordinates"
+          );
         }
       });
 
@@ -334,12 +340,12 @@ export default function MapComponent({
       // the location of the feature, with
       // description HTML from its properties.
       mapRef.current?.on("click", "unclustered-point", (e) => {
-        // //console.log("Unclustered onClick event: ", e);
+        clogger.trace({ data: e }, "unclustered mapRef.current.onClick event");
 
         if (e.features && e.features[0].geometry.type === "Point") {
           const coordinates = e.features[0].geometry.coordinates.slice();
 
-          //console.log("Unclusters onClick event coordinates: " + coordinates);
+          clogger.trace("unclustered onClick event coordinates " + coordinates);
           // Ensure that if the map is zoomed out such that
           // multiple copies of the feature are visible, the
           // popup appears over the copy being pointed to.
@@ -350,7 +356,10 @@ export default function MapComponent({
           const properties: SimplePlaceType = e.features[0]
             .properties as SimplePlaceType;
 
-          // //console.log("Unclusters onClick event properties: ", properties);
+          clogger.trace(
+            { data: properties },
+            "unclustered onClick event properties"
+          );
 
           setPlaceSelected(properties);
           // setPlacePopupOpen(true);
@@ -361,22 +370,23 @@ export default function MapComponent({
       // TODO: understand hover on touch devices
       mapRef.current?.on("mouseenter", unclusteredPointLayer.id ?? "", (e) => {
         mapRef.current!.getCanvas().style.cursor = "pointer";
-        // //console.log("Unclustered mouseenter event: ", e);
+        clogger.trace({ data: e }, "unclustered mouseenter event");
       });
       mapRef.current?.on("mouseleave", unclusteredPointLayer.id ?? "", () => {
         mapRef.current!.getCanvas().style.cursor = "";
       });
 
       mapRef.current?.on("mouseenter", clusterLayer.id ?? "", (e) => {
-        // console.log("clusterLayer mouseenter event: ", e);
+        clogger.trace({ data: e }, "clustered mouseenter event");
         mapRef.current!.getCanvas().style.cursor = "pointer";
 
         if (e.features && e.features[0].geometry.type === "Point") {
           const coordinates = e.features[0].geometry.coordinates.slice();
 
-          //console.log(
-          //   "clusterLayer mouseenter event coordinates: " + coordinates
-          // );
+          clogger.trace(
+            { data: coordinates },
+            "clustered mouseenter event coordinates"
+          );
           // Ensure that if the map is zoomed out such that
           // multiple copies of the feature are visible, the
           // popup appears over the copy being pointed to.
@@ -386,7 +396,10 @@ export default function MapComponent({
 
           const properties = e.features[0].properties;
 
-          // console.log("clusterLayer mouseenter event properties: ", properties);
+          clogger.trace(
+            { data: properties },
+            "clustered mouseenter event properties"
+          );
         }
       });
       mapRef.current?.on("mouseleave", clusterLayer.id ?? "", () => {
@@ -421,8 +434,11 @@ export default function MapComponent({
     // !!! REMEMBER !!!
     // state is not updated immediately -it might take some time
     // for the value to update
-    // //console.log("map's geographical centerpoint: ", crosshairLngLat);
   };
+
+  useEffect(() => {
+    clogger.trace("map's geographical centerpoint: " + crosshairLngLat);
+  }, [crosshairLngLat]);
 
   // when useMemo is in use, remeber that it will remember the initial state of the app
   // hence, no changes will be reflected in the function

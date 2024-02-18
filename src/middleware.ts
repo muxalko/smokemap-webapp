@@ -4,12 +4,13 @@
 //https://next-auth.js.org/configuration/nextjs#advanced-usage
 import { NextRequestWithAuth, withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
+import clogger from './lib/clogger';
 
 export default withAuth(
     // 'withAuth' augments 'Request' with the user\s token.
     function middleware(request: NextRequestWithAuth) {
-        // console.log("middleware() nextUrl: " + JSON.stringify(request.nextUrl));
-        // console.log("middleware() nextauth: " + JSON.stringify(request.nextauth));
+        clogger.debug("withAuth.middleware() nextUrl: " + JSON.stringify(request.nextUrl));
+        clogger.debug("withAuth.middleware() nextauth: " + JSON.stringify(request.nextauth));
 
         if (
             request.nextUrl.pathname.startsWith('/requests') &&

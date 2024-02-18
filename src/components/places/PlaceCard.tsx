@@ -32,6 +32,7 @@ import { GET_PLACE_BY_ID } from "@/graphql/queries/gql";
 import { useQuery } from "@apollo/client";
 import Image from "next/image";
 import { Button } from "../ui/button";
+import clogger from "@/lib/clogger";
 
 export type SimplePlaceType = {
   place_id: number;
@@ -48,12 +49,11 @@ type Props = {
 };
 
 export default function PlaceCard({ place }: Props) {
-  const { data, loading, error } = useQuery(GET_PLACE_BY_ID, {
-    fetchPolicy: "cache-first",
+  const { data, loading, error } = useGetPlaceByIdQuery({
     variables: { id: place.place_id.toString() },
   });
 
-  // //console.log("PlaceCard: ", place);
+  clogger.debug({ data: place }, "PlaceCard got object");
 
   const [imageOpen, setImageOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<ImageType>();
