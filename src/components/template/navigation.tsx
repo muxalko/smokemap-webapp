@@ -31,7 +31,7 @@ function classNames(...classes: Array<string>) {
 
 export default function Navigation({ user }: { user: User }) {
   return (
-    <Disclosure as="nav" className="bg-gray-800 p-0 z-10">
+    <Disclosure as="nav" className="z-10 bg-gray-800 p-0">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -41,7 +41,7 @@ export default function Navigation({ user }: { user: User }) {
                   <a className="cursor-default" href={"/"} key={"a-logo-image"}>
                     <img
                       alt="Smokemap"
-                      className="h-10 w-100"
+                      className="w-100 h-10"
                       src="/smokemap.svg"
                     />
                   </a>
