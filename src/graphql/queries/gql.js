@@ -61,7 +61,7 @@ export const NOT_APPROVED_REQUESTS_QUERY = gql`
             approved
             approvedBy
             approvedComment
-
+            requestedBy
         }
     }
 `;
@@ -129,6 +129,11 @@ export const DELETE_REQUEST = gql`
     }
 `;
 
+// export const GET_S3_PRESIGNED_URL = gql`
+//     query GetS3PresignedUrl($imageType: String!) {
+//         s3PresignedUrl(imageType: $imageType)
+//     }
+// `;
 export const GET_S3_PRESIGNED_URL = gql`
     query GetS3PresignedUrl {
         s3PresignedUrl
@@ -201,5 +206,33 @@ export const GET_PLACES_STARTWITH_NAME = gql`
 export const ALL_PLACES_NAMES_QUERY = gql`
     query GetAllPlacesNames {
         placesNames
+    }
+`;
+
+export const LOGIN = gql`
+    mutation Login($email: String!, $password: String! ) {
+        tokenAuth(email: $email, password: $password) {
+            payload
+            token
+            refreshExpiresIn
+            user {
+                name
+                email
+                role
+                image
+            }
+            refreshToken
+        }
+    }
+`;
+
+export const SILENT_REFRESH_TOKEN = gql`
+    mutation SilentTokenRefresh {
+        refreshToken {
+            payload
+            token
+            refreshExpiresIn
+            refreshToken
+        }
     }
 `;

@@ -18,7 +18,6 @@ export type Scalars = {
   DateTime: { input: Date; output: Date; }
   GenericScalar: { input: any; output: any; }
   JSONString: { input: any; output: any; }
-  Upload: { input: File; output: File; }
 };
 
 export type AddressProperties = {
@@ -47,11 +46,6 @@ export type CategoryType = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-};
-
-export type CreateCategory = {
-  __typename?: 'CreateCategory';
-  category?: Maybe<CategoryType>;
 };
 
 export type CreateImage = {
@@ -101,26 +95,19 @@ export type ImageType = {
 export type Mutation = {
   __typename?: 'Mutation';
   approveRequest?: Maybe<ApproveRequest>;
-  createCategory?: Maybe<CreateCategory>;
   createImage?: Maybe<CreateImage>;
   createRequest?: Maybe<CreateRequest>;
   deleteRequest?: Maybe<DeleteRequest>;
-  updateCategory?: Maybe<UpdateCategory>;
-  updateRequest?: Maybe<UpdateRequest>;
-  uploadFile?: Maybe<UploadFile>;
-  uploadFiles?: Maybe<UploadFiles>;
+  refreshToken?: Maybe<Refresh>;
+  revokeToken?: Maybe<Revoke>;
+  tokenAuth?: Maybe<ObtainJsonWebToken>;
+  verifyToken?: Maybe<Verify>;
 };
 
 
 export type MutationApproveRequestArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
   input: RequestApproveInput;
-};
-
-
-export type MutationCreateCategoryArgs = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
 };
 
 
@@ -139,26 +126,33 @@ export type MutationDeleteRequestArgs = {
 };
 
 
-export type MutationUpdateCategoryArgs = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+export type MutationRefreshTokenArgs = {
+  refreshToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 
-export type MutationUpdateRequestArgs = {
-  id?: InputMaybe<Scalars['ID']['input']>;
-  input: RequestInput;
+export type MutationRevokeTokenArgs = {
+  refreshToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 
-export type MutationUploadFileArgs = {
-  file: Scalars['Upload']['input'];
+export type MutationTokenAuthArgs = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
 };
 
 
-export type MutationUploadFilesArgs = {
-  files?: InputMaybe<Array<InputMaybe<Scalars['Upload']['input']>>>;
+export type MutationVerifyTokenArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ObtainJsonWebToken = {
+  __typename?: 'ObtainJSONWebToken';
+  payload: Scalars['GenericScalar']['output'];
+  refreshExpiresIn: Scalars['Int']['output'];
+  refreshToken: Scalars['String']['output'];
+  token: Scalars['String']['output'];
+  user?: Maybe<UserType>;
 };
 
 export type PlaceType = {
@@ -215,6 +209,14 @@ export type QueryRequestsByNameArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Refresh = {
+  __typename?: 'Refresh';
+  payload: Scalars['GenericScalar']['output'];
+  refreshExpiresIn: Scalars['Int']['output'];
+  refreshToken: Scalars['String']['output'];
+  token: Scalars['String']['output'];
+};
+
 export type RequestApproveInput = {
   approvedBy?: InputMaybe<Scalars['String']['input']>;
   approvedComment?: InputMaybe<Scalars['String']['input']>;
@@ -242,7 +244,13 @@ export type RequestType = {
   id: Scalars['ID']['output'];
   imageSet: Array<ImageType>;
   name: Scalars['String']['output'];
+  requestedBy?: Maybe<Scalars['String']['output']>;
   tags: Array<Maybe<Scalars['String']['output']>>;
+};
+
+export type Revoke = {
+  __typename?: 'Revoke';
+  revoked: Scalars['Int']['output'];
 };
 
 export type TagType = {
@@ -251,24 +259,17 @@ export type TagType = {
   name: Scalars['String']['output'];
 };
 
-export type UpdateCategory = {
-  __typename?: 'UpdateCategory';
-  category?: Maybe<CategoryType>;
+export type UserType = {
+  __typename?: 'UserType';
+  email: Scalars['String']['output'];
+  image: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  role?: Maybe<Scalars['String']['output']>;
 };
 
-export type UpdateRequest = {
-  __typename?: 'UpdateRequest';
-  request?: Maybe<RequestType>;
-};
-
-export type UploadFile = {
-  __typename?: 'UploadFile';
-  success?: Maybe<Scalars['Boolean']['output']>;
-};
-
-export type UploadFiles = {
-  __typename?: 'UploadFiles';
-  success?: Maybe<Scalars['Boolean']['output']>;
+export type Verify = {
+  __typename?: 'Verify';
+  payload: Scalars['GenericScalar']['output'];
 };
 
 export type GetAllCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -284,7 +285,7 @@ export type GetAllRequestsQuery = { __typename?: 'Query', requests?: Array<{ __t
 export type GetAllNotApprovedRequestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, imageSet: Array<{ __typename?: 'ImageType', id: string, name: string, url: string }> } | null> | null };
+export type GetAllNotApprovedRequestsQuery = { __typename?: 'Query', requestsToApprove?: Array<{ __typename?: 'RequestType', id: string, name: string, description: string, tags: Array<string | null>, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, requestedBy?: string | null, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, imageSet: Array<{ __typename?: 'ImageType', id: string, name: string, url: string }> } | null> | null };
 
 export type CreateRequestMutationVariables = Exact<{
   input: RequestInput;
@@ -338,6 +339,19 @@ export type GetAllPlacesNamesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetAllPlacesNamesQuery = { __typename?: 'Query', placesNames?: Array<string | null> | null };
+
+export type LoginMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+
+export type LoginMutation = { __typename?: 'Mutation', tokenAuth?: { __typename?: 'ObtainJSONWebToken', payload: any, token: string, refreshExpiresIn: number, refreshToken: string, user?: { __typename?: 'UserType', name: string, email: string, role?: string | null, image: string } | null } | null };
+
+export type SilentTokenRefreshMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SilentTokenRefreshMutation = { __typename?: 'Mutation', refreshToken?: { __typename?: 'Refresh', payload: any, token: string, refreshExpiresIn: number, refreshToken: string } | null };
 
 
 export const GetAllCategoriesDocument = gql`
@@ -463,6 +477,7 @@ export const GetAllNotApprovedRequestsDocument = gql`
     approved
     approvedBy
     approvedComment
+    requestedBy
   }
 }
     `;
@@ -863,3 +878,81 @@ export type GetAllPlacesNamesQueryHookResult = ReturnType<typeof useGetAllPlaces
 export type GetAllPlacesNamesLazyQueryHookResult = ReturnType<typeof useGetAllPlacesNamesLazyQuery>;
 export type GetAllPlacesNamesSuspenseQueryHookResult = ReturnType<typeof useGetAllPlacesNamesSuspenseQuery>;
 export type GetAllPlacesNamesQueryResult = Apollo.QueryResult<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>;
+export const LoginDocument = gql`
+    mutation Login($email: String!, $password: String!) {
+  tokenAuth(email: $email, password: $password) {
+    payload
+    token
+    refreshExpiresIn
+    user {
+      name
+      email
+      role
+      image
+    }
+    refreshToken
+  }
+}
+    `;
+export type LoginMutationFn = Apollo.MutationFunction<LoginMutation, LoginMutationVariables>;
+
+/**
+ * __useLoginMutation__
+ *
+ * To run a mutation, you first call `useLoginMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLoginMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [loginMutation, { data, loading, error }] = useLoginMutation({
+ *   variables: {
+ *      email: // value for 'email'
+ *      password: // value for 'password'
+ *   },
+ * });
+ */
+export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginMutation, LoginMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LoginMutation, LoginMutationVariables>(LoginDocument, options);
+      }
+export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
+export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
+export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const SilentTokenRefreshDocument = gql`
+    mutation SilentTokenRefresh {
+  refreshToken {
+    payload
+    token
+    refreshExpiresIn
+    refreshToken
+  }
+}
+    `;
+export type SilentTokenRefreshMutationFn = Apollo.MutationFunction<SilentTokenRefreshMutation, SilentTokenRefreshMutationVariables>;
+
+/**
+ * __useSilentTokenRefreshMutation__
+ *
+ * To run a mutation, you first call `useSilentTokenRefreshMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSilentTokenRefreshMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [silentTokenRefreshMutation, { data, loading, error }] = useSilentTokenRefreshMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useSilentTokenRefreshMutation(baseOptions?: Apollo.MutationHookOptions<SilentTokenRefreshMutation, SilentTokenRefreshMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SilentTokenRefreshMutation, SilentTokenRefreshMutationVariables>(SilentTokenRefreshDocument, options);
+      }
+export type SilentTokenRefreshMutationHookResult = ReturnType<typeof useSilentTokenRefreshMutation>;
+export type SilentTokenRefreshMutationResult = Apollo.MutationResult<SilentTokenRefreshMutation>;
+export type SilentTokenRefreshMutationOptions = Apollo.BaseMutationOptions<SilentTokenRefreshMutation, SilentTokenRefreshMutationVariables>;

@@ -12,6 +12,12 @@ declare module 'next-auth' {
             id: string;
             /** The user's role as string. */
             role: string;
+            /** The user's access token as string. */
+            access: string;
+            accessExpiresIn: number;
+            /** The user's refresh token as string. */
+            refresh: string;
+            refreshExpiresIn: number;
         } & DefaultSession['user'];
     }
 
@@ -22,6 +28,10 @@ declare module 'next-auth' {
     interface User extends DefaultUser {
         /** The user's role as string. */
         role: string;
+        access: string;
+        accessExpiresIn: number;
+        refresh: string;
+        refreshExpiresIn: number;
     }
 
     /**
@@ -37,6 +47,10 @@ declare module 'next-auth/jwt' {
     interface JWT extends DefaultJWT {
         /** The user's role as string. */
         role: string;
+        access: string;
+        accessExpiresIn: number;
+        refresh: string;
+        efreshExpiresIn: number;
         /** OpenID ID Token */
         //idToken?: string
     }
