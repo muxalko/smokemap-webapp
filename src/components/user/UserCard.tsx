@@ -11,13 +11,13 @@ export default function Card({ user, pagetype }: Props) {
   //console.log("Card: user=" + JSON.stringify(user));
 
   const greeting = user?.name ? (
-    <div className="flex flex-col items-center rounded-lg bg-white p-6 text-5xl font-bold text-black">
+    <div className="flex flex-col items-center rounded-lg bg-white p-6 text-3xl font-bold text-black sm:text-5xl">
       Hello {user?.name}!
     </div>
   ) : null;
 
   const emailDisplay = user?.email ? (
-    <div className="flex flex-col items-center rounded-lg bg-white p-6 text-5xl font-bold text-black">
+    <div className="flex flex-col items-center rounded-lg bg-white p-6 text-3xl font-bold text-black sm:text-5xl">
       {user?.email}
     </div>
   ) : null;
