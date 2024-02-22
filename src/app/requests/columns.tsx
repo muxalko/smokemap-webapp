@@ -88,16 +88,40 @@ export const columns: ColumnDef<RequestType>[] = [
       const images: ImageType[] = row.getValue("imageSet");
 
       return (
-        <div className="text-right font-medium">
+        // <div className="text-right font-medium">
+        <div
+        // className="relative z-10 h-full w-full rounded-md bg-center shadow-lg ring-1 ring-inset ring-black/10"
+        // style={{ "background-image": "url(https://images.unsplash.com/photo-1554629947-334ff61d85dc?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=128&amp;h=128&amp;q=80)"}}
+        >
           {images &&
             images.map((image) => (
-              <Image
-                key={image.id}
-                src={image.url}
-                width={500}
-                height={500}
-                alt={image.name}
-              />
+              <a href={image.url} key={image.id} about={image.name}>
+                <Image
+                  // key={image.id}
+                  src={image.url}
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: "100%", height: "auto" }} // optional
+                  alt={image.name}
+                />
+
+                <div
+                  // key={image.id}
+                  className="absolute h-auto w-auto max-w-none -translate-x-1/4 -translate-y-1/4 overflow-hidden rounded-md opacity-0 hover:opacity-100"
+                  // className="hover:w-64"
+                >
+                  <Image
+                    // key={image.id}
+                    src={image.url}
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    style={{ width: "100%", height: "auto" }} // optional
+                    alt={image.name}
+                  />
+                </div>
+              </a>
             ))}
         </div>
       );
@@ -113,6 +137,10 @@ export const columns: ColumnDef<RequestType>[] = [
   }),
   columnHelper.accessor("tags", {
     header: "Tags",
+    cell: (props) => props.getValue(),
+  }),
+  columnHelper.accessor("requestedBy", {
+    header: "Requested by",
     cell: (props) => props.getValue(),
   }),
   columnHelper.display("actions", {
