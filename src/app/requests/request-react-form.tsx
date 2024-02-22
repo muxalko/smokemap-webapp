@@ -64,6 +64,8 @@ import { randomBytes } from "crypto";
 import path from "path";
 import { Checkbox } from "@/components/ui/checkbox";
 import { omit } from "lodash";
+import logger from "redux-logger";
+import clogger from "@/lib/clogger";
 export const dynamic = "force-dynamic";
 
 const MIN_TAG_LENGTH = 3;
@@ -241,7 +243,7 @@ export default function RequestReactForm({
   const [createImage] = useCreateImageMutation({
     fetchPolicy: "no-cache",
     onError: (error) => {
-      console.error("GraphQL Error:", error);
+      clogger.error("GraphQL Error:", error);
       // display an error message
       toast({
         title: "Image upload error:",
@@ -328,7 +330,7 @@ export default function RequestReactForm({
 
       // V2: Each file upload uses same s3 url
       const uploadStatus = getS3PresignedUrl().then((response) => {
-        //console.log("getS3PresignedUrl() response:", response);
+        clogger.debug(response, "getS3PresignedUrl() response");
         //build formData
         const token = response.data.s3PresignedUrl;
         const formUpload = new FormData();
@@ -339,12 +341,13 @@ export default function RequestReactForm({
 
         // iterate over each file and get temporary S3 URL for uploading an image
         (form.getValues("images") as FileWithPath[]).forEach((file) => {
-          //console.log("Images left to upload ", files2upload);
+          clogger.debug({ current: file }, "processing image");
           // replace target filename with our own
           const extention = path.extname(file.name);
           const filename = randomBytes(16).toString("hex") + extention;
           formUpload.set("file", file, filename);
-
+          formUpload.set("Content-Type", file.type);
+          clogger.debug({ data: formUpload }, "formUpload");
           // S3 upload
           const s3Post = fetch(token.url as string, {
             method: "POST",
@@ -353,7 +356,11 @@ export default function RequestReactForm({
             // },
             body: formUpload,
           }).then((data) => {
-            //console.log("S3 upload response:", data);
+            const message = data
+              .text()
+              .then((res) =>
+                clogger.debug({ message: res }, "S3 upload response")
+              );
             const newRequest = createRequestResponse_data?.createRequest
               ?.request as RequestType;
             if (files2upload >= 1) {
@@ -371,7 +378,7 @@ export default function RequestReactForm({
                 .then((res) => {
                   return res;
                 })
-                .catch((err) => console.log("Upload: error: ", err));
+                .catch((err) => clogger.error(err, "S3 Images Upload failed"));
 
               files2upload -= 1;
             }
