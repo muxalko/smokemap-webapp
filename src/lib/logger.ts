@@ -83,12 +83,12 @@ const logger = pino({
         env: process.env.NODE_ENV,
         revision: process.env.VERCEL_GITHUB_COMMIT_SHA,
     },
-    transport: {
-        target: 'pino-pretty',
-        options: {
-            colorize: true
-        }
-    }
+    // transport: {
+    //     target: 'pino-pretty',
+    //     options: {
+    //         colorize: true
+    //     }
+    // }
 }, 
 // pino.multistream(streams)
 
