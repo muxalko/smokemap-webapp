@@ -10,12 +10,12 @@ export default async function Profile() {
       {session ? (
         <Card pagetype={"About"} user={session?.user} />
       ) : (
-        <>
+        <div className="w-full text-center align-middle text-xl">
           <h1>Your session is not active.</h1>
           <Link className="text-blue-500" href="/api/auth/signin">
             Sign in
           </Link>
-        </>
+        </div>
       )}
     </>
   );
