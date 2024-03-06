@@ -37,7 +37,7 @@ function makeClient() {
     if (cookie_data && cookie_data.length > 0) {
       const cookie_value: string = cookie_data[0];
       const csrftoken = cookie_value.substring(10);
-      clogger.debug({ csrftoken: csrftoken }, "Read CSRF Cookie value");
+      clogger.trace({ csrftoken: csrftoken }, "Read CSRF Cookie value");
       // const token = localStorage.getItem("token") || null;
       return {
         headers: {
