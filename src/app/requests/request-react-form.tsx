@@ -112,6 +112,7 @@ const FormSchema = z.object({
   ),
   images: z
     .any()
+    .optional()
     // To not allow empty files
     .refine((files) => files?.length >= 1, { message: "Image is required." })
     // To not allow files other than images
