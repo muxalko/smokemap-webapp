@@ -24,13 +24,7 @@ import {
   SymbolLayer,
 } from "react-map-gl/maplibre";
 // import ControlPanel from "@/components/control/panel";
-import {
-  GeoJSONFeature,
-  GeoJSONSource,
-  LngLat,
-  LngLatBounds,
-  LngLatLike,
-} from "maplibre-gl";
+import { GeoJSONSource, LngLat, LngLatBounds, LngLatLike } from "maplibre-gl";
 // need maplibre css for markers
 import "maplibre-gl/dist/maplibre-gl.css";
 import GeocoderControl from "./geocoder-control";
@@ -80,18 +74,14 @@ import { MapRef } from "react-map-gl/maplibre";
 import {
   CategoryType,
   useGetAllCategoriesLazyQuery,
-  useGetAllCategoriesQuery,
-  useGetAllCategoriesSuspenseQuery,
 } from "@/graphql/__generated__/types";
 import PlaceCard, { SimplePlaceType } from "../places/PlaceCard";
 import PlaceList from "../places/PlaceList";
 import Search from "../places/Search";
 import RequestReactForm from "@/app/requests/request-react-form";
 import clogger from "@/lib/clogger";
-import { cookies } from "next/headers";
 import { setCookie, getCookie } from "@/app/actions";
 import CategoryLayers from "./category-layers";
-import { set } from "lodash";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
@@ -154,6 +144,10 @@ export default function MapComponent() {
   //   lng: 0,
   //   lat: 0,
   // });
+
+  // save viewport in cookie
+  const [viewportSavedInCookie, setViewportSavedInCookie] =
+    useState<boolean>(true);
 
   // popup with a place properties
   // const [popupInfo, setPopupInfo] = useState(null);
@@ -487,33 +481,36 @@ export default function MapComponent() {
   const onMapLoad = useCallback(() => {
     clogger.trace("onLoad() fired");
 
-    if (isMounted.current) {
-      // try to read viewport saved in cookie
-      startTransition(() => {
-        getCookie("viewport")
-          .then((data) => {
-            clogger.debug(
-              { data: data },
-              "Viewport state is detected in cookie"
-            );
-            try {
-              const viewState: ViewState = JSON.parse(
-                data?.value as string
-              ) as ViewState;
+    if (viewportSavedInCookie) {
+      // run when rendered
+      if (isMounted.current) {
+        // try to read viewport saved in cookie
+        startTransition(() => {
+          getCookie("viewport")
+            .then((data) => {
               clogger.debug(
-                { data: viewState },
-                "Cookie viewport state value parsed successfully!"
+                { data: data },
+                "Viewport state is detected in cookie"
               );
-              setViewport(viewState);
-            } catch (ex) {
-              clogger.error(ex, "Error parsing viewstate from cookie");
-            }
-            return;
-          })
-          .catch((err) =>
-            clogger.error(err, "Error trying to read 'viewport' cookie")
-          );
-      });
+              try {
+                const viewState: ViewState = JSON.parse(
+                  data?.value as string
+                ) as ViewState;
+                clogger.debug(
+                  { data: viewState },
+                  "Cookie viewport state value parsed successfully!"
+                );
+                setViewport(viewState);
+              } catch (ex) {
+                clogger.error(ex, "Error parsing viewstate from cookie");
+              }
+              return;
+            })
+            .catch((err) =>
+              clogger.error(err, "Error trying to read 'viewport' cookie")
+            );
+        });
+      }
     }
 
     // make our map draggable + debounce map bounds update
@@ -679,14 +676,16 @@ export default function MapComponent() {
       padding: mapRef.current!.getPadding(),
     };
 
-    startTransition(() => {
-      setCookie({
-        name: "viewport",
-        value: JSON.stringify(map_viewport),
-      })
-        .then((data) => clogger.debug({ data: data }, "Cookie is updated"))
-        .catch((err) => clogger.error(err, "Transition error"));
-    });
+    if (viewportSavedInCookie) {
+      startTransition(() => {
+        setCookie({
+          name: "viewport",
+          value: JSON.stringify(map_viewport),
+        })
+          .then((data) => clogger.debug({ data: data }, "Cookie is updated"))
+          .catch((err) => clogger.error(err, "Transition error"));
+      });
+    }
   };
 
   useEffect(() => {
