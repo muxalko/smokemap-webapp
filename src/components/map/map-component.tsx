@@ -177,43 +177,79 @@ export default function MapComponent() {
     },
   ] = useGetAllCategoriesLazyQuery();
 
-  // selector items initial state
-  const categoriesSelectorFormInitialCheckState = new Map([
-    ["Default", false],
-    ["Bar", false],
-    ["Pub", false],
-    ["Sports Bar", false],
-    ["Beer Garden", false],
-    ["Amusement Arcade", false],
-    ["Public Space", false],
-    ["Barber Shop", false],
-    ["Restaurant", false],
-    ["Casino", false],
-    ["Social House", false],
-  ]);
-
   // indicate which category is visible
   const [categoriesSelectorMap, setCategoriesSelectorMap] = useState<
     Map<string, boolean>
-  >(new Map([["-1", false]]));
+  >(new Map());
+
+  // used for default state
+  const [
+    categoriesSelectorMapInitialValues,
+    setCategoriesSelectorMapInitialValues,
+  ] = useState<Map<string, boolean>>(new Map());
+  // used for select all button
+  const [categoriesSelectorMapAllValues, setCategoriesSelectorMapAllValues] =
+    useState<Map<string, boolean>>(new Map());
+  // used for select none button
+  const [
+    categoriesSelectorMapDeselectValues,
+    setCategoriesSelectorMapDeselectValues,
+  ] = useState<Map<string, boolean>>(new Map());
+
+  //Because we are using names in selector form, it is easier to update items with string[]
+  const [catNames, setCatNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (categories.length > 0) {
       clogger.debug({ data: categories }, "Categories were updated");
-      // set all categories visible by default
-      const categoriesSelectorMapInitialValues: Map<string, boolean> =
+
+      const categoriesSelectorMapInitialValuesTmp: Map<string, boolean> =
         new Map();
-      categories.map((item) =>
-        categoriesSelectorMapInitialValues.set(item.id, false)
+      categories.map((item) => {
+        // uncheck one category
+        if (item.name == "Casino") {
+          categoriesSelectorMapInitialValuesTmp.set(item.id, false);
+        } else {
+          categoriesSelectorMapInitialValuesTmp.set(item.id, true);
+        }
+      });
+
+      setCategoriesSelectorMapInitialValues(
+        categoriesSelectorMapInitialValuesTmp
       );
 
-      setCategoriesSelectorMap(categoriesSelectorMapInitialValues);
+      // set initial categories visibility
+      setCategoriesSelectorMap(categoriesSelectorMapInitialValuesTmp);
+
+      const categoriesSelectorMapAllValuesTmp: Map<string, boolean> = new Map();
+      categories.map((item) =>
+        categoriesSelectorMapAllValuesTmp.set(item.id, true)
+      );
+
+      setCategoriesSelectorMapAllValues(categoriesSelectorMapAllValuesTmp);
+
+      const categoriesSelectorMapDeselectValuesTmp: Map<string, boolean> =
+        new Map();
+      categories.map((item) =>
+        categoriesSelectorMapDeselectValuesTmp.set(item.id, false)
+      );
+
+      setCategoriesSelectorMapDeselectValues(
+        categoriesSelectorMapDeselectValuesTmp
+      );
+
+      const catNamesTmp: string[] = [];
+      // update category names string[]
+      categories.forEach((item) => catNamesTmp.push(item.name));
+      setCatNames(catNamesTmp);
 
       // set default checkbox items
       const items: string[] = [];
-      categoriesSelectorFormInitialCheckState.forEach((value, key) => {
-        if (value) items.push(key);
+      categories.forEach((category: CategoryType) => {
+        if (categoriesSelectorMapInitialValuesTmp.get(category.id))
+          items.push(category.name);
       });
+
       categorySelectorForm.setValue(
         "items",
         // categories.map((category: CategoryType) => category.name)
@@ -283,32 +319,32 @@ export default function MapComponent() {
     },
   });
 
-  const handleCategorySelectorChange = (layer_id: string, checked: boolean) => {
-    console.log(
-      "handleCategorySelectorChange() fired with ",
-      layer_id,
-      checked
-    );
+  // const handleCategorySelectorChange = (layer_id: string, checked: boolean) => {
+  //   console.log(
+  //     "handleCategorySelectorChange() fired with ",
+  //     layer_id,
+  //     checked
+  //   );
 
-    // update category visual checkboxes
-    if (categoriesSelectorMap) {
-      const tmp = categoriesSelectorMap;
-      tmp.set(layer_id, checked);
-      setCategoriesSelectorMap(tmp);
-    }
+  //   // update category visual checkboxes
+  //   if (categoriesSelectorMap) {
+  //     const tmp = categoriesSelectorMap;
+  //     tmp.set(layer_id, checked);
+  //     setCategoriesSelectorMap(tmp);
+  //   }
 
-    if (mapRef?.current) {
-      clogger.debug("Trigger map refresh");
-      mapRef.current.zoomTo(mapRef.current.getZoom());
-    }
-    // clogger.trace(
-    //   "getLayer(" + layer_id + "):" + mapRef.current?.getLayer(layer_id)
-    // );
-    // clogger.trace(
-    //   "getLayoutProperty():" +
-    //     mapRef.current?.getLayoutProperty(layer_id, "visibility")
-    // );
-  };
+  //   if (mapRef?.current) {
+  //     clogger.debug("Trigger map refresh");
+  //     mapRef.current.zoomTo(mapRef.current.getZoom());
+  //   }
+  //   // clogger.trace(
+  //   //   "getLayer(" + layer_id + "):" + mapRef.current?.getLayer(layer_id)
+  //   // );
+  //   // clogger.trace(
+  //   //   "getLayoutProperty():" +
+  //   //     mapRef.current?.getLayoutProperty(layer_id, "visibility")
+  //   // );
+  // };
 
   function onSubmit(data: z.infer<typeof CategorySelectorSchema>) {
     toast({
@@ -320,92 +356,116 @@ export default function MapComponent() {
       ),
     });
   }
-  const categoriesSelector = useMemo(
-    () => (
-      <Form {...categorySelectorForm}>
-        <form
-          className="space-y-8"
-          onSubmit={() => categorySelectorForm.handleSubmit(onSubmit)}
-        >
-          <FormField
-            control={categorySelectorForm.control}
-            name="items"
-            render={() => (
-              <FormItem>
-                <div className="mb-4">
-                  <FormLabel className="text-base">Categories</FormLabel>
-                  <FormDescription>
+  const categoriesSelector = (
+    <Form {...categorySelectorForm}>
+      <form
+        className="space-y-8"
+        onSubmit={() => categorySelectorForm.handleSubmit(onSubmit)}
+      >
+        <FormField
+          control={categorySelectorForm.control}
+          name="items"
+          render={() => (
+            <FormItem>
+              <div className="mb-4">
+                <FormLabel className="text-base">Categories</FormLabel>
+                {/* <FormDescription>
                     Select the categories you wish to appear on the map.
-                  </FormDescription>
-                </div>
-                {getAllCategories_loading && <p>Loading ...</p>}
-                {getAllCategories_error && (
-                  <p>{getAllCategories_error.message}</p>
-                )}
-                {categories.map((item: CategoryType) => (
-                  // each item will result in
-                  // <div>
-                  //  <button><span>v</span></button>
-                  //  <input/>
-                  // <label/>
-                  // </div>
-                  <FormField
-                    control={categorySelectorForm.control}
-                    key={item.name}
-                    name="items"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                          key={item.id}
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(item.name)}
-                              onCheckedChange={(checked: boolean) => {
-                                console.log("onCheckedChange fired");
-                                if (
-                                  mapRef &&
-                                  mapRef.current
-                                  // mapRef.current?.isStyleLoaded()
-                                ) {
-                                  const layer_id = `poi-${item?.name?.replace(
-                                    / /g,
-                                    "-"
-                                  )}`;
+                  </FormDescription> */}
+              </div>
+              {getAllCategories_loading && <p>Loading ...</p>}
+              {getAllCategories_error && (
+                <p>{getAllCategories_error.message}</p>
+              )}
+              {categories.map((item: CategoryType) => (
+                // each item will result in
+                // <div>
+                //  <button><span>v</span></button>
+                //  <input/>
+                // <label/>
+                // </div>
+                <FormField
+                  control={categorySelectorForm.control}
+                  key={item.name}
+                  name="items"
+                  render={({ field }) => {
+                    return (
+                      <FormItem
+                        className="flex flex-row items-start space-x-3 space-y-0"
+                        key={item.id}
+                      >
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value?.includes(item.name)}
+                            onCheckedChange={(checked: boolean) => {
+                              console.log("onCheckedChange fired");
+                              if (
+                                mapRef &&
+                                mapRef.current
+                                // mapRef.current?.isStyleLoaded()
+                              ) {
+                                // const layer_id = `poi-${item?.name?.replace(
+                                //   / /g,
+                                //   "-"
+                                // )}`;
 
-                                  handleCategorySelectorChange(
-                                    item.id,
-                                    checked
+                                // update category visual checkboxes
+                                setCategoriesSelectorMap(
+                                  new Map(
+                                    categoriesSelectorMap.set(item.id, checked)
+                                  )
+                                );
+
+                                if (mapRef?.current) {
+                                  clogger.debug("Trigger map refresh");
+                                  mapRef.current.zoomTo(
+                                    mapRef.current.getZoom()
                                   );
                                 }
-                                return checked
-                                  ? field.onChange([...field.value, item.name])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item.name
-                                      )
-                                    );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            {item.name}
-                          </FormLabel>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit">Submit</Button>
-        </form>
-      </Form>
-    ),
-    [categories, categorySelectorForm]
+                              }
+                              return checked
+                                ? field.onChange([...field.value, item.name])
+                                : field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== item.name
+                                    )
+                                  );
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          {item.name}
+                        </FormLabel>
+                      </FormItem>
+                    );
+                  }}
+                />
+              ))}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button
+          type="button"
+          onClick={() => {
+            setCategoriesSelectorMap(categoriesSelectorMapAllValues);
+            categorySelectorForm.setValue("items", catNames);
+          }}
+        >
+          select all
+        </Button>
+        <Button
+          type="button"
+          onClick={() => {
+            setCategoriesSelectorMap(categoriesSelectorMapDeselectValues);
+            categorySelectorForm.setValue("items", []);
+          }}
+        >
+          select none
+        </Button>
+        {/* <Button type="submit">Submit</Button> */}
+      </form>
+    </Form>
   );
 
   function onCategorySelectorSubmit(
@@ -768,13 +828,21 @@ export default function MapComponent() {
         }}
         crosshairPosition={crosshairLngLat}
       />
-      <div className="absolute left-1/2 top-1/2 z-20 border-violet-900 bg-white p-5">
-        {categoriesSelector}
-        {/* {categorySelectorForm && (
-          <pre className="text-left text-red-800">
-            {JSON.stringify(categorySelectorForm, null, 4)}
-          </pre>
-        )} */}
+      <div className="absolute right-5 top-20 z-20 border-violet-900 bg-white p-1">
+        <Popover>
+          <PopoverTrigger>filter</PopoverTrigger>
+          <PopoverContent>
+            {categoriesSelectorMap.size > 0 && (
+              <>
+                {/* <pre className="text-left text-red-800">
+                  {JSON.stringify(Array.from(categoriesSelectorMap.entries()))}
+                </pre> */}
+
+                <div className="m-1 p-2">{categoriesSelector}</div>
+              </>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
       {pointsDatasource.features.length <= 0 && (
         <div className="absolute left-1/2 top-1/2 z-50">
