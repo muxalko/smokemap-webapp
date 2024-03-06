@@ -109,6 +109,7 @@ export const APPROVE_REQUEST = gql`
                     }
                 }
                 description
+                requestedBy
                 dateCreated
                 dateUpdated
                 dateApproved
