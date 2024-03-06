@@ -1,11 +1,18 @@
 import * as React from "react";
 import debounce from "lodash.debounce";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 // import { ALL_PLACES_QUERY } from "@/graphql/queries/gql";
 // import { useSuspenseQuery } from "@apollo/experimental-nextjs-app-support/ssr";
 // import { lat2tile, lon2tile } from "@/gis-utils";
 import {
-  Map,
+  Map as DynamicMap,
   Source,
   Layer,
   ViewState,
@@ -14,9 +21,16 @@ import {
   FullscreenControl,
   ScaleControl,
   GeolocateControl,
+  SymbolLayer,
 } from "react-map-gl/maplibre";
 // import ControlPanel from "@/components/control/panel";
-import { GeoJSONSource, LngLat, LngLatBounds, LngLatLike } from "maplibre-gl";
+import {
+  GeoJSONFeature,
+  GeoJSONSource,
+  LngLat,
+  LngLatBounds,
+  LngLatLike,
+} from "maplibre-gl";
 // need maplibre css for markers
 import "maplibre-gl/dist/maplibre-gl.css";
 import GeocoderControl from "./geocoder-control";
@@ -63,12 +77,21 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "../ui/use-toast";
 import { MapRef } from "react-map-gl/maplibre";
-import { CategoryType } from "@/graphql/__generated__/types";
+import {
+  CategoryType,
+  useGetAllCategoriesLazyQuery,
+  useGetAllCategoriesQuery,
+  useGetAllCategoriesSuspenseQuery,
+} from "@/graphql/__generated__/types";
 import PlaceCard, { SimplePlaceType } from "../places/PlaceCard";
 import PlaceList from "../places/PlaceList";
 import Search from "../places/Search";
 import RequestReactForm from "@/app/requests/request-react-form";
 import clogger from "@/lib/clogger";
+import { cookies } from "next/headers";
+import { setCookie, getCookie } from "@/app/actions";
+import CategoryLayers from "./category-layers";
+import { set } from "lodash";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
@@ -97,13 +120,15 @@ const CategorySelectorSchema = z.object({
   }),
 });
 
-export default function MapComponent({
-  categories,
-}: {
-  categories: CategoryType[];
-}) {
+// export default function MapComponent({
+//   categories,
+// }: {
+//   categories: CategoryType[];
+// }) {
+export default function MapComponent() {
   // Hooks
-
+  // indicate the component is rendered
+  const isMounted = useRef(false);
   // our map reference
   // const mapRef = useRef<MapLibreGL>();
   // I suspect that this is where I am presumably wrong.
@@ -133,17 +158,85 @@ export default function MapComponent({
   // popup with a place properties
   // const [popupInfo, setPopupInfo] = useState(null);
 
-  // const { networkStatus, error, data } = useSuspenseQuery(ALL_CATEGORIES_QUERY);
+  // const [mapStyle, setMapStyle] = useState(null);
 
-  // if (error) return <div>Error loading Places.</div>;
-  // if (networkStatus === 1) return <div>Loading</div>;
+  const [categories, setCategories] = useState<CategoryType[]>([]);
 
-  // const { categories } = data;
+  // const { data, loading, error } = useGetAllCategoriesQuery({
+  //   onCompleted: (data) => {
+  //     isMounted.current && setCategories(data.categories as CategoryType[]);
+  //   },
+  //   onError: (err) => clogger.error(err, "Error fetching categories"),
+  // });
+  const [
+    getAllCategories,
+    {
+      data: getAllCategories_data,
+      loading: getAllCategories_loading,
+      error: getAllCategories_error,
+    },
+  ] = useGetAllCategoriesLazyQuery();
 
-  // //console.log("CategorySelection:", categories);
-  const [mapStyle, setMapStyle] = useState(null);
+  // selector items initial state
+  const categoriesSelectorFormInitialCheckState = new Map([
+    ["Default", false],
+    ["Bar", false],
+    ["Pub", false],
+    ["Sports Bar", false],
+    ["Beer Garden", false],
+    ["Amusement Arcade", false],
+    ["Public Space", false],
+    ["Barber Shop", false],
+    ["Restaurant", false],
+    ["Casino", false],
+    ["Social House", false],
+  ]);
+
+  // indicate which category is visible
+  const [categoriesSelectorMap, setCategoriesSelectorMap] = useState<
+    Map<string, boolean>
+  >(new Map([["-1", false]]));
 
   useEffect(() => {
+    if (categories.length > 0) {
+      clogger.debug({ data: categories }, "Categories were updated");
+      // set all categories visible by default
+      const categoriesSelectorMapInitialValues: Map<string, boolean> =
+        new Map();
+      categories.map((item) =>
+        categoriesSelectorMapInitialValues.set(item.id, false)
+      );
+
+      setCategoriesSelectorMap(categoriesSelectorMapInitialValues);
+
+      // set default checkbox items
+      const items: string[] = [];
+      categoriesSelectorFormInitialCheckState.forEach((value, key) => {
+        if (value) items.push(key);
+      });
+      categorySelectorForm.setValue(
+        "items",
+        // categories.map((category: CategoryType) => category.name)
+        // Array.from(categoriesSelectorMap.keys())
+        items
+      );
+    }
+  }, [categories]);
+
+  // used to retrieve cookie with server action
+  const [isPending, startTransition] = useTransition();
+
+  // main datasource
+  const [pointsDatasource, setPointsDatasource] =
+    useState<GeoJSON.FeatureCollection>({
+      type: "FeatureCollection",
+      features: [],
+    });
+
+  useEffect(() => {
+    // update component is rendered
+    isMounted.current = true;
+
     clogger.debug(
       {
         version: process.env.NEXT_PUBLIC_VERSION,
@@ -155,26 +248,66 @@ export default function MapComponent({
       "App is started!"
     );
 
-    clogger.trace({ categories: categories }, "Retreive data from backend");
+    // trigger category retrieval
+    getAllCategories()
+      .then((data) => setCategories(data.data?.categories as CategoryType[]))
+      .catch((err) => clogger.error(err, "Error fetching categories"));
+
+    fetch(
+      `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
+        (mapBounds
+          ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
+          : [lon - 2, lat - 2, lon + 2, lat + 2].join(",")),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+      .then((data) => data.json().then((points) => setPointsDatasource(points)))
+      .catch((err) => clogger.error(err, "Error fetching points datasource"));
+
+    // Stop the invocation of the debounced function
+    // after unmounting
+    return () => {
+      debouncedMapOnMoveHandler.cancel();
+    };
   }, []);
 
   const categorySelectorForm = useForm<z.infer<typeof CategorySelectorSchema>>({
     resolver: zodResolver(CategorySelectorSchema),
     defaultValues: {
+      // categories are empty at this stage, will be setup when retrieved insid useEffect
       items: categories.map((category: CategoryType) => category.name),
     },
   });
 
   const handleCategorySelectorChange = (layer_id: string, checked: boolean) => {
-    //console.log("CURRENT MAP:", mapRef.current);
+    console.log(
+      "handleCategorySelectorChange() fired with ",
+      layer_id,
+      checked
+    );
 
-    clogger.trace(
-      "getLayer(" + layer_id + "):" + mapRef.current?.getLayer(layer_id)
-    );
-    clogger.trace(
-      "getLayoutProperty():" +
-        mapRef.current?.getLayoutProperty(layer_id, "visibility")
-    );
+    // update category visual checkboxes
+    if (categoriesSelectorMap) {
+      const tmp = categoriesSelectorMap;
+      tmp.set(layer_id, checked);
+      setCategoriesSelectorMap(tmp);
+    }
+
+    if (mapRef?.current) {
+      clogger.debug("Trigger map refresh");
+      mapRef.current.zoomTo(mapRef.current.getZoom());
+    }
+    // clogger.trace(
+    //   "getLayer(" + layer_id + "):" + mapRef.current?.getLayer(layer_id)
+    // );
+    // clogger.trace(
+    //   "getLayoutProperty():" +
+    //     mapRef.current?.getLayoutProperty(layer_id, "visibility")
+    // );
   };
 
   function onSubmit(data: z.infer<typeof CategorySelectorSchema>) {
@@ -205,8 +338,17 @@ export default function MapComponent({
                     Select the categories you wish to appear on the map.
                   </FormDescription>
                 </div>
-
+                {getAllCategories_loading && <p>Loading ...</p>}
+                {getAllCategories_error && (
+                  <p>{getAllCategories_error.message}</p>
+                )}
                 {categories.map((item: CategoryType) => (
+                  // each item will result in
+                  // <div>
+                  //  <button><span>v</span></button>
+                  //  <input/>
+                  // <label/>
+                  // </div>
                   <FormField
                     control={categorySelectorForm.control}
                     key={item.name}
@@ -221,18 +363,19 @@ export default function MapComponent({
                             <Checkbox
                               checked={field.value?.includes(item.name)}
                               onCheckedChange={(checked: boolean) => {
+                                console.log("onCheckedChange fired");
                                 if (
                                   mapRef &&
-                                  mapRef.current &&
-                                  mapRef.current?.isStyleLoaded()
+                                  mapRef.current
+                                  // mapRef.current?.isStyleLoaded()
                                 ) {
                                   const layer_id = `poi-${item?.name?.replace(
                                     / /g,
                                     "-"
                                   )}`;
 
-                                  return handleCategorySelectorChange(
-                                    layer_id,
+                                  handleCategorySelectorChange(
+                                    item.id,
                                     checked
                                   );
                                 }
@@ -277,9 +420,41 @@ export default function MapComponent({
       ),
     });
   }
+  const onMapIdle = useCallback(() => {
+    clogger.trace("onMapIdle() fired");
+  }, []);
 
   const onMapLoad = useCallback(() => {
     clogger.trace("onLoad() fired");
+
+    if (isMounted.current) {
+      // try to read viewport saved in cookie
+      startTransition(() => {
+        getCookie("viewport")
+          .then((data) => {
+            clogger.debug(
+              { data: data },
+              "Viewport state is detected in cookie"
+            );
+            try {
+              const viewState: ViewState = JSON.parse(
+                data?.value as string
+              ) as ViewState;
+              clogger.debug(
+                { data: viewState },
+                "Cookie viewport state value parsed successfully!"
+              );
+              setViewport(viewState);
+            } catch (ex) {
+              clogger.error(ex, "Error parsing viewstate from cookie");
+            }
+            return;
+          })
+          .catch((err) =>
+            clogger.error(err, "Error trying to read 'viewport' cookie")
+          );
+      });
+    }
 
     // make our map draggable + debounce map bounds update
     if (mapRef && mapRef.current) {
@@ -419,7 +594,6 @@ export default function MapComponent({
     // update visual bounds
     setMapBounds(mapRef.current!.getBounds());
 
-    // TODO: implement creation with crosshair.
     // get map's geographical centerpoint for later creation of place location.
     const center = mapRef.current?.getCenter();
     // setCrosshairLngLat({
@@ -434,6 +608,25 @@ export default function MapComponent({
     // !!! REMEMBER !!!
     // state is not updated immediately -it might take some time
     // for the value to update
+
+    // save current map viewstate in cookie
+    const map_viewport = {
+      latitude: center?.lat,
+      longitude: center?.lng,
+      zoom: mapRef.current!.getZoom(),
+      bearing: mapRef.current!.getBearing(),
+      pitch: mapRef.current!.getPitch(),
+      padding: mapRef.current!.getPadding(),
+    };
+
+    startTransition(() => {
+      setCookie({
+        name: "viewport",
+        value: JSON.stringify(map_viewport),
+      })
+        .then((data) => clogger.debug({ data: data }, "Cookie is updated"))
+        .catch((err) => clogger.error(err, "Transition error"));
+    });
   };
 
   useEffect(() => {
@@ -446,15 +639,6 @@ export default function MapComponent({
     () => debounce(mapOnMoveHandler, 300),
     []
   );
-
-  // Stop the invocation of the debounced function
-  // after unmounting
-  useEffect(() => {
-    return () => {
-      debouncedMapOnMoveHandler.cancel();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const flyToCoordinates = useCallback((coordinates: Array<number>) => {
     const longitude: number = coordinates[0];
@@ -478,11 +662,11 @@ export default function MapComponent({
 
   const PLACES_SOURCE = {
     // our main points source
-    data:
-      `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
-      (mapBounds
-        ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
-        : [lon - 2, lat - 2, lon + 2, lat + 2].join(",")),
+    data: pointsDatasource,
+    // `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
+    // (mapBounds
+    //   ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
+    //   : [lon - 2, lat - 2, lon + 2, lat + 2].join(",")),
   };
 
   const [placeSelected, setPlaceSelected] = useState<SimplePlaceType>({
@@ -499,6 +683,34 @@ export default function MapComponent({
   const [placeListPopupOpen, setPlaceListPopupOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Set Layer for categories
+
+  const symbolLayerIdName = "symbol_name";
+  const [symbolLayerName, setSymbolLayerName] = useState<SymbolLayer>({
+    id: symbolLayerIdName,
+    type: "symbol",
+    source: pointsLayerId,
+    layout: {
+      visibility: "visible",
+      "text-allow-overlap": true,
+      "text-font": ["Arial Italic"],
+      "text-field": ["get", "name"],
+      "text-size": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        // zoom is 5 (or less)
+        5,
+        12,
+        // zoom is 10 (or greater)
+        10,
+        11,
+      ],
+      "text-anchor": "bottom",
+      // "text-offset": [0, -2],
+    },
+  });
 
   return (
     <>
@@ -546,7 +758,6 @@ export default function MapComponent({
               closeHandler={() => setPlaceListPopupOpen(false)}
             />
           )}
-          {/* {categoriesSelector} */}
         </PopoverContent>
       </Popover>
       {/* //crosshairPositionHandler: () => Array<number>; </> */}
@@ -557,41 +768,55 @@ export default function MapComponent({
         }}
         crosshairPosition={crosshairLngLat}
       />
+      <div className="absolute left-1/2 top-1/2 z-20 border-violet-900 bg-white p-5">
+        {categoriesSelector}
+        {/* {categorySelectorForm && (
+          <pre className="text-left text-red-800">
+            {JSON.stringify(categorySelectorForm, null, 4)}
+          </pre>
+        )} */}
+      </div>
+      {pointsDatasource.features.length <= 0 && (
+        <div className="absolute left-1/2 top-1/2 z-50">
+          <p>Loading ...</p>
+        </div>
+      )}
+      {pointsDatasource.features.length > 0 && (
+        <DynamicMap
+          reuseMaps
+          {...viewport}
+          ref={mapRef}
+          style={{ width: "100%", height: "100%", display: "inline-block" }}
+          // Caution!! simple demo style breaks cluster style
+          // mapStyle="https://demotiles.maplibre.org/style.json"
+          mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
+          // mapStyle={mapStyle && mapStyle.toJS()}
+          //mapStyle={process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN ? "https://api.maptiler.com/maps/basic-v2/style.json?key="+process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN:process.env.NEXT_PUBLIC_MAP_STYLE}
+          //maxZoom={20}
+          // interactive={true} // Enables zoom with scroll
+          // dragPan={false} // disable panning
+          // dragRotate={false} // disable map rotation using right click + drag
+          // touchZoomRotate={false} // disable map rotation using touch rotation gesture
+          interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
+          onLoad={onMapLoad} // onClick={onClick}
+          onIdle={onMapIdle}
+          // attributionControl={false}
+        >
+          {/* <GeocoderControl position="bottom-right" placeholder="Address search" /> */}
+          <GeolocateControl position="bottom-right" />
+          {/* <FullscreenControl position="bottom-left" /> */}
+          <NavigationControl position="bottom-right" />
+          <ScaleControl />
 
-      <Map
-        reuseMaps
-        {...viewport}
-        ref={mapRef}
-        style={{ width: "100%", height: "100%", display: "inline-block" }}
-        // Caution!! simple demo style breaks cluster style
-        // mapStyle="https://demotiles.maplibre.org/style.json"
-        mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
-        // mapStyle={mapStyle && mapStyle.toJS()}
-        //mapStyle={process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN ? "https://api.maptiler.com/maps/basic-v2/style.json?key="+process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN:process.env.NEXT_PUBLIC_MAP_STYLE}
-        //maxZoom={20}
-        // interactive={true} // Enables zoom with scroll
-        // dragPan={false} // disable panning
-        // dragRotate={false} // disable map rotation using right click + drag
-        // touchZoomRotate={false} // disable map rotation using touch rotation gesture
-        interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
-        onLoad={onMapLoad} // onClick={onClick}
-        // attributionControl={false}
-      >
-        {/* <GeocoderControl position="bottom-right" placeholder="Address search" /> */}
-        <GeolocateControl position="bottom-right" />
-        {/* <FullscreenControl position="bottom-left" /> */}
-        <NavigationControl position="bottom-right" />
-        <ScaleControl />
+          {trackCrosshair && (
+            <CustomOverlay>
+              {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
+              <Crosshair />
+            </CustomOverlay>
+          )}
 
-        {trackCrosshair && (
-          <CustomOverlay>
-            {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
-            <Crosshair />
-          </CustomOverlay>
-        )}
-
-        {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
-        {/* <AttributionControl
+          {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
+          {/* <AttributionControl
           style={{
             //color: 'ff7c92',
             "text-size-adjust": "100%",
@@ -609,24 +834,31 @@ export default function MapComponent({
           }}
         /> */}
 
-        {/*Adding source for places*/}
-        <Source
-          clusterRadius={75} // cluster two points if less than stated pixels apart
-          id={pointsLayerId}
-          maxzoom={15}
-          // clusterMinPoints={2}
-          clusterMaxZoom={14} // display all points individually from stated zoom up
-          type="geojson"
-          // tolerance={20}
-          cluster={true}
-          {...PLACES_SOURCE}
-          // data="https://maplibre.org/maplibre-gl-js/docs/assets/earthquakes.geojson"
-        >
-          <Layer {...{ source: pointsLayerId, ...clusterLayer }} />
-          <Layer {...{ source: pointsLayerId, ...clusterCountLayer }} />
-          <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} />
-        </Source>
-      </Map>
+          {/*Adding source for places*/}
+          <Source
+            clusterRadius={50} // cluster two points if less than stated pixels apart
+            id={pointsLayerId}
+            maxzoom={15}
+            // clusterMinPoints={2}
+            clusterMaxZoom={14} // display all points individually from stated zoom up
+            type="geojson"
+            // tolerance={20}
+            cluster={false}
+            {...PLACES_SOURCE}
+            // data="https://maplibre.org/maplibre-gl-js/docs/assets/earthquakes.geojson"
+          >
+            <Layer {...{ source: pointsLayerId, ...clusterLayer }} />
+            <Layer {...{ source: pointsLayerId, ...clusterCountLayer }} />
+            {/* <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} /> */}
+
+            <CategoryLayers
+              sourceLayerId={pointsLayerId}
+              categories={categories}
+              selector={categoriesSelectorMap}
+            />
+          </Source>
+        </DynamicMap>
+      )}
       {/* 
       <div>
         <Button
