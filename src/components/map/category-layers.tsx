@@ -13,14 +13,15 @@ export default function CategoryLayers({
   categories: CategoryType[];
   selector: Map<string, boolean>;
 }): React.ReactElement<SymbolLayer> {
-  clogger.debug(
-    {
-      sourceLayerId: sourceLayerId,
-      categories: categories,
-      selector: selector,
-    },
-    "CategoryLayers() fired"
-  );
+  // console.log("CategoryLayers() fired");
+  // clogger.debug(
+  //   {
+  //     sourceLayerId: sourceLayerId,
+  //     categories: categories,
+  //     selector: selector,
+  //   },
+  //   "CategoryLayers() fired"
+  // );
   const symbolLayerIdName = "symbol_name";
   const symbolLayerIdCategory = "symbol_category";
   const paintLayerIdCategory = "paint_category";
@@ -92,7 +93,7 @@ export default function CategoryLayers({
               },
             }}
           />
-          {/* <Layer
+          <Layer
             {...{
               id: symbolLayerIdName + "_" + item.name,
               type: "symbol",
@@ -118,9 +119,11 @@ export default function CategoryLayers({
                 // "text-offset": [0, -2],
               },
             }}
-          /> */}
+          />
         </Fragment>
       ))}
     </>
   );
 }
+
+export const MemoizedCategoryLayers = React.memo(CategoryLayers);

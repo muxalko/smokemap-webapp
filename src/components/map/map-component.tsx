@@ -81,7 +81,7 @@ import Search from "../places/Search";
 import RequestReactForm from "@/app/requests/request-react-form";
 import clogger from "@/lib/clogger";
 import { setCookie, getCookie } from "@/app/actions";
-import CategoryLayers from "./category-layers";
+import { MemoizedCategoryLayers } from "./category-layers";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
@@ -918,7 +918,7 @@ export default function MapComponent() {
             <Layer {...{ source: pointsLayerId, ...clusterCountLayer }} />
             {/* <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} /> */}
 
-            <CategoryLayers
+            <MemoizedCategoryLayers
               sourceLayerId={pointsLayerId}
               categories={categories}
               selector={categoriesSelectorMap}
