@@ -9,6 +9,9 @@ import {
 import { APPROVE_REQUEST, DELETE_REQUEST, GET_S3_PRESIGNED_URL } from '@/graphql/queries/gql';
 import { revalidatePath } from 'next/cache';
 import { ALL_PLACES_NAMES_QUERY } from '@/graphql/queries/gql';
+import logger from '@/lib/logger';
+import { cookies } from 'next/headers';
+import { CookieListItem } from 'next/dist/compiled/@edge-runtime/cookies';
 
 export async function deleteRequest(id: string) {
     //console.log('deleteRequest(): id=', id);
@@ -36,7 +39,8 @@ export async function getS3PresignedUrl() {
 
 // TODO: check what does it take to use string as an id
 export async function approveRequest(id: string) {
-    //console.log('approveRequest(): id=', id);
+    if (id.length === 0) return 'Error: Must provide request ID'
+    logger.debug({id: id, type: typeof id },'approveRequest');
     const request = await getClient().mutate<ApproveRequestMutation>({
         fetchPolicy: 'no-cache',
         mutation: APPROVE_REQUEST,
@@ -44,7 +48,7 @@ export async function approveRequest(id: string) {
             id: Number(id),
             input: {
                 approvedBy: 'Admin',
-                approvedComment: 'Manual testing of approvals',
+                approvedComment: 'Manual approval',
             },
         },
     });
@@ -81,3 +85,20 @@ export async function search(search: string) {
     //   .map((p: { name: string }) => p.name)
     //   .slice(0, 50);
   }
+
+ export async function setCookie(data: CookieListItem) {
+
+    const cookieStore = cookies();
+
+    cookieStore.set(data);
+
+    return data;
+}
+
+ export async function getCookie(name: string) {
+
+    const cookieStore = cookies();
+
+    return cookieStore.get(name);
+
+}
