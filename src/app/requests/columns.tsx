@@ -20,6 +20,7 @@ import { MoreHorizontal } from "lucide-react";
 import { approveRequest, deleteRequest } from "../actions";
 import { generateColumnHelper } from "@/lib/table-utils";
 import Image from "next/image";
+import clogger from "@/lib/clogger";
 
 // const columnHelper = createColumnHelper<RequestType>();
 const columnHelper = generateColumnHelper<RequestType>();
@@ -137,7 +138,7 @@ export const columns: ColumnDef<RequestType>[] = [
   }),
   columnHelper.accessor("tags", {
     header: "Tags",
-    cell: (props) => props.getValue(),
+    cell: (props) => "[" + props.getValue() + "]",
   }),
   columnHelper.accessor("requestedBy", {
     header: "Requested by",
@@ -153,10 +154,10 @@ export const columns: ColumnDef<RequestType>[] = [
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onClick={async () => {
               const approveRequestResult = await approveRequest(request.id);
-              // console.log(
-              //   "Got approveRequest response: ",
-              //   approveRequestResult
-              // );
+              clogger.debug(
+                { result: approveRequestResult },
+                "Got approveRequest response"
+              );
             }}
           >
             Approve
@@ -174,10 +175,10 @@ export const columns: ColumnDef<RequestType>[] = [
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 onClick={async () => {
                   const deleteRequestResult = await deleteRequest(request.id);
-                  //console.log(
-                  //   "Got deleteRequest response: ",
-                  //   deleteRequestResult
-                  // );
+                  clogger.debug(
+                    { result: deleteRequestResult },
+                    "Got deleteRequest response"
+                  );
                 }}
               >
                 Delete
@@ -186,10 +187,10 @@ export const columns: ColumnDef<RequestType>[] = [
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 onClick={async () => {
                   const approveRequestResult = await approveRequest(request.id);
-                  //console.log(
-                  //   "Got approveRequest response: ",
-                  //   approveRequestResult
-                  // );
+                  clogger.debug(
+                    { result: approveRequestResult },
+                    "Got approveRequest response"
+                  );
                 }}
               >
                 Approve
