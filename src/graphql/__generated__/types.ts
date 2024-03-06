@@ -300,7 +300,7 @@ export type ApproveRequestMutationVariables = Exact<{
 }>;
 
 
-export type ApproveRequestMutation = { __typename?: 'Mutation', approveRequest?: { __typename?: 'ApproveRequest', request?: { __typename?: 'RequestType', id: string, name: string, description: string, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, tags: Array<string | null>, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null } | null };
+export type ApproveRequestMutation = { __typename?: 'Mutation', approveRequest?: { __typename?: 'ApproveRequest', request?: { __typename?: 'RequestType', id: string, name: string, description: string, requestedBy?: string | null, dateCreated: Date, dateUpdated: Date, dateApproved?: Date | null, approved: boolean, approvedBy?: string | null, approvedComment?: string | null, tags: Array<string | null>, category: { __typename?: 'CategoryType', name: string }, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } } } | null } | null };
 
 export type DeleteRequestMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -581,6 +581,7 @@ export const ApproveRequestDocument = gql`
         }
       }
       description
+      requestedBy
       dateCreated
       dateUpdated
       dateApproved
