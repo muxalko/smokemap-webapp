@@ -36,7 +36,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Tag, TagInput } from "@/components/tag-input";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
@@ -162,6 +171,7 @@ export default function RequestReactForm({
 
   // main form dialog open/close control
   const [dialogOpen, setDialogOpen] = useState(false);
+  // const [drawerOpen, setDrawerOpen] = useState(false);
 
   // when address is unknown (user pressed track with crosshair button )
   // we will pass geolocation [lng,lat] in form.addressString
@@ -494,6 +504,35 @@ export default function RequestReactForm({
           +
         </Button>
       )}
+      {/* 
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button
+            variant="outline"
+            className="absolute left-5 top-10 z-40 text-2xl"
+          >
+            +
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Create a new request</DrawerTitle>
+            <DrawerDescription>
+              This action will create a request for a place to be added to the
+              map. Your request will be reviewed and confirmed by an
+              administrator in 3-5 days.
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <DrawerFooter>
+            <Button>Submit</Button>
+            <DrawerClose>
+              <Button>Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer> */}
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
           <Button
@@ -503,7 +542,7 @@ export default function RequestReactForm({
             +
           </Button>
         </DialogTrigger>
-        <DialogContent className="h-dvh max-h-screen overflow-y-scroll sm:max-w-md">
+        <DialogContent className="no-scrollbar h-dvh max-h-[70%] overflow-y-scroll sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create a new request</DialogTitle>
             <DialogDescription>
@@ -517,14 +556,14 @@ export default function RequestReactForm({
               <section className="z-10 flex w-full max-w-5xl flex-col items-center gap-5 text-center">
                 <div className="w-full py-0" id="try">
                   <div className="relative my-0 flex w-full flex-col space-y-2">
-                    <div className="preview relative mt-2 flex min-h-[350px] w-full items-center justify-center rounded-md border p-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    <div className="relative mt-2 flex min-h-[350px] w-full items-center justify-center rounded-md p-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                       <Form {...form}>
                         <form
                           className="flex flex-col items-start space-y-8"
                           // eslint-disable-next-line @typescript-eslint/no-misused-promises
                           onSubmit={form.handleSubmit(onSubmit)}
                         >
-                          <Accordion className="w-full" type="multiple">
+                          <Accordion className="w-full px-2" type="multiple">
                             <AccordionItem value="item-1">
                               <AccordionTrigger>
                                 Provide name and select category
@@ -540,6 +579,7 @@ export default function RequestReactForm({
                                       </FormLabel>
                                       <FormControl className="w-full">
                                         <Input
+                                          className="block w-full"
                                           placeholder="What is the place name?"
                                           {...field}
                                         />
@@ -559,6 +599,9 @@ export default function RequestReactForm({
                                       <FormLabel className="text-left">
                                         Category
                                       </FormLabel>
+                                      <FormDescription>
+                                        Choose what best describes the place
+                                      </FormDescription>
                                       <Popover
                                         onOpenChange={setComboOpen}
                                         open={comboopen}
@@ -625,9 +668,6 @@ export default function RequestReactForm({
                                           </Command>
                                         </PopoverContent>
                                       </Popover>
-                                      <FormDescription>
-                                        Choose what best describes the place
-                                      </FormDescription>
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -750,15 +790,13 @@ export default function RequestReactForm({
                                       </FormLabel>
                                       <FormControl className="w-full">
                                         <Input
-                                          className="sm:min-w-[350px]"
+                                          className="block w-full"
                                           placeholder="What is the place address?"
                                           {...field}
                                         />
                                       </FormControl>
                                       <FormDescription className="text-left">
-                                        If you do not know the address, or it is
-                                        not resolved correctly, you can manually
-                                        specify the location with crosshair.
+                                        <p>If you do not know the address</p>
                                         <Button
                                           type="button"
                                           variant="ghost"
@@ -768,7 +806,7 @@ export default function RequestReactForm({
                                             setDialogOpen(false);
                                           }}
                                         >
-                                          crosshair tracking
+                                          Show on the map
                                         </Button>
                                       </FormDescription>
                                       <FormMessage />
@@ -793,7 +831,8 @@ export default function RequestReactForm({
                                       <FormControl className="w-full">
                                         <TagInput
                                           {...field}
-                                          className="sm:min-w-[300px] sm:max-w-[350px] "
+                                          className="block w-full"
+                                          // className="sm:min-w-[300px] sm:max-w-[350px] "
                                           maxLength={MAX_TAG_LENGTH}
                                           maxTags={MAX_TAGS_AMOUNT}
                                           minLength={MIN_TAG_LENGTH}
@@ -884,13 +923,16 @@ export default function RequestReactForm({
                                       </FormLabel>
                                       <FormControl className="w-full">
                                         <Textarea
-                                          className="sm:min-w-[350px]"
+                                          className="block w-full"
+                                          // className="sm:min-w-[350px]"
                                           placeholder="..."
                                           {...field}
                                         />
                                       </FormControl>
                                       <FormDescription>
-                                        Drop few words if you would like to.
+                                        <p>
+                                          Drop few words if you would like to.
+                                        </p>
                                       </FormDescription>
                                       <FormMessage />
                                     </FormItem>
@@ -950,41 +992,6 @@ export default function RequestReactForm({
                             </pre>
                           )} */}
 
-                          <Button
-                            className="bg-indigo-500"
-                            disabled={!form.formState.isValid}
-                            type="submit"
-                            variant={"default"}
-                          >
-                            {!loading_createRequest && <p>Submit</p>}
-
-                            {loading_createRequest && (
-                              <>
-                                <svg
-                                  className="-ml-1 mr-3 h-5 w-5 animate-spin text-white motion-reduce:hidden"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                    fill="currentColor"
-                                  ></path>
-                                </svg>
-                                <p>Processing...</p>
-                              </>
-                            )}
-                          </Button>
-
                           {submission_result && (
                             <>
                               <p className="text-green-700">
@@ -1015,12 +1022,55 @@ export default function RequestReactForm({
               </section>
             </div>
           </div>
-          <DialogFooter className="sm:justify-end">
+          <DialogFooter className="sm:flex-row-reverse sm:justify-center">
             <DialogClose asChild>
-              <Button type="button" variant="default">
+              <Button type="button" variant="outline">
                 Close
               </Button>
             </DialogClose>
+            <Button
+              type="button"
+              onClick={() => {
+                form.reset();
+              }}
+              variant="secondary"
+            >
+              Reset
+            </Button>
+            <Button
+              disabled={!form.formState.isValid}
+              type="button"
+              onClick={() => form.handleSubmit()}
+              variant={"default"}
+            >
+              {!loading_createRequest && <p>Submit</p>}
+
+              {loading_createRequest && (
+                <>
+                  <svg
+                    className="-ml-1 mr-3 h-5 w-5 animate-spin text-white motion-reduce:hidden"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      fill="currentColor"
+                    ></path>
+                  </svg>
+                  <p>Processing...</p>
+                </>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
