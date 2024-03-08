@@ -1,3 +1,4 @@
+// @refresh reset
 import * as React from "react";
 import debounce from "lodash.debounce";
 import {
@@ -81,6 +82,7 @@ import {
   unclusteredPointLayer,
   MemoizedCategoryLayers,
 } from "./category-layers";
+import { filterIcon } from "../icons";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
@@ -116,7 +118,7 @@ const CategorySelectorSchema = z.object({
 // }) {
 export default function MapComponent() {
   // Hooks
-  // indicate the component is rendered
+  // indicate that component is rendered
   const isMounted = useRef(false);
   // our map reference
   // const mapRef = useRef<MapLibreGL>();
@@ -338,6 +340,10 @@ export default function MapComponent() {
       debouncedMapOnMoveHandler.cancel();
     };
   }, []);
+
+  useEffect(() => {
+    clogger.debug("mapRef change detected!");
+  }, [mapRef]);
 
   const categorySelectorForm = useForm<z.infer<typeof CategorySelectorSchema>>({
     resolver: zodResolver(CategorySelectorSchema),
@@ -643,6 +649,10 @@ export default function MapComponent() {
       });
 
       mapRef.current?.on("mouseenter", clusterLayer.id ?? "", (e) => {
+        // test map instance still exists
+        if (mapRef === null || mapRef === undefined) {
+          clogger.error("Map reference is lost !");
+        }
         clogger.trace({ data: e }, "clustered mouseenter event");
         mapRef.current!.getCanvas().style.cursor = "pointer";
 
@@ -861,9 +871,25 @@ export default function MapComponent() {
         }}
         crosshairPosition={crosshairLngLat}
       />
-      <div className="absolute right-5 top-20 z-20 border-violet-900 bg-white p-1">
+      <div className="absolute right-5 top-20 z-20">
         <Popover>
-          <PopoverTrigger>filter</PopoverTrigger>
+          <PopoverTrigger type="button" className="bg-transparent">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24px"
+              height="24px"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M19 3H5C3.89543 3 3 3.89543 3 5V6.17157C3 6.70201 3.21071 7.21071 3.58579 7.58579L9.41421 13.4142C9.78929 13.7893 10 14.298 10 14.8284V20V20.2857C10 20.9183 10.7649 21.2351 11.2122 20.7878L12 20L13.4142 18.5858C13.7893 18.2107 14 17.702 14 17.1716V14.8284C14 14.298 14.2107 13.7893 14.5858 13.4142L20.4142 7.58579C20.7893 7.21071 21 6.70201 21 6.17157V5C21 3.89543 20.1046 3 19 3Z"
+                stroke="#3f6be3"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </PopoverTrigger>
           <PopoverContent>
             {categoriesSelectorMap.size > 0 && (
               <>
