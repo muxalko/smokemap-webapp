@@ -561,7 +561,7 @@ export default function RequestReactForm({
                         <form
                           className="flex flex-col items-start space-y-8"
                           // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                          onSubmit={form.handleSubmit(onSubmit)}
+                          //onSubmit={form.handleSubmit(onSubmit)}
                         >
                           <Accordion className="w-full px-2" type="multiple">
                             <AccordionItem value="item-1">
@@ -1040,7 +1040,8 @@ export default function RequestReactForm({
             <Button
               disabled={!form.formState.isValid}
               type="button"
-              onClick={() => form.handleSubmit()}
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
+              onClick={form.handleSubmit(onSubmit)}
               variant={"default"}
             >
               {!loading_createRequest && <p>Submit</p>}
