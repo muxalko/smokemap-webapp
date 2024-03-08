@@ -33,12 +33,6 @@ import GeocoderControl from "./geocoder-control";
 //import MarkerIconSvg from "./../src/assets/icon-marker.svg";
 //import { Image } from "canvas";
 // import Pin from "./pin";
-import {
-  clusterCountLayer,
-  clusterLayer,
-  unclusteredPointLayer,
-} from "./layers";
-
 // import RANDOM from "./.data/random.json";
 // import CITIES from "./.data/cities.json";
 import { Button } from "@/components/ui/button";
@@ -81,7 +75,12 @@ import Search from "../places/Search";
 import RequestReactForm from "@/app/requests/request-react-form";
 import clogger from "@/lib/clogger";
 import { setCookie, getCookie } from "@/app/actions";
-import { MemoizedCategoryLayers } from "./category-layers";
+import {
+  clusterCountLayer,
+  clusterLayer,
+  unclusteredPointLayer,
+  MemoizedCategoryLayers,
+} from "./category-layers";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
@@ -193,6 +192,10 @@ export default function MapComponent() {
   //Because we are using names in selector form, it is easier to update items with string[]
   const [catNames, setCatNames] = useState<string[]>([]);
 
+  //used to show counts by category when in cluster mode
+  const [categoriesClusterProperties, setCategoriesClusterProperties] =
+    useState({});
+
   useEffect(() => {
     if (categories.length > 0) {
       clogger.debug({ data: categories }, "Categories were updated");
@@ -201,7 +204,7 @@ export default function MapComponent() {
         new Map();
       categories.map((item) => {
         // uncheck one category
-        if (item.name == "Casino") {
+        if (item.name == "Some_category_to_uncheck_by_default") {
           categoriesSelectorMapInitialValuesTmp.set(item.id, false);
         } else {
           categoriesSelectorMapInitialValuesTmp.set(item.id, true);
@@ -250,6 +253,37 @@ export default function MapComponent() {
         // Array.from(categoriesSelectorMap.keys())
         items
       );
+
+      type RecursiveArray = Array<RecursiveArray | string | number>;
+      interface ArrayDict {
+        [key: string]: RecursiveArray;
+      }
+      const filtersByCategory: ArrayDict = {
+        // const filtersByCategory: { [key: string]:  } = {
+        // bar: ["+", ["case", ["==", ["get", "category"], 1], 1, 0]],
+      };
+      categories.forEach((category) => {
+        filtersByCategory[category.name.toLowerCase().replaceAll(/ /g, "_")] = [
+          "+",
+          ["case", ["==", ["get", "category"], Number(category.id)], 1, 0],
+        ];
+      });
+      // categories.forEach((category) => {
+      //   filtersByCategory.push({
+      //     [category.name.toLowerCase().replaceAll(/ /g, "_")]: [
+      //       "+",
+      //       ["case", ["==", ["get", "category"], Number(category.id)], 1, 0],
+      //     ],
+      //   });
+      // });
+
+      // items.forEach((item) => {
+      //   filtersByCategory.push({
+      //     [item]: ["+", ["case", ["==", ["get", "category"], 1], 1, 0]],
+      //   });
+      // });
+      console.log("Cluster Filters", filtersByCategory);
+      setCategoriesClusterProperties(filtersByCategory);
     }
   }, [categories]);
 
@@ -903,19 +937,24 @@ export default function MapComponent() {
 
           {/*Adding source for places*/}
           <Source
-            clusterRadius={50} // cluster two points if less than stated pixels apart
-            id={pointsLayerId}
-            maxzoom={15}
-            // clusterMinPoints={2}
-            clusterMaxZoom={14} // display all points individually from stated zoom up
             type="geojson"
-            // tolerance={20}
-            cluster={false}
             {...PLACES_SOURCE}
+            id={pointsLayerId}
+            maxzoom={14}
+            // tolerance={20}
+            cluster={true}
+            clusterRadius={100} // cluster two points if less than stated pixels apart
+            clusterMinPoints={3}
+            clusterMaxZoom={14} // display all points individually from stated zoom up
+            clusterProperties={categoriesClusterProperties}
+            // {
+            //   bar: ["+", ["case", ["==",["get","category"],"1"], 1, 0]]
+            // }
             // data="https://maplibre.org/maplibre-gl-js/docs/assets/earthquakes.geojson"
           >
             <Layer {...{ source: pointsLayerId, ...clusterLayer }} />
             <Layer {...{ source: pointsLayerId, ...clusterCountLayer }} />
+            {/* <Layer {...{ source: pointsLayerId, ...clusterCountLayerBars }} /> */}
             {/* <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} /> */}
 
             <MemoizedCategoryLayers

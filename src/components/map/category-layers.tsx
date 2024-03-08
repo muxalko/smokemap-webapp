@@ -3,6 +3,104 @@ import clogger from "@/lib/clogger";
 import * as React from "react";
 import { useState, Fragment } from "react";
 import { Layer, SymbolLayer } from "react-map-gl/maplibre";
+import type { LayerProps } from "react-map-gl/maplibre";
+
+// export const clusterLayer: LayerProps = {
+//   id: "clusters",
+//   type: "circle",
+//   filter: ["has", "point_count"],
+//   paint: {
+//     "circle-color": [
+//       "step",
+//       ["get", "point_count"],
+//       "#51bbd6",
+//       100,
+//       "#f1f075",
+//       750,
+//       "#f28cb1",
+//     ],
+//     "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
+//   },
+// };
+
+// export const clusterCountLayer: LayerProps = {
+//   id: "cluster-count",
+//   type: "symbol",
+//   filter: ["has", "point_count"],
+//   layout: {
+//     "text-field": "{point_count_abbreviated}",
+//     "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+//     "text-size": 12,
+//   },
+// };
+
+// export const unclusteredPointLayer: LayerProps = {
+//   id: "unclustered-point",
+//   type: "circle",
+//   filter: ["!", ["has", "point_count"]],
+//   paint: {
+//     "circle-color": "#ff0000",
+//     "circle-radius": 10,
+//     "circle-stroke-width": 1,
+//     "circle-stroke-color": "#000",
+//   },
+// };
+
+export const clusterLayer: LayerProps = {
+  id: "clusters",
+  type: "circle",
+  filter: ["has", "point_count"],
+  paint: {
+    "circle-color": [
+      "step",
+      ["get", "point_count"],
+      "#51bbd6",
+      100,
+      "#f1f075",
+      750,
+      "#f28cb1",
+    ],
+    "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
+  },
+};
+
+export const clusterCountLayer: LayerProps = {
+  id: "cluster-count-total",
+  type: "symbol",
+  filter: ["has", "point_count"],
+  layout: {
+    "text-field": "Total: {point_count_abbreviated}",
+    "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+    "text-size": 12,
+    "text-anchor": "center",
+    "text-offset": [0, 6],
+  },
+};
+
+// export const clusterCountLayerBars: LayerProps = {
+//   id: "cluster-count-bar",
+//   type: "symbol",
+//   filter: [">", ["get", "bar"], 0],
+//   layout: {
+//     "text-field": "Bars: {bar}",
+//     "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+//     "text-size": 12,
+//     "text-anchor": "bottom",
+//     "text-offset": [0, -2],
+//   },
+// };
+
+export const unclusteredPointLayer: LayerProps = {
+  id: "unclustered-point",
+  type: "circle",
+  filter: ["!", ["has", "point_count"]],
+  paint: {
+    "circle-color": "#ff0000",
+    "circle-radius": 10,
+    "circle-stroke-width": 1,
+    "circle-stroke-color": "#000",
+  },
+};
 
 export default function CategoryLayers({
   sourceLayerId,
@@ -25,6 +123,7 @@ export default function CategoryLayers({
   const symbolLayerIdName = "symbol_name";
   const symbolLayerIdCategory = "symbol_category";
   const paintLayerIdCategory = "paint_category";
+
   const colors: Map<string, string> = new Map([
     ["-1", "#FFFFFF"],
     ["1", "#277551"],
@@ -101,7 +200,7 @@ export default function CategoryLayers({
               filter: ["==", ["get", "category"], Number(item.id)],
               layout: {
                 visibility: selector.get(item.id) ? "visible" : "none",
-                "text-allow-overlap": true,
+                "text-allow-overlap": false,
                 "text-font": ["Arial Italic"],
                 "text-field": ["get", "name"],
                 "text-size": [
@@ -117,6 +216,38 @@ export default function CategoryLayers({
                 ],
                 "text-anchor": "bottom",
                 // "text-offset": [0, -2],
+              },
+            }}
+          />
+          <Layer
+            {...{
+              id:
+                "cluster-count-" +
+                item.name.toLowerCase().replaceAll(/ /g, "-"),
+              type: "symbol",
+              source: sourceLayerId,
+              filter: [
+                ">",
+                ["get", item.name.toLowerCase().replaceAll(/ /g, "_")],
+                0,
+              ],
+              layout: {
+                visibility: selector.get(item.id) ? "visible" : "none",
+                "text-allow-overlap": true,
+                "text-field":
+                  item.name +
+                  ": {" +
+                  item.name.toLowerCase().replaceAll(/ /g, "_") +
+                  "}",
+                "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                "text-size": 12,
+                "text-ignore-placement": true,
+                "text-max-width": 15,
+                "text-justify": "left",
+                // "symbol-placement": "point",
+                // "text-padding": 1,
+                "text-anchor": "center",
+                "text-offset": [0, Number(item.id) - 5],
               },
             }}
           />
