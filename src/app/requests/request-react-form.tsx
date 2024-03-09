@@ -796,7 +796,7 @@ export default function RequestReactForm({
                                         />
                                       </FormControl>
                                       <FormDescription className="text-left">
-                                        <p>If you do not know the address</p>
+                                        If you do not know the address
                                         <Button
                                           type="button"
                                           variant="ghost"
@@ -930,9 +930,7 @@ export default function RequestReactForm({
                                         />
                                       </FormControl>
                                       <FormDescription>
-                                        <p>
-                                          Drop few words if you would like to.
-                                        </p>
+                                        Drop few words if you would like to.
                                       </FormDescription>
                                       <FormMessage />
                                     </FormItem>
