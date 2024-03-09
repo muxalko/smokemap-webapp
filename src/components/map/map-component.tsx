@@ -924,7 +924,8 @@ export default function MapComponent() {
           // dragPan={false} // disable panning
           // dragRotate={false} // disable map rotation using right click + drag
           // touchZoomRotate={false} // disable map rotation using touch rotation gesture
-          interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
+          // interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
+          interactiveLayerIds={interactiveLayerIds} //enable click on markers
           onLoad={onMapLoad} // onClick={onClick}
           onIdle={onMapIdle}
           // attributionControl={false}
