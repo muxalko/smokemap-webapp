@@ -816,10 +816,13 @@ export default function MapComponent() {
   });
 
   const paintLayerIdCategory = "paint_category";
-  const interactiveLayerIds: string[] = [
-    "clusters",
-    categories.map((item) => paintLayerIdCategory + "_" + item.name),
-  ];
+  // make points clickable
+  const interactiveLayerIds: string[] = categories.map(
+    (item: CategoryType) => paintLayerIdCategory + "_" + item.name
+  );
+
+  // add cluster layer clickability for expansion
+  interactiveLayerIds.push("clusters");
 
   return (
     <>
