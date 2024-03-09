@@ -815,6 +815,12 @@ export default function MapComponent() {
     },
   });
 
+  const paintLayerIdCategory = "paint_category";
+  const interactiveLayerIds: string[] = [
+    "clusters",
+    categories.map((item) => paintLayerIdCategory + "_" + item.name),
+  ];
+
   return (
     <>
       {/* {viewport && <h2>Zoom: {viewport.zoom}</h2>}
