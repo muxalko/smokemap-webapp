@@ -104,10 +104,12 @@ export const unclusteredPointLayer: LayerProps = {
 
 export default function CategoryLayers({
   sourceLayerId,
+  paintLayerIdCategory,
   categories,
   selector,
 }: {
   sourceLayerId: string;
+  paintLayerIdCategory: string;
   categories: CategoryType[];
   selector: Map<string, boolean>;
 }): React.ReactElement<SymbolLayer> {
@@ -122,7 +124,6 @@ export default function CategoryLayers({
   // );
   const symbolLayerIdName = "symbol_name";
   const symbolLayerIdCategory = "symbol_category";
-  const paintLayerIdCategory = "paint_category";
 
   const colors: Map<string, string> = new Map([
     ["-1", "#FFFFFF"],
@@ -144,15 +145,18 @@ export default function CategoryLayers({
         <Fragment key={item.id}>
           <Layer
             {...{
-              id: paintLayerIdCategory + "_" + item.name,
+              id:
+                paintLayerIdCategory +
+                "_" +
+                item.name.toLowerCase().replaceAll(/ /g, "-"),
               source: sourceLayerId,
               type: "circle",
-              filter: ["==", ["get", "category"], Number(item.id)],
-              // filter: [
-              //   "==",
-              //   ["!", ["has", "point_count"]],
-              //   ["==", ["get", "category"], Number(item.id)],
-              // ],
+              // filter: ["==", ["get", "category"], Number(item.id)],
+              filter: [
+                "==",
+                ["!", ["has", "point_count"]],
+                ["==", ["get", "category"], Number(item.id)],
+              ],
               paint: {
                 "circle-color": colors.get(item.id),
                 // "#" +
@@ -167,7 +171,10 @@ export default function CategoryLayers({
           />
           <Layer
             {...{
-              id: symbolLayerIdCategory + "_" + item.name,
+              id:
+                symbolLayerIdCategory +
+                "_" +
+                item.name.toLowerCase().replaceAll(/ /g, "-"),
               type: "symbol",
               source: sourceLayerId,
               filter: ["==", ["get", "category"], Number(item.id)],
@@ -194,7 +201,10 @@ export default function CategoryLayers({
           />
           <Layer
             {...{
-              id: symbolLayerIdName + "_" + item.name,
+              id:
+                symbolLayerIdName +
+                "_" +
+                item.name.toLowerCase().replaceAll(/ /g, "-"),
               type: "symbol",
               source: sourceLayerId,
               filter: ["==", ["get", "category"], Number(item.id)],

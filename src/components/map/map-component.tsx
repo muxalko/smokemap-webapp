@@ -111,6 +111,8 @@ const CategorySelectorSchema = z.object({
   }),
 });
 
+const paintLayerIdCategory = "paint_category";
+
 // export default function MapComponent({
 //   categories,
 // }: {
@@ -198,6 +200,9 @@ export default function MapComponent() {
   const [categoriesClusterProperties, setCategoriesClusterProperties] =
     useState({});
 
+  // make points clickable
+  const [interactiveLayers, setInteractiveLayerIds] = useState<string[]>([]);
+
   useEffect(() => {
     if (categories.length > 0) {
       clogger.debug({ data: categories }, "Categories were updated");
@@ -284,8 +289,18 @@ export default function MapComponent() {
       //     [item]: ["+", ["case", ["==", ["get", "category"], 1], 1, 0]],
       //   });
       // });
-      console.log("Cluster Filters", filtersByCategory);
+      clogger.debug({ data: filtersByCategory }, "Cluster Filters");
       setCategoriesClusterProperties(filtersByCategory);
+
+      // set clickable layers
+      const interactiveLayerIdsTmp: string[] = categories.map(
+        (item: CategoryType) =>
+          paintLayerIdCategory +
+          "_" +
+          item.name.toLowerCase().replaceAll(/ /g, "-")
+      );
+      clogger.debug({ data: interactiveLayerIdsTmp }, "Interactive layers");
+      setInteractiveLayerIds(interactiveLayerIdsTmp);
     }
   }, [categories]);
 
@@ -568,8 +583,17 @@ export default function MapComponent() {
 
       // When a click event occurs on the clusters layer
       // zoom in to expand level
-      mapRef.current?.on("click", "clusters", (e) => {
-        clogger.trace({ data: e }, "clustered mapRef.current.onClick event");
+      mapRef.current?.on("click", clusterLayer.id!, (e) => {
+        clogger.debug(
+          {
+            data: mapRef.current,
+            style: mapRef.current?.getStyle(),
+            layer: mapRef.current?.getLayer(clusterLayer.id!),
+            source: mapRef.current?.getSource(pointsLayerId),
+          },
+          "mapRef"
+        );
+        clogger.debug({ data: e }, "clustered mapRef.current.onClick event");
         // When the map is clicked, get the geographic coordinate.
         const coordinates = mapRef.current?.unproject(e.point);
         // get first element clicked - for zooming in to cluster expand
@@ -607,47 +631,6 @@ export default function MapComponent() {
         }
       });
 
-      // When a click event occurs on a feature in
-      // the unclustered-point layer, open a popup at
-      // the location of the feature, with
-      // description HTML from its properties.
-      mapRef.current?.on("click", "unclustered-point", (e) => {
-        clogger.trace({ data: e }, "unclustered mapRef.current.onClick event");
-
-        if (e.features && e.features[0].geometry.type === "Point") {
-          const coordinates = e.features[0].geometry.coordinates.slice();
-
-          clogger.trace("unclustered onClick event coordinates " + coordinates);
-          // Ensure that if the map is zoomed out such that
-          // multiple copies of the feature are visible, the
-          // popup appears over the copy being pointed to.
-          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-          }
-
-          const properties: SimplePlaceType = e.features[0]
-            .properties as SimplePlaceType;
-
-          clogger.trace(
-            { data: properties },
-            "unclustered onClick event properties"
-          );
-
-          setPlaceSelected(properties);
-          // setPlacePopupOpen(true);
-          setPlaceDialogOpen(true);
-        }
-      });
-
-      // TODO: understand hover on touch devices
-      mapRef.current?.on("mouseenter", unclusteredPointLayer.id ?? "", (e) => {
-        mapRef.current!.getCanvas().style.cursor = "pointer";
-        clogger.trace({ data: e }, "unclustered mouseenter event");
-      });
-      mapRef.current?.on("mouseleave", unclusteredPointLayer.id ?? "", () => {
-        mapRef.current!.getCanvas().style.cursor = "";
-      });
-
       mapRef.current?.on("mouseenter", clusterLayer.id ?? "", (e) => {
         // test map instance still exists
         if (mapRef === null || mapRef === undefined) {
@@ -683,9 +666,53 @@ export default function MapComponent() {
       });
     }
 
+    // When a click event occurs on a feature in
+    // the unclustered-point layer, open a popup at
+    // the location of the feature, with
+    // description HTML from its properties.
+
+    interactiveLayers.forEach((layer) => {
+      clogger.trace("Create onClick event for " + layer);
+      mapRef.current?.on("click", layer, (e) => {
+        clogger.trace({ data: e }, "onClick event fired for " + layer);
+
+        if (e.features && e.features[0].geometry.type === "Point") {
+          const coordinates = e.features[0].geometry.coordinates.slice();
+
+          clogger.trace("unclustered onClick event coordinates " + coordinates);
+          // Ensure that if the map is zoomed out such that
+          // multiple copies of the feature are visible, the
+          // popup appears over the copy being pointed to.
+          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          }
+
+          const properties: SimplePlaceType = e.features[0]
+            .properties as SimplePlaceType;
+
+          clogger.trace(
+            { data: properties },
+            "unclustered onClick event properties"
+          );
+
+          setPlaceSelected(properties);
+          // setPlacePopupOpen(true);
+          setPlaceDialogOpen(true);
+        }
+      });
+      // TODO: understand hover on touch devices
+      mapRef.current?.on("mouseenter", layer, (e) => {
+        mapRef.current!.getCanvas().style.cursor = "pointer";
+        clogger.trace({ data: e }, "unclustered mouseenter event");
+      });
+      mapRef.current?.on("mouseleave", layer, () => {
+        mapRef.current!.getCanvas().style.cursor = "";
+      });
+    });
+
     //console.log("Map onLoad() ended");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [interactiveLayers]);
 
   // Prevent backend from overwhelming with the requests, hold for 300ms
   const mapOnMoveHandler = () => {
@@ -726,7 +753,7 @@ export default function MapComponent() {
           name: "viewport",
           value: JSON.stringify(map_viewport),
         })
-          .then((data) => clogger.debug({ data: data }, "Cookie is updated"))
+          .then((data) => clogger.trace({ data: data }, "Cookie is updated"))
           .catch((err) => clogger.error(err, "Transition error"));
       });
     }
@@ -815,15 +842,6 @@ export default function MapComponent() {
     },
   });
 
-  const paintLayerIdCategory = "paint_category";
-  // make points clickable
-  const interactiveLayerIds: string[] = categories.map(
-    (item: CategoryType) => paintLayerIdCategory + "_" + item.name
-  );
-
-  // add cluster layer clickability for expansion
-  interactiveLayerIds.push("clusters");
-
   return (
     <>
       {/* {viewport && <h2>Zoom: {viewport.zoom}</h2>}
@@ -898,6 +916,11 @@ export default function MapComponent() {
                 strokeLinejoin="round"
               />
             </svg>
+            {/* <pre className="text-left text-red-800">
+              {mapRef.current && (
+                <p>Zoom:{Math.floor(mapRef.current.getZoom())}</p>
+              )}
+            </pre> */}
           </PopoverTrigger>
           <PopoverContent>
             {categoriesSelectorMap.size > 0 && (
@@ -917,7 +940,7 @@ export default function MapComponent() {
           <p>Loading ...</p>
         </div>
       )}
-      {pointsDatasource.features.length > 0 && (
+      {pointsDatasource.features.length > 0 && interactiveLayers.length > 0 && (
         <DynamicMap
           reuseMaps
           {...viewport}
@@ -934,7 +957,7 @@ export default function MapComponent() {
           // dragRotate={false} // disable map rotation using right click + drag
           // touchZoomRotate={false} // disable map rotation using touch rotation gesture
           // interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
-          interactiveLayerIds={interactiveLayerIds} //enable click on markers
+          interactiveLayerIds={[clusterLayer.id!, ...interactiveLayers]} //enable click on markers
           onLoad={onMapLoad} // onClick={onClick}
           onIdle={onMapIdle}
           // attributionControl={false}
@@ -979,9 +1002,9 @@ export default function MapComponent() {
             maxzoom={14}
             // tolerance={20}
             cluster={true}
-            clusterRadius={100} // cluster two points if less than stated pixels apart
+            clusterRadius={30} // cluster two points if less than stated pixels apart
             clusterMinPoints={3}
-            clusterMaxZoom={14} // display all points individually from stated zoom up
+            clusterMaxZoom={15} // display all points individually from stated zoom up
             clusterProperties={categoriesClusterProperties}
             // {
             //   bar: ["+", ["case", ["==",["get","category"],"1"], 1, 0]]
@@ -995,6 +1018,7 @@ export default function MapComponent() {
 
             <MemoizedCategoryLayers
               sourceLayerId={pointsLayerId}
+              paintLayerIdCategory={paintLayerIdCategory}
               categories={categories}
               selector={categoriesSelectorMap}
             />
