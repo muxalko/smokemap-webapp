@@ -17,6 +17,12 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "smokemap-static-images-production.s3.amazonaws.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "lh3.googleusercontent.com",
         port: "",
         pathname: "/**",
