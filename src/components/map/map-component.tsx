@@ -322,6 +322,7 @@ export default function MapComponent() {
       {
         version: process.env.NEXT_PUBLIC_VERSION,
         base_url: process.env.NEXT_PUBLIC_BASE_URL,
+        graphql_endpoint: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
         vercel_url: process.env.NEXT_PUBLIC_VERCEL_URL,
         backend_url: process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT,
         log_level: process.env.NEXT_PUBLIC_LOG_LEVEL,
