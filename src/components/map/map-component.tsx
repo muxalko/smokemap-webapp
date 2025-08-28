@@ -327,13 +327,13 @@ export default function MapComponent() {
         backend_url: process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT,
         log_level: process.env.NEXT_PUBLIC_LOG_LEVEL,
         environment: process.env.NEXT_PUBLIC_ENVIRONMENT,
-        vercel_github_commit_sha: process.env.VERCEL_GITHUB_COMMIT_SHA,
-        vercel_github_repo_slug: process.env.VERCEL_GITHUB_REPO_SLUG,
-        vercel_github_repo_owner: process.env.VERCEL_GITHUB_REPO_OWNER,
-        vercel_github_repo_branch: process.env.VERCEL_GITHUB_REPO_BRANCH,
-        vercel_github_repo_name: process.env.VERCEL_GITHUB_REPO_NAME,
-        vercel_github_repo_url: process.env.VERCEL_GITHUB_REPO_URL,
-        vercel_github_repo_url_short: process.env.VERCEL_GITHUB_REPO_URL_SHORT
+        vercel_github_commit_sha: process.env.NEXT_PUBLIC_VERCEL_GITHUB_COMMIT_SHA,
+        vercel_github_repo_slug: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_SLUG,
+        vercel_github_repo_owner: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_OWNER,
+        vercel_github_repo_branch: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_BRANCH,
+        vercel_github_repo_name: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_NAME,
+        vercel_github_repo_url: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_URL,
+        vercel_github_repo_url_short: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_URL_SHORT
       },
       "App is started!"
     );
