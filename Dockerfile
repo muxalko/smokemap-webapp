@@ -1,13 +1,18 @@
-FROM node:alpine
+# syntax=docker/dockerfile:1
 
-RUN mkdir /webapp
-COPY . /webapp
+FROM node:22-bookworm-slim AS dependencies
 
-COPY package.json /webapp/package.json
-RUN cd /webapp; yarn install
+ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY . /webapp
+WORKDIR /app
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+FROM dependencies AS development
+
+COPY . .
 
 EXPOSE 3000
 
-WORKDIR /webapp
+CMD ["yarn", "dev", "--hostname", "0.0.0.0", "--port", "3000"]

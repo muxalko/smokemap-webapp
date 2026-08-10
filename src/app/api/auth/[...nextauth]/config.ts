@@ -11,6 +11,15 @@ import { getServerSession } from "next-auth";
 import { JWT } from 'next-auth/jwt';
 // import { setCookie } from "nookies";
 
+const backendInternalUrl =
+  process.env.BACKEND_INTERNAL_URL ??
+  process.env.NEXT_PUBLIC_BACKEND ??
+  "http://localhost:8000";
+const graphqlInternalEndpoint =
+  process.env.GRAPHQL_INTERNAL_ENDPOINT ??
+  process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ??
+  "http://localhost:8000/graphql/";
+
 /**
  * Takes a token, and returns a new token with updated
  * `accessToken` and `accessTokenExpires`. If an error occurs,
@@ -29,7 +38,7 @@ async function refreshAccessTokenWithDRF(token: JWT) {
     // const jwt_token = token?.access
     const jwt_refresh_token = token.refresh
     //login using DRF JWT auth 
-    const response = await fetch(process.env.NEXT_PUBLIC_BACKEND+"/dj-rest-auth/token/refresh/",{
+    const response = await fetch(backendInternalUrl+"/dj-rest-auth/token/refresh/",{
         method: "POST",
         headers: {
         "Content-Type": "application/json",
@@ -83,7 +92,7 @@ async function refreshAccessTokenWithGraphene(token: JWT) {
                 // });
     // const jwt_token = token?.access
     const jwt_refresh_token = token.refresh
-    const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT as string, {
+    const response = await fetch(graphqlInternalEndpoint, {
         method: 'POST',
         headers: {
             "Content-Type": "application/json",
