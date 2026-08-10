@@ -153,6 +153,13 @@ export const columns: ColumnDef<RequestType>[] = [
           <Button
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onClick={async () => {
+              clogger.debug("Approving request");
+              try {
+                await approveRequest(request.id);
+              } catch (error) {
+                clogger.error(error);
+              }
+
               const approveRequestResult = await approveRequest(request.id);
               clogger.debug(
                 { result: approveRequestResult },
@@ -183,7 +190,7 @@ export const columns: ColumnDef<RequestType>[] = [
               >
                 Delete
               </DropdownMenuItem>
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 onClick={async () => {
                   const approveRequestResult = await approveRequest(request.id);
@@ -194,7 +201,7 @@ export const columns: ColumnDef<RequestType>[] = [
                 }}
               >
                 Approve
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuSeparator />
               {/* <DropdownMenuItem>View customer</DropdownMenuItem>
             <DropdownMenuItem>View payment details</DropdownMenuItem> */}

@@ -14,11 +14,15 @@ import clogger from "./clogger";
 
 // have a function to create a client for you
 function makeClient() {
+  const isServer = typeof window === "undefined";
   const httpLink = new HttpLink({
     // const httpLink = createUploadLink({
     // this needs to be an absolute url, as relative urls cannot be used in SSR
     //uri: "http://localhost:3000/api",
-    uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
+    uri: isServer
+      ? process.env.GRAPHQL_INTERNAL_ENDPOINT ??
+        process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT
+      : process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
     credentials: "include",
     // you can disable result caching here if you want to
     // (this does not work if you are rendering your page with `export const dynamic = "force-static"`)
@@ -33,7 +37,10 @@ function makeClient() {
     // in case Django session authentication is in place and login successfully sent cookie
     // session cookie should be sent automatically by the browser
     const cookie_name = new RegExp("csrftoken=([^;]*)(;|$)");
-    const cookie_data = document.cookie?.match(cookie_name);
+    const cookie_data =
+      typeof document === "undefined"
+        ? null
+        : document.cookie?.match(cookie_name);
     if (cookie_data && cookie_data.length > 0) {
       const cookie_value: string = cookie_data[0];
       const csrftoken = cookie_value.substring(10);
@@ -62,7 +69,7 @@ function makeClient() {
     // use the `NextSSRInMemoryCache`, not the normal `InMemoryCache`
     cache: new NextSSRInMemoryCache(),
     link:
-      typeof window === "undefined"
+      isServer
         ? ApolloLink.from([
             // in a SSR environment, if you use multipart features like
             // @defer, you need to decide how to handle these.

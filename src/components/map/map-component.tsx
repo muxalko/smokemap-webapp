@@ -313,6 +313,10 @@ export default function MapComponent() {
       type: "FeatureCollection",
       features: [],
     });
+  const [pointsDatasourceLoading, setPointsDatasourceLoading] = useState(true);
+  const [pointsDatasourceError, setPointsDatasourceError] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     // update component is rendered
@@ -327,21 +331,40 @@ export default function MapComponent() {
         backend_url: process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT,
         log_level: process.env.NEXT_PUBLIC_LOG_LEVEL,
         environment: process.env.NEXT_PUBLIC_ENVIRONMENT,
-        vercel_github_commit_sha: process.env.NEXT_PUBLIC_VERCEL_GITHUB_COMMIT_SHA,
-        vercel_github_repo_slug: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_SLUG,
-        vercel_github_repo_owner: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_OWNER,
-        vercel_github_repo_branch: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_BRANCH,
-        vercel_github_repo_name: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_NAME,
+        vercel_github_commit_sha:
+          process.env.NEXT_PUBLIC_VERCEL_GITHUB_COMMIT_SHA,
+        vercel_github_repo_slug:
+          process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_SLUG,
+        vercel_github_repo_owner:
+          process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_OWNER,
+        vercel_github_repo_branch:
+          process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_BRANCH,
+        vercel_github_repo_name:
+          process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_NAME,
         vercel_github_repo_url: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_URL,
-        vercel_github_repo_url_short: process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_URL_SHORT
+        vercel_github_repo_url_short:
+          process.env.NEXT_PUBLIC_VERCEL_GITHUB_REPO_URL_SHORT,
       },
       "App is started!"
     );
 
     // trigger category retrieval
     getAllCategories()
-      .then((data) => setCategories(data.data?.categories as CategoryType[]))
-      .catch((err) => clogger.error(err, "Error fetching categories"));
+      .then(({ data }) => {
+        const loadedCategories = (data?.categories ?? []).filter(
+          (category): category is CategoryType => category != null
+        );
+
+        setCategories(loadedCategories);
+        return loadedCategories;
+      })
+      .catch((err: unknown) => {
+        setCategories([]);
+        clogger.error(err, "Error fetching categories");
+      });
+
+    setPointsDatasourceLoading(true);
+    setPointsDatasourceError(null);
 
     fetch(
       `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
@@ -355,8 +378,26 @@ export default function MapComponent() {
         },
       }
     )
-      .then((data) => data.json().then((points) => setPointsDatasource(points)))
-      .catch((err) => clogger.error(err, "Error fetching points datasource"));
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Places request failed with HTTP ${response.status}`);
+        }
+
+        return response.json() as Promise<GeoJSON.FeatureCollection>;
+      })
+      .then((points) => {
+        setPointsDatasource(points);
+        setPointsDatasourceLoading(false);
+        return points;
+      })
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : "Unable to load places";
+        setPointsDatasourceError(message);
+        setPointsDatasourceLoading(false);
+        clogger.error(err, "Error fetching points datasource");
+        return null;
+      });
 
     // Stop the invocation of the debounced function
     // after unmounting
@@ -944,48 +985,59 @@ export default function MapComponent() {
           </PopoverContent>
         </Popover>
       </div>
-      {pointsDatasource.features.length <= 0 && (
-        <div className="absolute left-1/2 top-1/2 z-50">
+      {pointsDatasourceLoading && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-50 -translate-x-1/2 rounded-md bg-white/90 px-4 py-2 shadow">
           <p>Loading ...</p>
         </div>
       )}
-      {pointsDatasource.features.length > 0 && interactiveLayers.length > 0 && (
-        <DynamicMap
-          reuseMaps
-          {...viewport}
-          ref={mapRef}
-          style={{ width: "100%", height: "100%", display: "inline-block" }}
-          // Caution!! simple demo style breaks cluster style
-          // mapStyle="https://demotiles.maplibre.org/style.json"
-          mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
-          // mapStyle={mapStyle && mapStyle.toJS()}
-          //mapStyle={process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN ? "https://api.maptiler.com/maps/basic-v2/style.json?key="+process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN:process.env.NEXT_PUBLIC_MAP_STYLE}
-          //maxZoom={20}
-          // interactive={true} // Enables zoom with scroll
-          // dragPan={false} // disable panning
-          // dragRotate={false} // disable map rotation using right click + drag
-          // touchZoomRotate={false} // disable map rotation using touch rotation gesture
-          // interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
-          interactiveLayerIds={[clusterLayer.id!, ...interactiveLayers]} //enable click on markers
-          onLoad={onMapLoad} // onClick={onClick}
-          onIdle={onMapIdle}
-          // attributionControl={false}
-        >
-          {/* <GeocoderControl position="bottom-right" placeholder="Address search" /> */}
-          <GeolocateControl position="bottom-right" />
-          {/* <FullscreenControl position="bottom-left" /> */}
-          <NavigationControl position="bottom-right" />
-          <ScaleControl />
+      {!pointsDatasourceLoading && pointsDatasourceError && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-50 -translate-x-1/2 rounded-md bg-red-50 px-4 py-2 text-red-800 shadow">
+          <p>{pointsDatasourceError}</p>
+        </div>
+      )}
+      {!pointsDatasourceLoading &&
+        !pointsDatasourceError &&
+        pointsDatasource.features.length === 0 && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-50 -translate-x-1/2 rounded-md bg-white/90 px-4 py-2 shadow">
+            <p>No places in this area yet.</p>
+          </div>
+        )}
+      <DynamicMap
+        reuseMaps
+        {...viewport}
+        ref={mapRef}
+        style={{ width: "100%", height: "100%", display: "inline-block" }}
+        // Caution!! simple demo style breaks cluster style
+        // mapStyle="https://demotiles.maplibre.org/style.json"
+        mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
+        // mapStyle={mapStyle && mapStyle.toJS()}
+        //mapStyle={process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN ? "https://api.maptiler.com/maps/basic-v2/style.json?key="+process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN:process.env.NEXT_PUBLIC_MAP_STYLE}
+        //maxZoom={20}
+        // interactive={true} // Enables zoom with scroll
+        // dragPan={false} // disable panning
+        // dragRotate={false} // disable map rotation using right click + drag
+        // touchZoomRotate={false} // disable map rotation using touch rotation gesture
+        // interactiveLayerIds={[clusterLayer.id!, unclusteredPointLayer.id!]} //enable click on markers
+        interactiveLayerIds={[clusterLayer.id!, ...interactiveLayers]} //enable click on markers
+        onLoad={onMapLoad} // onClick={onClick}
+        onIdle={onMapIdle}
+        // attributionControl={false}
+      >
+        {/* <GeocoderControl position="bottom-right" placeholder="Address search" /> */}
+        <GeolocateControl position="bottom-right" />
+        {/* <FullscreenControl position="bottom-left" /> */}
+        <NavigationControl position="bottom-right" />
+        <ScaleControl />
 
-          {trackCrosshair && (
-            <CustomOverlay>
-              {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
-              <Crosshair />
-            </CustomOverlay>
-          )}
+        {trackCrosshair && (
+          <CustomOverlay>
+            {/* TODO: research mouse ents on overlay -> style={{ pointerEvents: "all",}} */}
+            <Crosshair />
+          </CustomOverlay>
+        )}
 
-          {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
-          {/* <AttributionControl
+        {/*need according to https://documentation.maptiler.com/hc/en-us/articles/4405445885457-How-to-add-MapTiler-attribution-to-a-map*/}
+        {/* <AttributionControl
           style={{
             //color: 'ff7c92',
             "text-size-adjust": "100%",
@@ -1003,37 +1055,36 @@ export default function MapComponent() {
           }}
         /> */}
 
-          {/*Adding source for places*/}
-          <Source
-            type="geojson"
-            {...PLACES_SOURCE}
-            id={pointsLayerId}
-            maxzoom={14}
-            // tolerance={20}
-            cluster={true}
-            clusterRadius={30} // cluster two points if less than stated pixels apart
-            clusterMinPoints={3}
-            clusterMaxZoom={15} // display all points individually from stated zoom up
-            clusterProperties={categoriesClusterProperties}
-            // {
-            //   bar: ["+", ["case", ["==",["get","category"],"1"], 1, 0]]
-            // }
-            // data="https://maplibre.org/maplibre-gl-js/docs/assets/earthquakes.geojson"
-          >
-            <Layer {...{ source: pointsLayerId, ...clusterLayer }} />
-            <Layer {...{ source: pointsLayerId, ...clusterCountLayer }} />
-            {/* <Layer {...{ source: pointsLayerId, ...clusterCountLayerBars }} /> */}
-            {/* <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} /> */}
+        {/*Adding source for places*/}
+        <Source
+          type="geojson"
+          {...PLACES_SOURCE}
+          id={pointsLayerId}
+          maxzoom={14}
+          // tolerance={20}
+          cluster={true}
+          clusterRadius={30} // cluster two points if less than stated pixels apart
+          clusterMinPoints={3}
+          clusterMaxZoom={15} // display all points individually from stated zoom up
+          clusterProperties={categoriesClusterProperties}
+          // {
+          //   bar: ["+", ["case", ["==",["get","category"],"1"], 1, 0]]
+          // }
+          // data="https://maplibre.org/maplibre-gl-js/docs/assets/earthquakes.geojson"
+        >
+          <Layer {...{ source: pointsLayerId, ...clusterLayer }} />
+          <Layer {...{ source: pointsLayerId, ...clusterCountLayer }} />
+          {/* <Layer {...{ source: pointsLayerId, ...clusterCountLayerBars }} /> */}
+          {/* <Layer {...{ source: pointsLayerId, ...unclusteredPointLayer }} /> */}
 
-            <MemoizedCategoryLayers
-              sourceLayerId={pointsLayerId}
-              paintLayerIdCategory={paintLayerIdCategory}
-              categories={categories}
-              selector={categoriesSelectorMap}
-            />
-          </Source>
-        </DynamicMap>
-      )}
+          <MemoizedCategoryLayers
+            sourceLayerId={pointsLayerId}
+            paintLayerIdCategory={paintLayerIdCategory}
+            categories={categories}
+            selector={categoriesSelectorMap}
+          />
+        </Source>
+      </DynamicMap>
       {/* 
       <div>
         <Button
