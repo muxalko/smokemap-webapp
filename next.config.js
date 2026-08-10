@@ -1,6 +1,22 @@
 /** @type {import('next').NextConfig} */
 
+const backendInternalUrl = (
+  process.env.BACKEND_INTERNAL_URL ?? "http://localhost:8000"
+).replace(/\/$/, "");
+
 const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/api/smokemap/graphql",
+        destination: `${backendInternalUrl}/graphql/`,
+      },
+      {
+        source: "/api/smokemap/locations",
+        destination: `${backendInternalUrl}/locations/`,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -25,6 +41,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
         port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
         pathname: "/**",
       },
     ],

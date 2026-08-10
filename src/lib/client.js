@@ -13,7 +13,7 @@ import { getServerSession } from "next-auth";
 export const { getClient } = registerApolloClient((user) => {
     logger.debug("registerApolloClient() fired")
     const httpLink = new HttpLink({
-        uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
+        uri: process.env.GRAPHQL_INTERNAL_ENDPOINT ?? process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
         credentials: "include"
     });
     const authLink = setContext(async (_, { headers }) => {

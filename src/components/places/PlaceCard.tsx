@@ -53,7 +53,7 @@ export default function PlaceCard({ place }: Props) {
     variables: { id: place.place_id.toString() },
   });
 
-  clogger.debug({ data: place }, "PlaceCard got object");
+  clogger.trace({ data: place }, "PlaceCard got object");
 
   const [imageOpen, setImageOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<ImageType>();
