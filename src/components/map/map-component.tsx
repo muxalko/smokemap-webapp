@@ -874,7 +874,7 @@ export default function MapComponent() {
     layout: {
       visibility: "visible",
       "text-allow-overlap": true,
-      "text-font": ["Arial Italic"],
+      "text-font": ["Open Sans Semibold"],
       "text-field": ["get", "name"],
       "text-size": [
         "interpolate",
