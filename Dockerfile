@@ -11,6 +11,8 @@ RUN yarn install --frozen-lockfile
 
 FROM dependencies AS development
 
+ENV AUTH_TRUST_HOST=true
+
 COPY . .
 
 EXPOSE 3000
