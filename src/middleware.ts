@@ -9,8 +9,10 @@ import clogger from './lib/clogger';
 export default withAuth(
     // 'withAuth' augments 'Request' with the user\s token.
     function middleware(request: NextRequestWithAuth) {
-        clogger.debug("withAuth.middleware() nextUrl: " + JSON.stringify(request.nextUrl));
-        clogger.debug("withAuth.middleware() nextauth: " + JSON.stringify(request.nextauth));
+        clogger.debug(
+            { pathname: request.nextUrl.pathname },
+            "withAuth middleware",
+        );
 
         if (
             request.nextUrl.pathname.startsWith('/requests') &&
@@ -24,25 +26,7 @@ export default withAuth(
         callbacks: {
             authorized: ({ token }) => !!token,
         },
-        //   authorized: ({ token }) => {
-        //     //console.log("callback(jwt) token: " + JSON.stringify(token))
-        //    return token?.role === "admin"
-        // },
     },
 );
 // More on how NextAuth.js middleware works: https://next-auth.js.org/configuration/nextjs#middleware
-// export default withAuth({
-//   callbacks: {
-//     authorized({ req, token }) {
-//       //console.log("withAuth(req,token): " + JSON.stringify(req)+", " + JSON.stringify(token));
-//       // `/admin` requires admin role
-//       if (req.nextUrl.pathname === "/admin") {
-//         return token?.userRole === "admin";
-//       }
-//       // `/me` only requires the user to be logged in
-//       return !!token;
-//     },
-//   },
-// });
-
 export const config = { matcher: ['/requests', '/me'] };

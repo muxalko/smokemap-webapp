@@ -7,7 +7,6 @@ import logger from '@/lib/logger';
 import { LOGIN } from '@/graphql/queries/gql';
 import { getClient } from '@/lib/client';
 import { LoginMutation } from '@/graphql/__generated__/types';
-import { getServerSession } from "next-auth";
 import { JWT } from 'next-auth/jwt';
 // import { setCookie } from "nookies";
 
@@ -28,7 +27,7 @@ const graphqlInternalEndpoint =
 async function refreshAccessTokenWithDRF(token: JWT) {
   try {
     
-    logger.debug({token: token}, "refreshAccessToken() fired");
+    logger.debug("Refreshing access token with DRF");
     
     // getClient is calling for session and causes loop with jwt callback ;(
     // const refresh_token_result = await getClient().mutate<SilentTokenRefreshMutation>({
@@ -47,9 +46,8 @@ async function refreshAccessTokenWithDRF(token: JWT) {
             refresh: jwt_refresh_token
         }),
     })
-    logger.debug({data: response}, "response")
     const refresh_token_result = await response.json()
-    logger.debug({data: refresh_token_result}, "refresh_token_result")
+    logger.debug({ status: response.status }, "DRF token refresh completed")
     if (response.status != 200) {
       throw refresh_token_result.detail
     }
@@ -65,8 +63,8 @@ async function refreshAccessTokenWithDRF(token: JWT) {
     //   refresh: refresh_token_result.data?.refreshToken?.refreshToken,
     //   refreshExpiresIn: refresh_token_result.data?.refreshToken?.refreshExpiresIn
     }
-  } catch (error) {
-    logger.error(error)
+  } catch {
+    logger.error("DRF access token refresh failed")
 
     return {
       ...token,
@@ -83,7 +81,7 @@ async function refreshAccessTokenWithDRF(token: JWT) {
 async function refreshAccessTokenWithGraphene(token: JWT) {
   try {
     
-    logger.debug({token: token}, "refreshAccessToken() fired");
+    logger.debug("Refreshing access token with GraphQL");
     
     // getClient is calling for session and causes loop with jwt callback ;(
     // const refresh_token_result = await getClient().mutate<SilentTokenRefreshMutation>({
@@ -103,11 +101,8 @@ async function refreshAccessTokenWithGraphene(token: JWT) {
             query: "mutation SilentTokenRefresh { refreshToken { payload  token  refreshExpiresIn refreshToken }}"
             })
         })
-        // .then(res => res.json())
-        // .then((data) => { logger.debug(data, "refresh data"); return data.data})
-    logger.debug({data: response}, "response")
     const refresh_token_result = await response.json()
-    logger.debug({data: refresh_token_result}, "refresh_token_result")
+    logger.debug({ status: response.status }, "GraphQL token refresh completed")
     if (refresh_token_result.errors) {
       throw refresh_token_result.errors
     }
@@ -119,8 +114,8 @@ async function refreshAccessTokenWithGraphene(token: JWT) {
       refresh: refresh_token_result.data?.refreshToken?.refreshToken,
       refreshExpiresIn: refresh_token_result.data?.refreshToken?.refreshExpiresIn
     }
-  } catch (error) {
-    logger.error(error)
+  } catch {
+    logger.error("GraphQL access token refresh failed")
 
     return {
       ...token,
@@ -147,10 +142,7 @@ export const options: NextAuthOptions = {
                 password: { label: 'Password', type: 'password' },
             },
             // eslint-disable-next-line @typescript-eslint/require-await
-            async authorize(credentials, req) {
-                const session = await getServerSession(options);
-                logger.debug(req,"authorize() request");
-                // logger.debug('authorize() credentials: ' + JSON.stringify(credentials));
+            async authorize(credentials) {
                 // Add logic here to look up the user from the credentials supplied
                 // const user = {
                 //     id: '1',
@@ -183,8 +175,6 @@ export const options: NextAuthOptions = {
                     },
                 });
 
-                logger.debug( login_result, "login_result");
-                
                 if (
                     // credentials?.username === user.email &&
                     // credentials?.password === user.password
@@ -212,7 +202,7 @@ export const options: NextAuthOptions = {
                     user.accessExpiresIn = accessExpiresIn ?? 0
                     user.refresh = refresh ?? ''
                     user.refreshExpiresIn = refreshExpiresIn ?? 0
-                    logger.debug({user: user}, "Authenticated")
+                    logger.debug("Credentials authentication succeeded")
                    
                     // const user:User = {
                     //     id: customUser ? customUser?.name as string : '',
@@ -271,7 +261,7 @@ export const options: NextAuthOptions = {
                     return user;
 
                 } else {
-                    logger.error(login_result.errors,"Login error(s)")
+                    logger.error("Credentials authentication failed")
                 }
                 // If you return null then an error will be displayed advising the user to check their details.
                 return null;
@@ -326,8 +316,8 @@ export const options: NextAuthOptions = {
     // },
     callbacks: {
         // eslint-disable-next-line @typescript-eslint/require-await
-        async jwt({ token, user, account }) {
-            logger.debug({token: token, user: user, account: account },"callback.jwt() fired")
+        async jwt({ token, user }) {
+            logger.debug("JWT callback fired")
             //https://authjs.dev/guides/basics/role-based-access-control
             // catch first user login
             if (user) {
@@ -347,12 +337,11 @@ export const options: NextAuthOptions = {
                 return token
             }
             
-            logger.debug({token: token, user: user},"callback.jwt() refreshAccessToken")
+            logger.debug("JWT callback refreshing access token")
             return refreshAccessTokenWithGraphene(token)
         },
         // for client components
-        session({ session, token, user }) {
-            // logger.debug({token: token, session: session},"callback.session()")
+        session({ session, token }) {
             if (session?.user) {
                 session.user.role = token.role;
                 session.user.access = token.access;
