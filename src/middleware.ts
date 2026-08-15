@@ -3,10 +3,10 @@
 
 //https://next-auth.js.org/configuration/nextjs#advanced-usage
 import { NextRequestWithAuth, withAuth } from 'next-auth/middleware';
-import { NextResponse } from 'next/server';
+import { NextFetchEvent, NextRequest, NextResponse } from 'next/server';
 import clogger from './lib/clogger';
 
-export default withAuth(
+const protectedRoutesMiddleware = withAuth(
     // 'withAuth' augments 'Request' with the user\s token.
     function middleware(request: NextRequestWithAuth) {
         clogger.debug(
@@ -28,5 +28,28 @@ export default withAuth(
         },
     },
 );
+
+export default function middleware(
+    request: NextRequest,
+    event: NextFetchEvent,
+) {
+    if (request.nextUrl.pathname.startsWith('/api/auth')) {
+        const requestHeaders = new Headers(request.headers);
+
+        if (!requestHeaders.has('x-forwarded-proto')) {
+            requestHeaders.set(
+                'x-forwarded-proto',
+                request.nextUrl.protocol.replace(':', ''),
+            );
+        }
+
+        return NextResponse.next({
+            request: { headers: requestHeaders },
+        });
+    }
+
+    return protectedRoutesMiddleware(request as NextRequestWithAuth, event);
+}
+
 // More on how NextAuth.js middleware works: https://next-auth.js.org/configuration/nextjs#middleware
-export const config = { matcher: ['/requests', '/me'] };
+export const config = { matcher: ['/api/auth/:path*', '/requests', '/me'] };
