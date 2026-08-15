@@ -155,16 +155,14 @@ export const columns: ColumnDef<RequestType>[] = [
             onClick={async () => {
               clogger.debug("Approving request");
               try {
-                await approveRequest(request.id);
+                const approveRequestResult = await approveRequest(request.id);
+                clogger.debug(
+                  { result: approveRequestResult },
+                  "Got approveRequest response"
+                );
               } catch (error) {
                 clogger.error(error);
               }
-
-              const approveRequestResult = await approveRequest(request.id);
-              clogger.debug(
-                { result: approveRequestResult },
-                "Got approveRequest response"
-              );
             }}
           >
             Approve
