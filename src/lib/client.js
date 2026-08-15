@@ -20,16 +20,15 @@ export const { getClient } = registerApolloClient((user) => {
         // tryto detect existing session
         const session = await getServerSession(options);
 
-        // case when there is an existing session with Django backend, form previous login
-        if (session?.user && session?.user.access && session.user.refresh) {
+        // Authenticate backend GraphQL calls with Django's configured JWT scheme.
+        if (session?.user?.access) {
             logger.debug("Authenticated server GraphQL request")
             const jwt_token = session?.user.access
-            const jwt_refresh_token = session.user.refresh
 
             return {
                 headers: {
                     ...headers,
-                    Cookie: `JWT=${jwt_token};JWT-refresh-token=${jwt_refresh_token}`,
+                    Authorization: `Bearer ${jwt_token}`,
                 }
             };
         } else {
