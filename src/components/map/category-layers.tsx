@@ -70,7 +70,7 @@ export const clusterCountLayer: LayerProps = {
   filter: ["has", "point_count"],
   layout: {
     "text-field": "Total: {point_count_abbreviated}",
-    "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+    "text-font": ["Open Sans Semibold"],
     "text-size": 12,
     "text-anchor": "center",
     "text-offset": [0, 6],
@@ -181,7 +181,7 @@ export default function CategoryLayers({
               layout: {
                 visibility: selector.get(item.id) ? "visible" : "none",
                 "text-allow-overlap": true,
-                "text-font": ["Arial Italic"],
+                "text-font": ["Open Sans Semibold"],
                 "text-field": item.name,
                 "text-size": [
                   "interpolate",
@@ -211,7 +211,7 @@ export default function CategoryLayers({
               layout: {
                 visibility: selector.get(item.id) ? "visible" : "none",
                 "text-allow-overlap": false,
-                "text-font": ["Arial Italic"],
+                "text-font": ["Open Sans Semibold"],
                 "text-field": ["get", "name"],
                 "text-size": [
                   "interpolate",
@@ -249,7 +249,7 @@ export default function CategoryLayers({
                   ": {" +
                   item.name.toLowerCase().replaceAll(/ /g, "_") +
                   "}",
-                "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                "text-font": ["Open Sans Semibold"],
                 "text-size": 12,
                 "text-ignore-placement": true,
                 "text-max-width": 15,
