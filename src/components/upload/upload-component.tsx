@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useDropzone, FileWithPath } from "react-dropzone";
+import { useDropzone, FileRejection, FileWithPath } from "react-dropzone";
 import "./style.css"; // Import the CSS file for styling
 
 const UploadComponent = ({
@@ -8,22 +8,31 @@ const UploadComponent = ({
   setCallbackHandler: (files: FileWithPath[]) => void;
 }) => {
   const [uploadedFiles, setUploadedFiles] = useState<FileWithPath[]>([]);
+  const [rejectionMessages, setRejectionMessages] = useState<string[]>([]);
 
   const handleDrop = (acceptedFiles: FileWithPath[]) => {
-    // Logic for handling the dropped files
+    setRejectionMessages([]);
     setUploadedFiles(acceptedFiles);
 
-    // callback to update the files input of the createRequest form and send
     setCallbackHandler(acceptedFiles);
+  };
+
+  const handleRejected = (fileRejections: FileRejection[]) => {
+    setRejectionMessages(
+      fileRejections.flatMap(({ file, errors }) =>
+        errors.map(({ message }) => `${file.name}: ${message}`)
+      )
+    );
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: handleDrop,
+    onDropAccepted: handleDrop,
+    onDropRejected: handleRejected,
     accept: {
       "image/png": [".png"],
-      "image/jpg": [".jpg"],
-      //   "text/html": [".html", ".htm"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/webp": [".webp"],
     },
     // accept: "image/*, .pdf, .doc, .docx",
     multiple: true,
@@ -46,7 +55,7 @@ const UploadComponent = ({
       </div>
 
       <div className="file-list">
-        <h3>Uploaded File:</h3>
+        <h3>Selected images:</h3>
         {uploadedFiles.length > 0 ? (
           <ul>
             {uploadedFiles.map((file: FileWithPath, index: number) => (
@@ -56,7 +65,14 @@ const UploadComponent = ({
             ))}
           </ul>
         ) : (
-          <p>No file uploaded</p>
+          <p>No images selected (optional)</p>
+        )}
+        {rejectionMessages.length > 0 && (
+          <ul aria-live="polite" className="text-red-700">
+            {rejectionMessages.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

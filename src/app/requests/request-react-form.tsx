@@ -88,6 +88,14 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/png",
   "image/webp",
 ];
+const ImageFileSchema = z.custom<FileWithPath>(
+  (file) =>
+    typeof file === "object" &&
+    file !== null &&
+    "type" in file &&
+    "size" in file,
+  { message: "Invalid image file." }
+);
 
 // form validation schema
 const FormSchema = z.object({
@@ -95,7 +103,12 @@ const FormSchema = z.object({
     .string()
     .min(2, "Name should be more than one symbol")
     .max(255, "maximum name length is reached"),
-  category: z.string().regex(/^-?\d+$/, "Should include digits only"), //.transform(Number),
+  category: z
+    .string()
+    .refine(
+      (category) => /^\d+$/.test(category) && Number(category) > 0,
+      "Select a category"
+    ),
   addressString: z
     .string()
     .min(5, "Please, check your address")
@@ -120,16 +133,18 @@ const FormSchema = z.object({
     })
   ),
   images: z
-    .any()
-    .optional()
-    // To not allow empty files
-    .refine((files) => files?.length >= 1, { message: "Image is required." })
-    // To not allow files other than images
-    .refine((files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type), {
-      message: ".jpg, .jpeg, .png and .webp files are accepted.",
+    .array(ImageFileSchema)
+    .max(MAX_IMAGES_TO_UPLOAD, {
+      message: `Upload up to ${MAX_IMAGES_TO_UPLOAD} images.`,
     })
-    // To not allow files larger than 5MB
-    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, {
+    .refine(
+      (files) =>
+        files.every((file) => ACCEPTED_IMAGE_TYPES.includes(file?.type)),
+      {
+        message: ".jpg, .jpeg, .png and .webp files are accepted.",
+      }
+    )
+    .refine((files) => files.every((file) => file?.size <= MAX_FILE_SIZE), {
       message: `Max file size is 5MB.`,
     }),
 });
@@ -148,6 +163,7 @@ export default function RequestReactForm({
   // default form values
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    mode: "onChange",
     defaultValues: {
       name: "",
       category: "-1",
@@ -180,7 +196,8 @@ export default function RequestReactForm({
     if (noAddressMode)
       form.setValue(
         "addressString",
-        `[${crosshairPosition.at(0)},${crosshairPosition.at(1)}]`
+        `[${crosshairPosition.at(0)},${crosshairPosition.at(1)}]`,
+        { shouldDirty: true, shouldTouch: true, shouldValidate: true }
       );
   }, [crosshairPosition]);
 
@@ -307,8 +324,17 @@ export default function RequestReactForm({
       //   JSON.stringify(createRequestResponse_data)
       // );
       // count files to upload
-      let files2upload = (form.getValues("images") as FileWithPath[]).length;
+      let files2upload = form.getValues("images").length;
       const filesCount = files2upload;
+      const newRequest = createRequestResponse_data?.createRequest
+        ?.request as RequestType;
+
+      if (filesCount === 0) {
+        clearFormData();
+        postCreateRequest(newRequest);
+        return;
+      }
+
       /*
       // V1: Each file upload uses new s3 url
       // iterate over each file and get temporary S3 URL for uploading an image
@@ -351,7 +377,7 @@ export default function RequestReactForm({
         });
 
         // iterate over each file and get temporary S3 URL for uploading an image
-        (form.getValues("images") as FileWithPath[]).forEach((file) => {
+        form.getValues("images").forEach((file) => {
           clogger.debug({ current: file }, "processing image");
           // replace target filename with our own
           const extention = path.extname(file.name);
@@ -372,8 +398,6 @@ export default function RequestReactForm({
               .then((res) =>
                 clogger.debug({ message: res }, "S3 upload response")
               );
-            const newRequest = createRequestResponse_data?.createRequest
-              ?.request as RequestType;
             if (files2upload >= 1) {
               const mutation = {
                 input: {
@@ -646,7 +670,12 @@ export default function RequestReactForm({
                                                     onSelect={() => {
                                                       form.setValue(
                                                         "category",
-                                                        item.id
+                                                        item.id,
+                                                        {
+                                                          shouldDirty: true,
+                                                          shouldTouch: true,
+                                                          shouldValidate: true,
+                                                        }
                                                       );
                                                       setComboOpen(false);
                                                     }}
@@ -841,7 +870,12 @@ export default function RequestReactForm({
                                             setTags(newTags);
                                             setValue(
                                               "tags",
-                                              newTags as [Tag, ...Tag[]]
+                                              newTags as [Tag, ...Tag[]],
+                                              {
+                                                shouldDirty: true,
+                                                shouldTouch: true,
+                                                shouldValidate: true,
+                                              }
                                             );
                                           }}
                                           tags={tags}
@@ -885,7 +919,7 @@ export default function RequestReactForm({
                                 <FormField
                                   control={form.control}
                                   name="images"
-                                  render={({ field }) => (
+                                  render={() => (
                                     <FormItem className="flex flex-col items-start">
                                       <FormLabel className="py-2 text-left">
                                         Images
@@ -897,7 +931,12 @@ export default function RequestReactForm({
                                           ) =>
                                             form.setValue(
                                               "images",
-                                              uploadedFiles
+                                              uploadedFiles,
+                                              {
+                                                shouldDirty: true,
+                                                shouldTouch: true,
+                                                shouldValidate: true,
+                                              }
                                             )
                                           }
                                         />
@@ -906,8 +945,8 @@ export default function RequestReactForm({
                                         Upload up to {MAX_IMAGES_TO_UPLOAD}{" "}
                                         images for the place you are adding.
                                         <br />
-                                        Only *.jpg or *.png format is accepted.
-                                        Up to 2MB per file.
+                                        JPG, JPEG, PNG, and WebP are accepted.
+                                        Up to 5MB per file.
                                       </FormDescription>
                                       <FormMessage />
                                     </FormItem>
@@ -1036,7 +1075,7 @@ export default function RequestReactForm({
               Reset
             </Button>
             <Button
-              disabled={!form.formState.isValid}
+              disabled={!form.formState.isValid || loading_createRequest}
               type="button"
               // eslint-disable-next-line @typescript-eslint/no-misused-promises
               onClick={form.handleSubmit(onSubmit)}
