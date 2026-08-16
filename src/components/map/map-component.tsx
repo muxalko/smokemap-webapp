@@ -1019,7 +1019,7 @@ export default function MapComponent() {
             <p>No places in this area yet.</p>
           </div>
         )}
-      <DynamicMap
+      {mapStyle && <DynamicMap
         reuseMaps
         {...viewport}
         ref={setMapRef}
@@ -1103,7 +1103,7 @@ export default function MapComponent() {
             selector={categoriesSelectorMap}
           />
         </Source>
-      </DynamicMap>
+      </DynamicMap>}
       {/* 
       <div>
         <Button
