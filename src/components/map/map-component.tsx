@@ -22,7 +22,12 @@ import {
   SymbolLayer,
 } from "react-map-gl/maplibre";
 // import ControlPanel from "@/components/control/panel";
-import { GeoJSONSource, LngLat, LngLatBounds, LngLatLike } from "maplibre-gl";
+import {
+  GeoJSONSource,
+  LngLat,
+  LngLatBounds,
+  LngLatLike,
+} from "maplibre-gl";
 // need maplibre css for markers
 import "maplibre-gl/dist/maplibre-gl.css";
 import GeocoderControl from "./geocoder-control";
@@ -79,6 +84,11 @@ import {
   MemoizedCategoryLayers,
 } from "./category-layers";
 import { filterIcon } from "../icons";
+import {
+  addMissingBasemapImage,
+  BasemapStyle,
+  normalizeBasemapStyle,
+} from "./basemap-style";
 
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 //Starting point
@@ -158,7 +168,55 @@ export default function MapComponent() {
   // I assume that 'maplibregl' type Map is the same as 'react-map-gl/maplibre' Map component ref={mapRef}
   // This is where I try to declare my mapRef following answer from here https://stackoverflow.com/questions/68368898/typescript-type-for-mapboxgljs-react-ref-hook
   // const mapRef = useRef<maplibregl.Map | null>(null);
-  const mapRef = useRef<MapRef>(null);
+  const mapRef = useRef<MapRef | null>(null);
+  const missingImageMapRef = useRef<ReturnType<MapRef["getMap"]> | null>(null);
+
+  const setMapRef = useCallback((ref: MapRef | null) => {
+    if (missingImageMapRef.current) {
+      missingImageMapRef.current.off(
+        "styleimagemissing",
+        addMissingBasemapImage
+      );
+    }
+
+    mapRef.current = ref;
+    missingImageMapRef.current = ref?.getMap() ?? null;
+    missingImageMapRef.current?.on(
+      "styleimagemissing",
+      addMissingBasemapImage
+    );
+  }, []);
+
+  const [mapStyle, setMapStyle] = useState<BasemapStyle>();
+
+  useEffect(() => {
+    const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE;
+    if (!styleUrl) return;
+
+    const controller = new AbortController();
+
+    fetch(styleUrl, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Map style request failed with HTTP ${response.status}`);
+        }
+
+        return response.json() as Promise<BasemapStyle>;
+      })
+      .then((style) => {
+        setMapStyle(normalizeBasemapStyle(undefined, style));
+        return style;
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return null;
+        }
+        clogger.error(error, "Unable to load the map style");
+        return null;
+      });
+
+    return () => controller.abort();
+  }, []);
 
   // trying other approach from here  https://gis.stackexchange.com/questions/440274/how-to-make-map-ref-object-available-on-first-modal-window-render-launch
   // Basically, instead of useRef to use useState as follows, Map component then should be set to ref={(ref) => setMap(ref)}
@@ -961,14 +1019,14 @@ export default function MapComponent() {
             <p>No places in this area yet.</p>
           </div>
         )}
-      <DynamicMap
+      {mapStyle && <DynamicMap
         reuseMaps
         {...viewport}
-        ref={mapRef}
+        ref={setMapRef}
         style={{ width: "100%", height: "100%", display: "inline-block" }}
         // Caution!! simple demo style breaks cluster style
         // mapStyle="https://demotiles.maplibre.org/style.json"
-        mapStyle={process.env.NEXT_PUBLIC_MAP_STYLE}
+        mapStyle={mapStyle}
         // mapStyle={mapStyle && mapStyle.toJS()}
         //mapStyle={process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN ? "https://api.maptiler.com/maps/basic-v2/style.json?key="+process.env.NEXT_PUBLIC_MAPTILER_API_TOKEN:process.env.NEXT_PUBLIC_MAP_STYLE}
         //maxZoom={20}
@@ -1045,7 +1103,7 @@ export default function MapComponent() {
             selector={categoriesSelectorMap}
           />
         </Source>
-      </DynamicMap>
+      </DynamicMap>}
       {/* 
       <div>
         <Button
