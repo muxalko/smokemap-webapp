@@ -10,8 +10,6 @@ import { APPROVE_REQUEST, DELETE_REQUEST, GET_S3_PRESIGNED_URL } from '@/graphql
 import { revalidatePath } from 'next/cache';
 import { ALL_PLACES_NAMES_QUERY } from '@/graphql/queries/gql';
 import logger from '@/lib/logger';
-import { cookies } from 'next/headers';
-import { CookieListItem } from 'next/dist/compiled/@edge-runtime/cookies';
 
 export async function deleteRequest(id: string) {
     //console.log('deleteRequest(): id=', id);
@@ -85,20 +83,3 @@ export async function search(search: string) {
     //   .map((p: { name: string }) => p.name)
     //   .slice(0, 50);
   }
-
- export async function setCookie(data: CookieListItem) {
-
-    const cookieStore = cookies();
-
-    cookieStore.set(data);
-
-    return data;
-}
-
- export async function getCookie(name: string) {
-
-    const cookieStore = cookies();
-
-    return cookieStore.get(name);
-
-}

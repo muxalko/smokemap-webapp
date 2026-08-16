@@ -1,13 +1,10 @@
 // @refresh reset
 import * as React from "react";
-import debounce from "lodash.debounce";
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
-  useTransition,
 } from "react";
 // import { ALL_PLACES_QUERY } from "@/graphql/queries/gql";
 // import { useSuspenseQuery } from "@apollo/experimental-nextjs-app-support/ssr";
@@ -75,7 +72,6 @@ import PlaceList from "../places/PlaceList";
 import Search from "../places/Search";
 import RequestReactForm from "@/app/requests/request-react-form";
 import clogger from "@/lib/clogger";
-import { setCookie, getCookie } from "@/app/actions";
 import {
   clusterCountLayer,
   clusterLayer,
@@ -103,6 +99,40 @@ const boundingBox = new LngLatBounds(southWest, northEast);
 const initialZoom = 13;
 const pointsLayerId = "places";
 const flyToZoomLevel = 19;
+const viewportCookieName = "viewport";
+
+function readViewportCookie(): ViewState | null {
+  const prefix = `${viewportCookieName}=`;
+  const cookie = document.cookie
+    .split("; ")
+    .find((item) => item.startsWith(prefix));
+
+  if (!cookie) return null;
+
+  try {
+    const viewState = JSON.parse(
+      decodeURIComponent(cookie.slice(prefix.length))
+    ) as ViewState;
+
+    if (
+      !Number.isFinite(viewState.latitude) ||
+      !Number.isFinite(viewState.longitude) ||
+      !Number.isFinite(viewState.zoom)
+    ) {
+      return null;
+    }
+
+    return viewState;
+  } catch {
+    return null;
+  }
+}
+
+function writeViewportCookie(viewState: ViewState) {
+  document.cookie = `${viewportCookieName}=${encodeURIComponent(
+    JSON.stringify(viewState)
+  )}; Path=/; SameSite=Lax`;
+}
 
 // for Category filter selector
 const CategorySelectorSchema = z.object({
@@ -304,9 +334,6 @@ export default function MapComponent() {
     }
   }, [categories]);
 
-  // used to retrieve cookie with server action
-  const [isPending, startTransition] = useTransition();
-
   // main datasource
   const [pointsDatasource, setPointsDatasource] =
     useState<GeoJSON.FeatureCollection>({
@@ -399,11 +426,6 @@ export default function MapComponent() {
         return null;
       });
 
-    // Stop the invocation of the debounced function
-    // after unmounting
-    return () => {
-      debouncedMapOnMoveHandler.cancel();
-    };
   }, []);
 
   useEffect(() => {
@@ -587,49 +609,14 @@ export default function MapComponent() {
     clogger.trace("onLoad() fired");
 
     if (viewportSavedInCookie) {
-      // run when rendered
       if (isMounted.current) {
-        // try to read viewport saved in cookie
-        startTransition(() => {
-          getCookie("viewport")
-            .then((data) => {
-              clogger.debug(
-                { data: data },
-                "Viewport state is detected in cookie"
-              );
-              try {
-                const viewState: ViewState = JSON.parse(
-                  data?.value as string
-                ) as ViewState;
-                clogger.debug(
-                  { data: viewState },
-                  "Cookie viewport state value parsed successfully!"
-                );
-                setViewport(viewState);
-              } catch (ex) {
-                clogger.error(ex, "Error parsing viewstate from cookie");
-              }
-              return;
-            })
-            .catch((err) =>
-              clogger.error(err, "Error trying to read 'viewport' cookie")
-            );
-        });
+        const savedViewport = readViewportCookie();
+        if (savedViewport) setViewport(savedViewport);
       }
     }
 
-    // make our map draggable + debounce map bounds update
     if (mapRef && mapRef.current) {
       clogger.trace({ data: mapRef.current }, "onMapLoad() =>  mapRef.current");
-      mapRef.current?.on("move", (evt: ViewStateChangeEvent) => {
-        setViewport({ ...evt.viewState });
-
-        if (mapRef && mapRef.current) {
-          debouncedMapOnMoveHandler();
-        }
-
-        // setMapBounds(mapRef.current?.getBounds())
-      });
 
       // When a click event occurs on the clusters layer
       // zoom in to expand level
@@ -764,11 +751,11 @@ export default function MapComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interactiveLayers]);
 
-  // Prevent backend from overwhelming with the requests, hold for 300ms
-  const mapOnMoveHandler = () => {
-    // feels chunky when dragging the map if used with debounce method
-    //setViewport({ ...evt.viewState });
+  const handleMapMove = useCallback((evt: ViewStateChangeEvent) => {
+    setViewport(evt.viewState);
+  }, []);
 
+  const handleMapMoveEnd = useCallback((evt: ViewStateChangeEvent) => {
     // update visual bounds
     setMapBounds(mapRef.current!.getBounds());
 
@@ -783,42 +770,14 @@ export default function MapComponent() {
     // const { lng, lat }: { lng: number; lat: number } =
     //   mapRef.current!.getCenter();
 
-    // !!! REMEMBER !!!
-    // state is not updated immediately -it might take some time
-    // for the value to update
-
-    // save current map viewstate in cookie
-    const map_viewport = {
-      latitude: center?.lat,
-      longitude: center?.lng,
-      zoom: mapRef.current!.getZoom(),
-      bearing: mapRef.current!.getBearing(),
-      pitch: mapRef.current!.getPitch(),
-      padding: mapRef.current!.getPadding(),
-    };
-
     if (viewportSavedInCookie) {
-      startTransition(() => {
-        setCookie({
-          name: "viewport",
-          value: JSON.stringify(map_viewport),
-        })
-          .then((data) => clogger.trace({ data: data }, "Cookie is updated"))
-          .catch((err) => clogger.error(err, "Transition error"));
-      });
+      writeViewportCookie(evt.viewState);
     }
-  };
+  }, [viewportSavedInCookie]);
 
   useEffect(() => {
     clogger.trace("map's geographical centerpoint: " + crosshairLngLat);
   }, [crosshairLngLat]);
-
-  // when useMemo is in use, remeber that it will remember the initial state of the app
-  // hence, no changes will be reflected in the function
-  const debouncedMapOnMoveHandler = useMemo(
-    () => debounce(mapOnMoveHandler, 300),
-    []
-  );
 
   const flyToCoordinates = useCallback((coordinates: Array<number>) => {
     const longitude: number = coordinates[0];
@@ -1021,6 +980,8 @@ export default function MapComponent() {
         interactiveLayerIds={[clusterLayer.id!, ...interactiveLayers]} //enable click on markers
         onLoad={onMapLoad} // onClick={onClick}
         onIdle={onMapIdle}
+        onMove={handleMapMove}
+        onMoveEnd={handleMapMoveEnd}
         // attributionControl={false}
       >
         {/* <GeocoderControl position="bottom-right" placeholder="Address search" /> */}
