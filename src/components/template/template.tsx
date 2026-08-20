@@ -21,10 +21,6 @@ export default async function Template({
       email: "",
       image: "/guest.svg",
       role: "guest",
-      access: "",
-      accessExpiresIn: 0,
-      refresh: "",
-      refreshExpiresIn: 0,
     };
   } else {
     logged_user = session?.user;
