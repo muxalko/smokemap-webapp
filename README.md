@@ -1,5 +1,8 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+The server-side authentication and future identity-provider boundary is
+documented in [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md).
+
 ## NextJS Getting Started
 
 For installing any packages inside the docker container use the following,
@@ -11,6 +14,7 @@ docker compose exec webapp yarn install maplibre-gl [<package-name>]
 Also, if u get any `ModuleNotFoundError` use the same command in order to install the missing one inside container.
 
 ## Running in VM
+
 ```bash
 $ yarn dev --hostname 0.0.0.0 --port 3000
 yarn run v1.22.21

@@ -4,4 +4,7 @@ const createJestConfig = nextJest({ dir: "./" });
 
 module.exports = createJestConfig({
   testEnvironment: "jsdom",
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1",
+  },
 });
