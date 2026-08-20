@@ -5,10 +5,12 @@ import { options } from "@/app/api/auth/[...nextauth]/config";
 
 type BackendServerSession = {
   backendAccess?: string;
+  role?: string;
+  userId?: string;
   authError?: "SessionExpired";
 };
 
-export async function getBackendAccessToken(): Promise<string | null> {
+export async function getBackendAuth(): Promise<BackendServerSession | null> {
   const session = await getServerSession({
     ...options,
     callbacks: {
@@ -16,10 +18,16 @@ export async function getBackendAccessToken(): Promise<string | null> {
       session({ token }) {
         return {
           backendAccess: token.backendAccess,
+          role: token.role,
+          userId: token.backendUserId,
           authError: token.authError,
         } as BackendServerSession;
       },
     },
   });
-  return session?.authError ? null : session?.backendAccess ?? null;
+  return session?.authError ? null : session;
+}
+
+export async function getBackendAccessToken(): Promise<string | null> {
+  return (await getBackendAuth())?.backendAccess ?? null;
 }

@@ -20,6 +20,14 @@ Server-side backend calls obtain the bearer credential through the private
 session projection in `src/lib/auth/get-backend-auth.ts`. They must not add a
 credential to the public session to make it accessible.
 
+Protected server actions obtain that private session once, check the normalized
+Django role, and pass the same access token to the backend call. Moderators and
+administrators may approve pending submissions; only administrators see or may
+invoke exceptional hard deletion. Guest and normal-user controls are absent,
+and direct action invocation fails before a backend request. These frontend
+checks improve UX only—Django reauthorizes every mutation and its denial is
+still returned to the caller.
+
 Refresh failures are terminal after one controlled retry for a transient
 provider or network failure. Terminal handling erases both backend
 credentials and requires a new login. Logout attempts to revoke the active

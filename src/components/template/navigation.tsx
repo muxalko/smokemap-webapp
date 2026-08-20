@@ -48,7 +48,7 @@ export default function Navigation({ user }: { user: User }) {
                 </div>
                 <div className="hidden md:block">
                   <div className="ml-10 flex items-baseline space-x-4">
-                    {user.role == "admin" &&
+                    {["moderator", "administrator"].includes(user.role) &&
                       navigation.map((item) => (
                         <a
                           aria-current={item.current ? "page" : undefined}

@@ -18,6 +18,7 @@ export const { getClient } = registerApolloClient((user) => {
   });
   const authLink = setContext(async (_, { headers }) => {
     logger.debug("registerApolloClient().setContext() fired");
+    if (headers?.Authorization || headers?.authorization) return { headers };
     const jwt_token = await getBackendAccessToken();
 
     // Authenticate backend GraphQL calls with Django's configured JWT scheme.

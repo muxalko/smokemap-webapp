@@ -10,7 +10,10 @@ import {
 export const dynamic = "force-dynamic";
 
 import { DataTable } from "./data-table";
-import { columns } from "./columns";
+import { createColumns } from "./columns";
+import { getBackendAuth } from "@/lib/auth/get-backend-auth";
+import { canHardDelete, canModerate } from "@/lib/auth/permissions";
+import { redirect } from "next/navigation";
 // import RequestReactForm from "./request-react-form";
 // import { ALL_CATEGORIES_QUERY } from "@/graphql/queries/gql";
 // import { revalidatePath } from "next/cache";
@@ -21,6 +24,10 @@ import { columns } from "./columns";
 // import { redirect } from "next/navigation";
 
 export default async function RequestsManager(): Promise<JSX.Element> {
+  const auth = await getBackendAuth();
+  if (!auth?.backendAccess) redirect("/api/auth/signin?callbackUrl=%2Frequests");
+  if (!canModerate(auth.role)) redirect("/denied");
+
   // const session = await getServerSession(options);
 
   // ensure relevant cookies are present
@@ -41,6 +48,12 @@ export default async function RequestsManager(): Promise<JSX.Element> {
   // fetch the data
   const data = await getClient().query<GetAllNotApprovedRequestsQuery>({
     query: NOT_APPROVED_REQUESTS_QUERY,
+    context: { headers: { Authorization: `Bearer ${auth.backendAccess}` } },
+  });
+
+  const columns = createColumns({
+    canApprove: canModerate(auth.role),
+    canDelete: canHardDelete(auth.role),
   });
 
   // const categories = await getClient().query<GetAllCategoriesQuery>({
