@@ -3,6 +3,25 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 The server-side authentication and future identity-provider boundary is
 documented in [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md).
 
+## Tests
+
+Run the canonical local checks from the workspace root:
+
+```sh
+make check
+make test
+```
+
+For a focused frontend run in the existing Compose container:
+
+```sh
+docker compose exec -T frontend yarn test:ci
+```
+
+`test:ci` exits after one deterministic run and fails when tests fail or when
+Jest discovers no tests. Pull requests and pushes to `development` run the
+same type, lint, and test commands in GitHub Actions.
+
 ## NextJS Getting Started
 
 For installing any packages inside the docker container use the following,

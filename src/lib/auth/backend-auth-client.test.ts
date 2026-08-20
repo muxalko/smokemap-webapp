@@ -5,21 +5,15 @@ import {
   revokeBackendSession,
   rotateBackendSession,
 } from "./backend-auth-client";
-
-const response = (body: unknown, status = 200) =>
-  ({
-    ok: status >= 200 && status < 300,
-    status,
-    json: jest.fn().mockResolvedValue(body),
-  }) as unknown as Response;
+import { installFetchMock, jsonResponse } from "@/test/network";
 
 beforeEach(() => {
-  global.fetch = jest.fn();
+  installFetchMock();
 });
 
 it("maps password login to provider-neutral backend credentials", async () => {
   (fetch as jest.Mock).mockResolvedValue(
-    response({
+    jsonResponse({
       data: {
         tokenAuth: {
           payload: { exp: 123, sub: "7" },
@@ -44,7 +38,7 @@ it("retries one transient refresh failure and rotates successfully", async () =>
   (fetch as jest.Mock)
     .mockRejectedValueOnce(new Error("network unavailable"))
     .mockResolvedValueOnce(
-      response({
+      jsonResponse({
         data: {
           refreshToken: {
             payload: { exp: 123 },
@@ -64,7 +58,7 @@ it("retries one transient refresh failure and rotates successfully", async () =>
 
 it("does not retry a stable authentication denial", async () => {
   (fetch as jest.Mock).mockResolvedValue(
-    response({ errors: [{ extensions: { code: "REFRESH_TOKEN_REUSED" } }] })
+    jsonResponse({ errors: [{ extensions: { code: "REFRESH_TOKEN_REUSED" } }] })
   );
   await expect(rotateBackendSession("refresh-secret")).rejects.toMatchObject({
     code: "REFRESH_TOKEN_REUSED",
@@ -75,7 +69,7 @@ it("does not retry a stable authentication denial", async () => {
 it("revokes through GraphQL without putting the token in a cookie header", async () => {
   const fetchMock = fetch as jest.MockedFunction<typeof fetch>;
   fetchMock.mockResolvedValue(
-    response({ data: { revokeToken: { revoked: 123 } } })
+    jsonResponse({ data: { revokeToken: { revoked: 123 } } })
   );
   await revokeBackendSession("refresh-secret");
   const init = fetchMock.mock.calls[0]?.[1] as RequestInit;

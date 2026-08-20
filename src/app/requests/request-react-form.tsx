@@ -75,6 +75,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { omit } from "lodash";
 import logger from "redux-logger";
 import clogger from "@/lib/clogger";
+import { completeWithoutImages } from "./submission-completion";
 export const dynamic = "force-dynamic";
 
 const MIN_TAG_LENGTH = 3;
@@ -329,9 +330,16 @@ export default function RequestReactForm({
       const newRequest = createRequestResponse_data?.createRequest
         ?.request as RequestType;
 
-      if (filesCount === 0) {
-        clearFormData();
-        postCreateRequest(newRequest);
+      if (
+        completeWithoutImages(
+          form.getValues("images"),
+          newRequest,
+          (request) => {
+            clearFormData();
+            postCreateRequest(request);
+          }
+        )
+      ) {
         return;
       }
 
