@@ -15,6 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { RequestType } from "@/graphql/__generated__/types";
+import { createColumns, type ModerationCapabilities } from "./columns";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -77,4 +79,13 @@ export function DataTable<TData, TValue>({
       </Table>
     </div>
   );
+}
+
+export function ModerationDataTable({
+  data,
+  canApprove,
+  canDelete,
+}: ModerationCapabilities & { data: RequestType[] }) {
+  const columns = createColumns({ canApprove, canDelete });
+  return <DataTable columns={columns} data={data} />;
 }

@@ -5,12 +5,11 @@ import {
   // CategoryType,
   // GetAllCategoriesQuery,
   GetAllNotApprovedRequestsQuery,
-  ImageType,
+  RequestType,
 } from "@/graphql/__generated__/types";
 export const dynamic = "force-dynamic";
 
-import { DataTable } from "./data-table";
-import { createColumns } from "./columns";
+import { ModerationDataTable } from "./data-table";
 import { getBackendAuth } from "@/lib/auth/get-backend-auth";
 import { canHardDelete, canModerate } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
@@ -49,11 +48,6 @@ export default async function RequestsManager(): Promise<JSX.Element> {
   const data = await getClient().query<GetAllNotApprovedRequestsQuery>({
     query: NOT_APPROVED_REQUESTS_QUERY,
     context: { headers: { Authorization: `Bearer ${auth.backendAccess}` } },
-  });
-
-  const columns = createColumns({
-    canApprove: canModerate(auth.role),
-    canDelete: canHardDelete(auth.role),
   });
 
   // const categories = await getClient().query<GetAllCategoriesQuery>({
@@ -95,9 +89,10 @@ export default async function RequestsManager(): Promise<JSX.Element> {
     <>
       
       <div className="container mx-auto py-10">
-        { /* prettier-ignore */ // added to .prettierignore, cause that decorator doesn't work
-         // @ts-expect-error: TS2322 because there is an issue with types for ColumnDef. See https://github.com/TanStack/table/issues/4241
-        }<DataTable columns={columns} data={data.data?.requestsToApprove}
+        <ModerationDataTable
+          data={(data.data?.requestsToApprove?.filter(Boolean) ?? []) as RequestType[]}
+          canApprove={canModerate(auth.role)}
+          canDelete={canHardDelete(auth.role)}
         />
       </div>
     </>
