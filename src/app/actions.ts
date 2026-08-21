@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getClient } from "@/lib/client";
 import { getBackendAuth } from "@/lib/auth/get-backend-auth";
 import { canHardDelete, canModerate } from "@/lib/auth/permissions";
+import { FrontendAuthorizationError } from "@/lib/auth/authorization-error";
 import type {
   ApproveRequestMutation,
   DeleteRequestMutation,
@@ -15,13 +16,6 @@ import {
   DELETE_REQUEST,
   GET_S3_PRESIGNED_URL,
 } from "@/graphql/queries/gql";
-
-export class FrontendAuthorizationError extends Error {
-  constructor(public readonly code: "AUTHENTICATION_REQUIRED" | "FORBIDDEN") {
-    super(code);
-    this.name = "FrontendAuthorizationError";
-  }
-}
 
 async function requireBackendRole(
   allowed: (role: string | undefined) => boolean
