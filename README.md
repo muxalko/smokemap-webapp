@@ -20,7 +20,8 @@ docker compose exec -T frontend yarn test:ci
 
 `test:ci` exits after one deterministic run and fails when tests fail or when
 Jest discovers no tests. Pull requests and pushes to `development` run the
-same type, lint, and test commands in GitHub Actions.
+same type, lint, and test commands in GitHub Actions. CI also scans the full
+Git history with Gitleaks and redacts any detected values.
 
 ## NextJS Getting Started
 
