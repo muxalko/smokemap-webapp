@@ -2,17 +2,32 @@ import type { FeatureCollection } from "geojson";
 
 export function ViewportStatus({
   loading,
+  hasLoaded = false,
   error,
   points,
+  onRetry,
 }: {
   loading: boolean;
+  hasLoaded?: boolean;
   error: string | null;
   points: FeatureCollection;
+  onRetry?: () => void;
 }) {
   const message = loading ? (
-    <p role="status">Loading places…</p>
+    <p role="status">{hasLoaded ? "Refreshing places…" : "Loading places…"}</p>
   ) : error ? (
-    <p role="alert">{error}</p>
+    <div role="alert">
+      <p>{error}</p>
+      {onRetry && (
+        <button
+          className="pointer-events-auto mt-2 rounded bg-blue-700 px-3 py-1 text-white"
+          onClick={onRetry}
+          type="button"
+        >
+          Retry
+        </button>
+      )}
+    </div>
   ) : points.features.length === 0 ? (
     <p role="status">No places in this area yet.</p>
   ) : null;

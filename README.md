@@ -24,6 +24,16 @@ same type, lint, and test commands, then compile and serve the home page with
 Next.js. CI also scans the full Git history with Gitleaks and redacts any
 detected values.
 
+## Viewport map data
+
+The map requests the backend's bounded GeoJSON contract through the same-origin
+`/api/smokemap/locations` browser route. Initial load and settled pan or zoom
+changes send the visible `bbox` and integer `zoom`. Requests are debounced;
+superseded requests are aborted and sequence-guarded so stale responses cannot
+replace the current viewport. Loading, refreshing, empty, and error overlays
+leave the MapLibre instance mounted, and request failures provide a retry
+action.
+
 ## NextJS Getting Started
 
 For installing any packages inside the docker container use the following,

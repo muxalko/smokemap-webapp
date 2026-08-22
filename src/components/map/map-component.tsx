@@ -17,11 +17,16 @@ import {
   SymbolLayer,
 } from "react-map-gl/maplibre";
 // import ControlPanel from "@/components/control/panel";
-import { GeoJSONSource, LngLat, LngLatBounds, LngLatLike } from "maplibre-gl";
+import { GeoJSONSource, LngLatLike } from "maplibre-gl";
 // need maplibre css for markers
 import "maplibre-gl/dist/maplibre-gl.css";
 import GeocoderControl from "./geocoder-control";
 import { ViewportStatus } from "./viewport-status";
+import {
+  createViewportQuery,
+  useViewportPlaces,
+  type ViewportQuery,
+} from "./viewport-places";
 
 // TODO: investigate error when installing canvas - neeeded for SVG type of images
 //import MarkerIconSvg from "./../src/assets/icon-marker.svg";
@@ -93,14 +98,23 @@ import {
 const lon = -77.01215461524441;
 const lat = 38.89630256339336;
 
-const southWest = new LngLat(lon - 2, lat + 2);
-const northEast = new LngLat(lon + 2, lat - 2);
-const boundingBox = new LngLatBounds(southWest, northEast);
-
 const initialZoom = 13;
 const pointsLayerId = "places";
 const flyToZoomLevel = 19;
 const viewportCookieName = "viewport";
+
+function sameViewportQuery(
+  current: ViewportQuery | null,
+  next: ViewportQuery | null
+) {
+  return (
+    current === next ||
+    (current !== null &&
+      next !== null &&
+      current.zoom === next.zoom &&
+      current.bbox.every((value, index) => value === next.bbox[index]))
+  );
+}
 
 function readViewportCookie(): ViewState | null {
   const prefix = `${viewportCookieName}=`;
@@ -212,9 +226,6 @@ export default function MapComponent() {
   // Basically, instead of useRef to use useState as follows, Map component then should be set to ref={(ref) => setMap(ref)}
   //  const [map, setMap] = useState(null);
   // Map component should be set to ref={(ref) => setMap(ref)}
-
-  // save our bounding box for future requests of data points within a boundary
-  const [mapBounds, setMapBounds] = useState<LngLatBounds>(boundingBox);
 
   // enable crosshair tracking
   const [trackCrosshair, setTrackCrosshair] = useState(false);
@@ -382,16 +393,19 @@ export default function MapComponent() {
     }
   }, [categories]);
 
-  // main datasource
-  const [pointsDatasource, setPointsDatasource] =
-    useState<GeoJSON.FeatureCollection>({
-      type: "FeatureCollection",
-      features: [],
-    });
-  const [pointsDatasourceLoading, setPointsDatasourceLoading] = useState(true);
-  const [pointsDatasourceError, setPointsDatasourceError] = useState<
-    string | null
-  >(null);
+  const [viewportQuery, setViewportQuery] = useState<ViewportQuery | null>(
+    null
+  );
+  const {
+    points: pointsDatasource,
+    loading: pointsDatasourceLoading,
+    hasLoaded: pointsDatasourceHasLoaded,
+    error: pointsDatasourceError,
+    retry: retryPointsDatasource,
+  } = useViewportPlaces(
+    process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT ?? "/api/smokemap/locations",
+    viewportQuery
+  );
 
   useEffect(() => {
     // update component is rendered
@@ -438,41 +452,6 @@ export default function MapComponent() {
         clogger.error(err, "Error fetching categories");
       });
 
-    setPointsDatasourceLoading(true);
-    setPointsDatasourceError(null);
-
-    fetch(
-      `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
-        (mapBounds
-          ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
-          : [lon - 2, lat - 2, lon + 2, lat + 2].join(",")),
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Places request failed with HTTP ${response.status}`);
-        }
-
-        return response.json() as Promise<GeoJSON.FeatureCollection>;
-      })
-      .then((points) => {
-        setPointsDatasource(points);
-        setPointsDatasourceLoading(false);
-        return points;
-      })
-      .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : "Unable to load places";
-        setPointsDatasourceError(message);
-        setPointsDatasourceLoading(false);
-        clogger.error(err, "Error fetching points datasource");
-        return null;
-      });
   }, []);
 
   useEffect(() => {
@@ -652,6 +631,15 @@ export default function MapComponent() {
     clogger.trace("onMapIdle() fired");
   }, []);
 
+  const settleViewport = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const nextQuery = createViewportQuery(map.getBounds(), map.getZoom());
+    setViewportQuery((currentQuery) =>
+      sameViewportQuery(currentQuery, nextQuery) ? currentQuery : nextQuery
+    );
+  }, []);
+
   const onMapLoad = useCallback(() => {
     clogger.trace("onLoad() fired");
 
@@ -661,6 +649,8 @@ export default function MapComponent() {
         if (savedViewport) setViewport(savedViewport);
       }
     }
+
+    window.requestAnimationFrame(settleViewport);
 
     if (mapRef && mapRef.current) {
       clogger.trace({ data: mapRef.current }, "onMapLoad() =>  mapRef.current");
@@ -796,7 +786,7 @@ export default function MapComponent() {
 
     //console.log("Map onLoad() ended");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interactiveLayers]);
+  }, [interactiveLayers, settleViewport, viewportSavedInCookie]);
 
   const handleMapMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewport(evt.viewState);
@@ -804,8 +794,7 @@ export default function MapComponent() {
 
   const handleMapMoveEnd = useCallback(
     (evt: ViewStateChangeEvent) => {
-      // update visual bounds
-      setMapBounds(mapRef.current!.getBounds());
+      settleViewport();
 
       // get map's geographical centerpoint for later creation of place location.
       const center = mapRef.current?.getCenter();
@@ -822,7 +811,7 @@ export default function MapComponent() {
         writeViewportCookie(evt.viewState);
       }
     },
-    [viewportSavedInCookie]
+    [settleViewport, viewportSavedInCookie]
   );
 
   useEffect(() => {
@@ -852,10 +841,6 @@ export default function MapComponent() {
   const PLACES_SOURCE = {
     // our main points source
     data: pointsDatasource,
-    // `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
-    // (mapBounds
-    //   ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
-    //   : [lon - 2, lat - 2, lon + 2, lat + 2].join(",")),
   };
 
   const [placeSelected, setPlaceSelected] = useState<SimplePlaceType>({
@@ -904,7 +889,6 @@ export default function MapComponent() {
   return (
     <>
       {/* {viewport && <h2>Zoom: {viewport.zoom}</h2>}
-      {viewport && <h2>mapBounds: {JSON.stringify(mapBounds)}</h2>}
        {categorySelectorForm && <pre>{JSON.stringify(categorySelectorForm, null, 4)}</pre>}
        */}
       <Dialog open={placeDialogOpen} onOpenChange={setPlaceDialogOpen}>
@@ -996,8 +980,10 @@ export default function MapComponent() {
       </div>
       <ViewportStatus
         loading={pointsDatasourceLoading}
+        hasLoaded={pointsDatasourceHasLoaded}
         error={pointsDatasourceError}
         points={pointsDatasource}
+        onRetry={retryPointsDatasource}
       />
       {mapStyle && (
         <DynamicMap
@@ -1115,19 +1101,6 @@ export default function MapComponent() {
           }}
         >
           Hide "Bar" layer
-        </Button>
-        <Button
-          onClick={(e) => {
-            //console.log(
-              "Places endpoint: ",
-              `${process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT}?in_bbox=` +
-                (mapBounds
-                  ? `${mapBounds._sw.lng},${mapBounds._sw.lat},${mapBounds._ne.lng},${mapBounds._ne.lat}`
-                  : [lon - 2, lat - 2, lon + 2, lat + 2].join(","))
-            );
-          }}
-        >
-          Print places endpoint
         </Button>
       </div> */}
     </>
