@@ -13,7 +13,7 @@ const nextConfig = {
       },
       {
         source: "/api/smokemap/locations",
-        destination: `${backendInternalUrl}/locations/`,
+        destination: `${backendInternalUrl}/api/v1/places/`,
       },
     ];
   },

@@ -151,9 +151,8 @@ export default function CategoryLayers({
                 item.name.toLowerCase().replaceAll(/ /g, "-"),
               source: sourceLayerId,
               type: "circle",
-              // filter: ["==", ["get", "category"], Number(item.id)],
               filter: [
-                "==",
+                "all",
                 ["!", ["has", "point_count"]],
                 ["==", ["get", "category"], Number(item.id)],
               ],
