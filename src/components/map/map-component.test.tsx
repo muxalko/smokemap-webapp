@@ -1,4 +1,9 @@
-import type { ButtonHTMLAttributes, ForwardedRef, ReactNode } from "react";
+import {
+  StrictMode,
+  type ButtonHTMLAttributes,
+  type ForwardedRef,
+  type ReactNode,
+} from "react";
 import type { FeatureCollection } from "geojson";
 import { act, fireEvent, render, screen } from "@/test/render";
 import { installFetchMock, jsonResponse } from "@/test/network";
@@ -24,7 +29,12 @@ type MockMapEvent = {
 type MockMapProps = {
   children?: ReactNode;
   interactiveLayerIds?: string[];
+  latitude?: number;
+  longitude?: number;
+  zoom?: number;
   onLoad?: () => void;
+  onIdle?: () => void;
+  onMove?: (event: { viewState: Record<string, unknown> }) => void;
   onMoveEnd?: (event: { viewState: Record<string, unknown> }) => void;
 };
 
@@ -35,24 +45,55 @@ type MockSourceProps = {
 
 type MockLayerProps = Record<string, unknown> & { id?: string };
 type MockLayerHandler = (event: MockMapEvent) => void;
+type MockClusterExpansionCallback = (
+  error?: Error | null,
+  zoom?: number | null
+) => void;
+type MockStyleImageEvent = {
+  id: string;
+  target: {
+    hasImage: jest.Mock;
+    addImage: jest.Mock;
+  };
+};
+type MockStyleImageHandler = (event: MockStyleImageEvent) => void;
 
 const mockCategories = [
   { __typename: "CategoryType" as const, id: "7", name: "Rooftop" },
 ];
 const mockLayerHandlers = new Map<string, Set<MockLayerHandler>>();
 const mockLayerProps = new Map<string, MockLayerProps>();
+const mockStyleImageHandlers = new Set<MockStyleImageHandler>();
 let mockCategoriesRequest: Promise<{
   data: { categories: typeof mockCategories };
 }>;
+let mockGetAllCategories: jest.Mock;
 let mockViewport: MockViewport;
 let mockLatestMapProps: MockMapProps | null;
 let mockLatestSourceProps: MockSourceProps | null;
 let mockMapMountCount: number;
 let mockSelectedPlace: Record<string, unknown> | null;
+let mockClusterExpansionCallback: MockClusterExpansionCallback | null;
+let mockLoadMapOnMount: boolean;
+let mockSynchronousMapStyle: boolean;
+let mockMapRefCallback: ((map: unknown) => void) | null;
 
 const mockRawMap = {
-  on: jest.fn(),
-  off: jest.fn(),
+  on: jest.fn((event: string, handler: MockStyleImageHandler) => {
+    if (event === "styleimagemissing") mockStyleImageHandlers.add(handler);
+  }),
+  off: jest.fn((event: string, handler: MockStyleImageHandler) => {
+    if (event === "styleimagemissing") mockStyleImageHandlers.delete(handler);
+  }),
+};
+
+const mockCanvas = { style: { cursor: "" } };
+const mockClusterSource = {
+  getClusterExpansionZoom: jest.fn(
+    (_clusterId: number, callback: MockClusterExpansionCallback) => {
+      mockClusterExpansionCallback = callback;
+    }
+  ),
 };
 
 const mockMapApi = {
@@ -65,9 +106,9 @@ const mockMapApi = {
   getZoom: () => mockViewport.zoom,
   getCenter: () => ({ lng: 0, lat: 0 }),
   getMap: () => mockRawMap,
-  getCanvas: () => ({ style: { cursor: "" } }),
+  getCanvas: () => mockCanvas,
   getLayer: jest.fn(),
-  getSource: jest.fn(),
+  getSource: jest.fn(() => mockClusterSource),
   getStyle: jest.fn(),
   unproject: jest.fn(),
   easeTo: jest.fn(),
@@ -94,12 +135,17 @@ jest.mock("react-map-gl/maplibre", () => {
     props: MockMapProps,
     ref: ForwardedRef<unknown>
   ) {
+    const { onLoad } = props;
+    if (typeof ref === "function") mockMapRefCallback = ref;
     const instanceId = React.useRef<number | null>(null);
     if (instanceId.current === null) {
       mockMapMountCount += 1;
       instanceId.current = mockMapMountCount;
     }
-    React.useImperativeHandle(ref, () => mockMapApi);
+    React.useImperativeHandle(ref, () => mockMapApi, []);
+    React.useLayoutEffect(() => {
+      if (mockLoadMapOnMount) onLoad?.();
+    }, [onLoad]);
     mockLatestMapProps = props;
 
     return (
@@ -143,9 +189,25 @@ jest.mock("react-map-gl/maplibre", () => {
   };
 });
 
+jest.mock("./use-basemap-style", () => {
+  const actual = jest.requireActual<typeof import("./use-basemap-style")>(
+    "./use-basemap-style"
+  );
+
+  return {
+    ...actual,
+    useBasemapStyle: (styleUrl: string | undefined) => {
+      const loadedStyle = actual.useBasemapStyle(styleUrl);
+      return mockSynchronousMapStyle
+        ? { version: 8 as const, sources: {}, layers: [] }
+        : loadedStyle;
+    },
+  };
+});
+
 jest.mock("@/graphql/__generated__/types", () => ({
   useGetAllCategoriesLazyQuery: () => [
-    jest.fn(() => mockCategoriesRequest),
+    mockGetAllCategories,
     { data: undefined, loading: false, error: undefined },
   ],
 }));
@@ -312,6 +374,7 @@ beforeEach(() => {
   mockCategoriesRequest = Promise.resolve({
     data: { categories: mockCategories },
   });
+  mockGetAllCategories = jest.fn(() => mockCategoriesRequest);
   process.env.NEXT_PUBLIC_MAP_STYLE = "/map-style.json";
   delete process.env.NEXT_PUBLIC_FEATURESERV_ENDPOINT;
   mockViewport = {
@@ -327,6 +390,13 @@ beforeEach(() => {
   mockLatestSourceProps = null;
   mockMapMountCount = 0;
   mockSelectedPlace = null;
+  mockClusterExpansionCallback = null;
+  mockLoadMapOnMount = false;
+  mockSynchronousMapStyle = false;
+  mockMapRefCallback = null;
+  mockCanvas.style.cursor = "";
+  mockStyleImageHandlers.clear();
+  document.cookie = "viewport=; Max-Age=0; Path=/";
   jest.clearAllMocks();
   window.requestAnimationFrame = jest.fn((callback: FrameRequestCallback) => {
     callback(0);
@@ -335,6 +405,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  document.cookie = "viewport=; Max-Age=0; Path=/";
   jest.useRealTimers();
 });
 
@@ -476,6 +547,292 @@ it("synchronizes async category handlers after load without duplicates", async (
   expect(mockLayerHandlers.has("mouseleave:paint_category_rooftop")).toBe(
     false
   );
+});
+
+it("registers and cleans up exact MapLibre callbacks under Strict Mode", async () => {
+  const fetchMock = installFetchMock();
+  fetchMock.mockResolvedValue(jsonResponse(style));
+  mockLoadMapOnMount = true;
+  mockSynchronousMapStyle = true;
+
+  const view = render(
+    <StrictMode>
+      <MapComponent />
+    </StrictMode>
+  );
+  await flushPromises();
+  expect(screen.getByTestId("maplibre-map")).toBeInTheDocument();
+
+  const registrations = mockMapApi.on.mock.calls as Array<
+    [string, string, MockLayerHandler]
+  >;
+  const clusterClickRegistrations = registrations.filter(
+    ([event, layer]) => event === "click" && layer === "clusters"
+  );
+  expect(clusterClickRegistrations.length).toBeGreaterThan(1);
+  expect(
+    new Set(clusterClickRegistrations.map(([, , handler]) => handler)).size
+  ).toBe(clusterClickRegistrations.length);
+
+  const activeHandlers = new Set(
+    Array.from(mockLayerHandlers.values()).flatMap((handlers) =>
+      Array.from(handlers)
+    )
+  );
+  registrations.forEach(([event, layer, handler]) => {
+    if (!activeHandlers.has(handler)) {
+      expect(mockMapApi.off).toHaveBeenCalledWith(event, layer, handler);
+    }
+  });
+  expect(mockLayerHandlers.size).toBe(6);
+  expect(mockLayerHandlers.get("click:clusters")?.size).toBe(1);
+  expect(
+    mockLayerHandlers.get("click:paint_category_rooftop")?.size
+  ).toBe(1);
+  expect(mockStyleImageHandlers.size).toBe(1);
+
+  const clusterEvent: MockMapEvent = {
+    features: [
+      {
+        geometry: { type: "Point", coordinates: [-77, 39] },
+        properties: { cluster_id: 42 },
+      },
+    ],
+    lngLat: { lng: -77 },
+    point: { x: 0, y: 0 },
+  };
+  clusterClickRegistrations[0][2](clusterEvent);
+  expect(mockClusterExpansionCallback).toBeNull();
+
+  const styleRegistrations = mockRawMap.on.mock.calls
+    .filter(([event]) => event === "styleimagemissing")
+    .map(([, handler]) => handler);
+  expect(styleRegistrations.length).toBeGreaterThan(1);
+  expect(new Set(styleRegistrations).size).toBe(styleRegistrations.length);
+  const staleStyleEvent: MockStyleImageEvent = {
+    id: "stale-image",
+    target: { hasImage: jest.fn(() => false), addImage: jest.fn() },
+  };
+  styleRegistrations[0](staleStyleEvent);
+  expect(staleStyleEvent.target.addImage).not.toHaveBeenCalled();
+
+  const clusterClickHandler = getOnlyLayerHandler("click", "clusters");
+  const categoryClickHandler = getOnlyLayerHandler(
+    "click",
+    "paint_category_rooftop"
+  );
+  const clusterMouseEnterHandler = getOnlyLayerHandler(
+    "mouseenter",
+    "clusters"
+  );
+  clusterClickHandler(clusterEvent);
+  expect(mockClusterExpansionCallback).toEqual(expect.any(Function));
+
+  const styleImageHandler = Array.from(mockStyleImageHandlers)[0];
+
+  view.unmount();
+
+  expect(mockLayerHandlers.size).toBe(0);
+  registrations.forEach(([event, layer, handler]) => {
+    expect(mockMapApi.off).toHaveBeenCalledWith(event, layer, handler);
+  });
+  expect(mockStyleImageHandlers.size).toBe(0);
+  expect(mockRawMap.off).toHaveBeenCalledWith(
+    "styleimagemissing",
+    styleImageHandler
+  );
+
+  mockClusterExpansionCallback?.(null, 16);
+  categoryClickHandler({
+    features: [
+      {
+        geometry: { type: "Point", coordinates: [-77, 39] },
+        properties: { name: "stale place" },
+      },
+    ],
+    lngLat: { lng: -77 },
+    point: { x: 0, y: 0 },
+  });
+  clusterMouseEnterHandler({
+    lngLat: { lng: -77 },
+    point: { x: 0, y: 0 },
+  });
+  styleImageHandler(staleStyleEvent);
+
+  expect(mockMapApi.easeTo).not.toHaveBeenCalled();
+  expect(mockSelectedPlace).toBeNull();
+  expect(mockCanvas.style.cursor).toBe("");
+  expect(staleStyleEvent.target.addImage).not.toHaveBeenCalled();
+});
+
+it("ignores stale MapLibre props and animation frames after same-map reattachment", async () => {
+  const scheduledFrames: FrameRequestCallback[] = [];
+  window.requestAnimationFrame = jest.fn((callback: FrameRequestCallback) => {
+    scheduledFrames.push(callback);
+    return scheduledFrames.length;
+  });
+  window.cancelAnimationFrame = jest.fn();
+
+  const fetchMock = installFetchMock();
+  fetchMock
+    .mockResolvedValueOnce(jsonResponse(style))
+    .mockResolvedValueOnce(jsonResponse(places("current")));
+  const view = render(<MapComponent />);
+  await flushPromises();
+  expect(screen.getByTestId("maplibre-map")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByTestId("map-load"));
+  expect(scheduledFrames).toHaveLength(1);
+  const staleProps = mockLatestMapProps;
+  const staleFrame = scheduledFrames[0];
+  expect(staleProps?.onLoad).toEqual(expect.any(Function));
+  expect(staleProps?.onIdle).toEqual(expect.any(Function));
+  expect(staleProps?.onMove).toEqual(expect.any(Function));
+  expect(staleProps?.onMoveEnd).toEqual(expect.any(Function));
+  expect(mockMapRefCallback).toEqual(expect.any(Function));
+
+  act(() => mockMapRefCallback?.(null));
+  act(() => mockMapRefCallback?.(mockMapApi));
+  const currentProps = mockLatestMapProps;
+  expect(currentProps?.onLoad).not.toBe(staleProps?.onLoad);
+  expect(currentProps?.onIdle).not.toBe(staleProps?.onIdle);
+  expect(currentProps?.onMove).not.toBe(staleProps?.onMove);
+  expect(currentProps?.onMoveEnd).not.toBe(staleProps?.onMoveEnd);
+
+  act(() => currentProps?.onLoad?.());
+  expect(scheduledFrames).toHaveLength(2);
+
+  const staleViewState = {
+    latitude: 51,
+    longitude: 4,
+    zoom: 20,
+    bearing: 0,
+    pitch: 0,
+    padding: { top: 0, bottom: 0, left: 0, right: 0 },
+  };
+  act(() => {
+    staleProps?.onLoad?.();
+    staleProps?.onMove?.({ viewState: staleViewState });
+    staleProps?.onMoveEnd?.({ viewState: staleViewState });
+    staleFrame(0);
+  });
+
+  expect(scheduledFrames).toHaveLength(2);
+  expect(window.cancelAnimationFrame).toHaveBeenCalledTimes(1);
+  expect(mockLatestMapProps?.latitude).not.toBe(staleViewState.latitude);
+  expect(document.cookie).not.toContain("viewport=");
+  expect(
+    fetchMock.mock.calls.filter(([url]) =>
+      String(url).startsWith("/api/smokemap/locations")
+    )
+  ).toHaveLength(0);
+
+  const currentViewState = {
+    latitude: 40.7,
+    longitude: -74,
+    zoom: 16,
+    bearing: 5,
+    pitch: 10,
+    padding: { top: 10, bottom: 25, left: 15, right: 5 },
+  };
+  mockViewport = {
+    west: -74.1,
+    south: 40.6,
+    east: -73.9,
+    north: 40.8,
+    zoom: currentViewState.zoom,
+  };
+  act(() => {
+    currentProps?.onMove?.({ viewState: currentViewState });
+    currentProps?.onMoveEnd?.({ viewState: currentViewState });
+    scheduledFrames[1](0);
+  });
+
+  expect(mockLatestMapProps).toMatchObject({
+    latitude: currentViewState.latitude,
+    longitude: currentViewState.longitude,
+    zoom: currentViewState.zoom,
+  });
+  expect(document.cookie).toContain("viewport=");
+  await runDebounce();
+  expect(
+    fetchMock.mock.calls
+      .map(([url]) => String(url))
+      .filter((url) => url.startsWith("/api/smokemap/locations"))
+  ).toEqual([
+    "/api/smokemap/locations?bbox=-74.1%2C40.6%2C-73.9%2C40.8&zoom=16",
+  ]);
+
+  view.unmount();
+});
+
+it("clears the captured detached map cursor without changing the newer map", async () => {
+  const fetchMock = installFetchMock();
+  fetchMock.mockResolvedValueOnce(jsonResponse(style));
+  const view = render(<MapComponent />);
+  await flushPromises();
+
+  const detachedCanvas = { style: { cursor: "" } };
+  const newerCanvas = { style: { cursor: "wait" } };
+  const detachedMap = {
+    ...mockMapApi,
+    getCanvas: () => detachedCanvas,
+  };
+  const newerMap = {
+    ...mockMapApi,
+    getCanvas: () => newerCanvas,
+  };
+
+  act(() => mockMapRefCallback?.(detachedMap));
+  const detachedProps = mockLatestMapProps;
+  act(() => detachedProps?.onLoad?.());
+  detachedCanvas.style.cursor = "pointer";
+
+  act(() => mockMapRefCallback?.(newerMap));
+
+  expect(detachedCanvas.style.cursor).toBe("");
+  expect(newerCanvas.style.cursor).toBe("wait");
+
+  view.unmount();
+});
+
+it("restores and updates the persisted viewport without remounting MapLibre", async () => {
+  const savedViewport = {
+    latitude: 40.7,
+    longitude: -74,
+    zoom: 15,
+    bearing: 5,
+    pitch: 10,
+    padding: { top: 10, bottom: 25, left: 15, right: 5 },
+  };
+  document.cookie = `viewport=${encodeURIComponent(
+    JSON.stringify(savedViewport)
+  )}; Path=/`;
+  const fetchMock = installFetchMock();
+  const view = await renderLoadedMap(fetchMock);
+
+  expect(mockLatestMapProps).toMatchObject({
+    latitude: savedViewport.latitude,
+    longitude: savedViewport.longitude,
+    zoom: savedViewport.zoom,
+  });
+  const mapNode = screen.getByTestId("maplibre-map");
+
+  mockViewport = { ...mockViewport, zoom: 17 };
+  fireEvent.click(screen.getByTestId("map-move-end"));
+  const persisted = JSON.parse(
+    decodeURIComponent(
+      document.cookie
+        .split("; ")
+        .find((cookie) => cookie.startsWith("viewport="))!
+        .slice("viewport=".length)
+    )
+  ) as { zoom: number };
+
+  expect(persisted.zoom).toBe(17);
+  expect(screen.getByTestId("maplibre-map")).toBe(mapNode);
+  expect(mockMapMountCount).toBe(1);
+  view.unmount();
 });
 
 it("coalesces settled move-end changes into only the newest viewport request", async () => {

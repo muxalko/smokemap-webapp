@@ -60,7 +60,7 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: false
   },
-  reactStrictMode: false
+  reactStrictMode: true
 };
 
 module.exports = nextConfig
