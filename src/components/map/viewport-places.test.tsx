@@ -5,6 +5,7 @@ import { ViewportStatus } from "./viewport-status";
 import {
   buildViewportPlacesUrl,
   createViewportQuery,
+  normalizeViewportPlaces,
   useViewportPlaces,
   type ViewportQuery,
 } from "./viewport-places";
@@ -91,6 +92,27 @@ it("builds the bounded API query from visible bounds and integer zoom", () => {
   expect(buildViewportPlacesUrl(endpoint, viewport!)).toBe(
     "/api/smokemap/locations?bbox=-77.123457%2C38.1%2C-76.9%2C38.987654&zoom=13"
   );
+});
+
+it("normalizes backend category objects for MapLibre without mutating the response", () => {
+  const response = points("outside");
+  response.features[0].properties = {
+    ...response.features[0].properties,
+    place_id: 42,
+    category: { id: 7, name: "Rooftop" },
+  };
+
+  const normalized = normalizeViewportPlaces(response);
+
+  expect(normalized.features[0].properties).toEqual({
+    name: "outside",
+    place_id: 42,
+    category: 7,
+  });
+  expect(response.features[0].properties?.category).toEqual({
+    id: 7,
+    name: "Rooftop",
+  });
 });
 
 it("loads initially and refetches the settled pan and zoom viewport", async () => {

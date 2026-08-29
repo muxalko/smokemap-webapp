@@ -15,6 +15,7 @@ import {
   ScaleControl,
   GeolocateControl,
   SymbolLayer,
+  MapLayerMouseEvent,
 } from "react-map-gl/maplibre";
 // import ControlPanel from "@/components/control/panel";
 import { GeoJSONSource, LngLatLike } from "maplibre-gl";
@@ -291,6 +292,7 @@ export default function MapComponent() {
 
   // make points clickable
   const [interactiveLayers, setInteractiveLayerIds] = useState<string[]>([]);
+  const [mapLoadVersion, setMapLoadVersion] = useState(0);
 
   useEffect(() => {
     if (categories.length > 0) {
@@ -451,7 +453,6 @@ export default function MapComponent() {
         setCategories([]);
         clogger.error(err, "Error fetching categories");
       });
-
   }, []);
 
   useEffect(() => {
@@ -642,6 +643,7 @@ export default function MapComponent() {
 
   const onMapLoad = useCallback(() => {
     clogger.trace("onLoad() fired");
+    setMapLoadVersion((version) => version + 1);
 
     if (viewportSavedInCookie) {
       if (isMounted.current) {
@@ -740,53 +742,65 @@ export default function MapComponent() {
       });
     }
 
-    // When a click event occurs on a feature in
-    // the unclustered-point layer, open a popup at
-    // the location of the feature, with
-    // description HTML from its properties.
+    //console.log("Map onLoad() ended");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settleViewport, viewportSavedInCookie]);
 
-    interactiveLayers.forEach((layer) => {
-      clogger.trace("Create onClick event for " + layer);
-      mapRef.current?.on("click", layer, (e) => {
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapLoadVersion === 0) return;
+
+    const registrations = interactiveLayers.map((layer) => {
+      const handleClick = (e: MapLayerMouseEvent) => {
         clogger.trace({ data: e }, "onClick event fired for " + layer);
 
         if (e.features && e.features[0].geometry.type === "Point") {
           const coordinates = e.features[0].geometry.coordinates.slice();
 
           clogger.trace("unclustered onClick event coordinates " + coordinates);
-          // Ensure that if the map is zoomed out such that
-          // multiple copies of the feature are visible, the
-          // popup appears over the copy being pointed to.
+          // Ensure that if the map is zoomed out such that multiple copies of
+          // the feature are visible, the dialog targets the pointed-to copy.
           while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
             coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
           }
 
-          const properties: SimplePlaceType = e.features[0]
-            .properties as SimplePlaceType;
-
+          const properties = e.features[0].properties as SimplePlaceType;
           clogger.trace(
             { data: properties },
             "unclustered onClick event properties"
           );
 
           setPlaceSelected(properties);
-          // setPlacePopupOpen(true);
           setPlaceDialogOpen(true);
         }
-      });
-      // TODO: understand hover on touch devices
-      mapRef.current?.on("mouseenter", layer, (e) => {
-        mapRef.current!.getCanvas().style.cursor = "pointer";
+      };
+      const handleMouseEnter = (e: MapLayerMouseEvent) => {
+        map.getCanvas().style.cursor = "pointer";
         clogger.trace({ data: e }, "unclustered mouseenter event");
-      });
-      mapRef.current?.on("mouseleave", layer, () => {
-        mapRef.current!.getCanvas().style.cursor = "";
-      });
+      };
+      const handleMouseLeave = () => {
+        map.getCanvas().style.cursor = "";
+      };
+
+      clogger.trace("Create category handlers for " + layer);
+      map.on("click", layer, handleClick);
+      map.on("mouseenter", layer, handleMouseEnter);
+      map.on("mouseleave", layer, handleMouseLeave);
+
+      return { layer, handleClick, handleMouseEnter, handleMouseLeave };
     });
 
-    //console.log("Map onLoad() ended");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interactiveLayers, settleViewport, viewportSavedInCookie]);
+    return () => {
+      registrations.forEach(
+        ({ layer, handleClick, handleMouseEnter, handleMouseLeave }) => {
+          map.off("click", layer, handleClick);
+          map.off("mouseenter", layer, handleMouseEnter);
+          map.off("mouseleave", layer, handleMouseLeave);
+        }
+      );
+      map.getCanvas().style.cursor = "";
+    };
+  }, [interactiveLayers, mapLoadVersion]);
 
   const handleMapMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewport(evt.viewState);

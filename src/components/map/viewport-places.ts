@@ -61,6 +61,42 @@ function isFeatureCollection(value: unknown): value is FeatureCollection {
   );
 }
 
+function categoryId(category: unknown): number | null {
+  if (
+    typeof category !== "object" ||
+    category === null ||
+    !("id" in category)
+  ) {
+    return null;
+  }
+
+  const id = category.id;
+  if (typeof id === "number" && Number.isFinite(id)) return id;
+  if (typeof id === "string" && /^\d+$/.test(id)) return Number(id);
+  return null;
+}
+
+export function normalizeViewportPlaces(
+  collection: FeatureCollection
+): FeatureCollection {
+  return {
+    ...collection,
+    features: collection.features.map((feature) => {
+      const properties = feature.properties;
+      const normalizedCategory = categoryId(properties?.category);
+      if (normalizedCategory === null) return feature;
+
+      return {
+        ...feature,
+        properties: {
+          ...properties,
+          category: normalizedCategory,
+        },
+      };
+    }),
+  };
+}
+
 async function responseError(response: Response): Promise<Error> {
   try {
     const body = (await response.json()) as { detail?: unknown };
@@ -88,7 +124,7 @@ async function fetchViewportPlaces(
   if (!isFeatureCollection(body)) {
     throw new Error("Places response was not valid GeoJSON");
   }
-  return body;
+  return normalizeViewportPlaces(body);
 }
 
 function isAbortError(error: unknown) {
@@ -153,7 +189,10 @@ export function useViewportPlaces(
     };
   }, [debounceMs, endpoint, query, retryVersion]);
 
-  const retry = useCallback(() => setRetryVersion((version) => version + 1), []);
+  const retry = useCallback(
+    () => setRetryVersion((version) => version + 1),
+    []
+  );
 
   return { points, loading, hasLoaded, error, retry };
 }
