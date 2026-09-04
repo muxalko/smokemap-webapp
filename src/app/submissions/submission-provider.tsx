@@ -18,16 +18,40 @@ import {
   type SubmissionActionResult,
 } from "./actions";
 import {
+  createMediaSlotOperations,
+  runMediaSlot,
+  type MediaSlotFailureOperation,
+  type MediaSlotOperation,
+  type MediaSlotPhase,
+} from "./media-pipeline";
+import { validateMediaFiles } from "./media-schema";
+import {
   M3SubmissionSchema,
   type M3SubmissionInput,
   type ValidatedM3SubmissionInput,
 } from "./m3-schema";
 
-export type SubmissionFailureOperation = "validation" | "create" | "finalize";
+export type SubmissionFailureOperation =
+  | "validation"
+  | "create"
+  | "finalize"
+  | MediaSlotFailureOperation;
+
+export type SubmissionProgressPhase =
+  | "idle"
+  | "creating"
+  | "uploading"
+  | "verifying"
+  | "attaching"
+  | "finalizing"
+  | "pending"
+  | "failed";
 
 export type SubmissionProgress = {
-  phase: "idle" | "creating" | "finalizing" | "pending" | "failed";
+  phase: SubmissionProgressPhase;
   submissionId?: string;
+  mediaIndex?: number;
+  mediaCount?: number;
   failure?: {
     operation: SubmissionFailureOperation;
     code: string;
@@ -39,16 +63,23 @@ type SubmissionOperation = {
   input: ValidatedM3SubmissionInput;
   createKey: string;
   finalizeKey: string;
+  mediaOps: MediaSlotOperation[];
   submissionId?: string;
 };
 
 type SubmissionContextValue = {
   progress: SubmissionProgress;
   active: boolean;
-  submit: (input: M3SubmissionInput) => boolean;
+  submit: (input: M3SubmissionInput, images?: File[]) => boolean;
   retry: () => boolean;
   dismiss: () => void;
 };
+
+function mediaProgressPhase(phase: MediaSlotPhase): SubmissionProgressPhase {
+  if (phase === "verifying") return "verifying";
+  if (phase === "attaching") return "attaching";
+  return "uploading";
+}
 
 const initialProgress: SubmissionProgress = { phase: "idle" };
 const SubmissionContext = createContext<SubmissionContextValue | null>(null);
@@ -114,6 +145,38 @@ export function SubmissionProvider({ children }: PropsWithChildren) {
         activeRef.current = false;
         return;
       }
+
+      for (const mediaOp of operation.mediaOps) {
+        if (mediaOp.attached) continue;
+        const result = await runMediaSlot(submissionId, mediaOp, (phase) => {
+          setProgressIfMounted({
+            phase: mediaProgressPhase(phase),
+            submissionId,
+            mediaIndex: mediaOp.slot,
+            mediaCount: operation.mediaOps.length,
+          });
+        });
+        if (!result.ok) {
+          activeRef.current = false;
+          setProgressIfMounted({
+            phase: "failed",
+            submissionId,
+            mediaIndex: mediaOp.slot,
+            mediaCount: operation.mediaOps.length,
+            failure: {
+              operation: result.failure.operation,
+              code: result.failure.code,
+              ...(result.failure.field ? { field: result.failure.field } : {}),
+            },
+          });
+          return;
+        }
+        if (!mountedRef.current) {
+          activeRef.current = false;
+          return;
+        }
+      }
+
       setProgressIfMounted({ phase: "finalizing", submissionId });
       let finalized: SubmissionActionResult;
       try {
@@ -141,7 +204,7 @@ export function SubmissionProvider({ children }: PropsWithChildren) {
   );
 
   const submit = useCallback(
-    (input: M3SubmissionInput) => {
+    (input: M3SubmissionInput, images: File[] = []) => {
       if (activeRef.current || operationRef.current) return false;
       const parsed = M3SubmissionSchema.safeParse(input);
       if (!parsed.success) {
@@ -157,10 +220,24 @@ export function SubmissionProvider({ children }: PropsWithChildren) {
         return false;
       }
 
+      const mediaFailure = validateMediaFiles(images);
+      if (mediaFailure) {
+        setProgressIfMounted({
+          phase: "failed",
+          failure: {
+            operation: "validation",
+            code: mediaFailure.code,
+            field: mediaFailure.field,
+          },
+        });
+        return false;
+      }
+
       const operation: SubmissionOperation = {
         input: parsed.data,
         createKey: uuid(),
         finalizeKey: uuid(),
+        mediaOps: createMediaSlotOperations(images),
       };
       operationRef.current = operation;
       activeRef.current = true;
@@ -189,7 +266,12 @@ export function SubmissionProvider({ children }: PropsWithChildren) {
   const value = useMemo<SubmissionContextValue>(
     () => ({
       progress,
-      active: progress.phase === "creating" || progress.phase === "finalizing",
+      active:
+        progress.phase === "creating" ||
+        progress.phase === "uploading" ||
+        progress.phase === "verifying" ||
+        progress.phase === "attaching" ||
+        progress.phase === "finalizing",
       submit,
       retry,
       dismiss,
