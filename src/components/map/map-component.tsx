@@ -47,14 +47,21 @@ function sameViewportQuery(
   );
 }
 
-export default function MapComponent() {
+export default function MapComponent({
+  authenticated = false,
+}: {
+  authenticated?: boolean;
+}) {
   const [viewport, setViewport] = useState<ViewState>(initialViewport);
   const [viewportQuery, setViewportQuery] = useState<ViewportQuery | null>(
     null
   );
   const categories = useMapCategories();
   const placeDialog = usePlaceDialog();
-  const submissionLocation = useSubmissionLocation();
+  const submissionLocation = useSubmissionLocation([
+    initialViewport.longitude,
+    initialViewport.latitude,
+  ]);
   const mapStyle = useBasemapStyle(process.env.NEXT_PUBLIC_MAP_STYLE);
 
   const handleViewportSettled = useCallback(
@@ -114,6 +121,7 @@ export default function MapComponent() {
       <PlaceDetailsDialog state={placeDialog} />
       <MapSearch onFlyTo={lifecycle.flyToCoordinates} />
       <SubmissionControls
+        authenticated={authenticated}
         categories={categories.categories}
         location={submissionLocation}
       />

@@ -318,8 +318,12 @@ export function useMapLibreLifecycle({
         return;
       }
       onViewportChange(event.viewState);
+      onCrosshairChange([
+        event.viewState.longitude,
+        event.viewState.latitude,
+      ]);
     },
-    [onViewportChange, propAttachment]
+    [onCrosshairChange, onViewportChange, propAttachment]
   );
 
   const handleMapMoveEnd = useCallback(

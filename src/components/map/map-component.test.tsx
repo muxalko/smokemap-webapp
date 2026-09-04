@@ -59,7 +59,12 @@ type MockStyleImageEvent = {
 type MockStyleImageHandler = (event: MockStyleImageEvent) => void;
 
 const mockCategories = [
-  { __typename: "CategoryType" as const, id: "7", name: "Rooftop" },
+  {
+    __typename: "CategoryType" as const,
+    id: "7",
+    slug: "rooftop",
+    name: "Rooftop",
+  },
 ];
 const mockLayerHandlers = new Map<string, Set<MockLayerHandler>>();
 const mockLayerProps = new Map<string, MockLayerProps>();
