@@ -11,7 +11,7 @@ import { sha256Hex } from "./media-crypto";
 import { postDirectUpload } from "./media-upload";
 
 export type MediaSlotOperation = {
-  file: File;
+  file?: File;
   slot: number;
   mimeType: string;
   createIntentKey: string;
@@ -26,6 +26,14 @@ export type MediaSlotOperation = {
   uploaded?: boolean;
   verified?: boolean;
   attached?: boolean;
+  attachmentId?: string;
+};
+
+/** The subset of a resumed media intent's state that still needs client action. */
+export type ResumableMediaIntentSnapshot = {
+  id: string;
+  slot: number;
+  state: "created" | "issued" | "verified";
 };
 
 export type MediaSlotPhase =
@@ -42,7 +50,8 @@ export type MediaSlotFailureOperation =
   | "media_authorize"
   | "media_upload"
   | "media_verify"
-  | "media_attach";
+  | "media_attach"
+  | "media_reselect";
 
 export type MediaSlotFailure = {
   operation: MediaSlotFailureOperation;
@@ -69,16 +78,45 @@ function failed(
   };
 }
 
-export function createMediaSlotOperations(files: File[]): MediaSlotOperation[] {
-  return files.map((file, slot) => ({
+export function createMediaSlotOperation(
+  slot: number,
+  file?: File
+): MediaSlotOperation {
+  return {
     file,
     slot,
-    mimeType: file.type,
+    mimeType: file?.type ?? "",
     createIntentKey: uuid(),
     issueKey: uuid(),
     verifyKey: uuid(),
     attachKey: uuid(),
-  }));
+  };
+}
+
+export function createMediaSlotOperations(files: File[]): MediaSlotOperation[] {
+  return files.map((file, slot) => createMediaSlotOperation(slot, file));
+}
+
+/**
+ * Rebuilds an in-flight-but-unattached media intent recovered from
+ * `submissionMediaStateV3` into an operation `runMediaSlot` can continue.
+ * `file` is only required when the intent has not reached `verified` yet -
+ * the bytes behind a `created`/`issued` intent never survive a page reload.
+ */
+export function createResumedMediaSlotOperation(
+  intent: ResumableMediaIntentSnapshot,
+  file?: File
+): MediaSlotOperation {
+  const op = createMediaSlotOperation(intent.slot, file);
+  op.intentId = intent.id;
+  if (intent.state === "verified") {
+    op.verified = true;
+    op.uploaded = true;
+    op.issuedOnce = true;
+  } else if (intent.state === "issued") {
+    op.issuedOnce = true;
+  }
+  return op;
 }
 
 export async function runMediaSlot(
@@ -87,13 +125,20 @@ export async function runMediaSlot(
   onPhase: (phase: MediaSlotPhase) => void
 ): Promise<MediaSlotResult> {
   if (op.attached) return { ok: true };
+  if (!op.file && !op.verified) {
+    return failed("media_reselect", "MEDIA_FILE_REQUIRED", op.slot);
+  }
 
   if (!op.intentId) {
+    const file = op.file;
+    if (!file) {
+      return failed("media_reselect", "MEDIA_FILE_REQUIRED", op.slot);
+    }
     if (op.declaredByteSize === undefined || op.declaredSha256 === undefined) {
       onPhase("hashing");
       try {
-        op.declaredSha256 = await sha256Hex(op.file);
-        op.declaredByteSize = op.file.size;
+        op.declaredSha256 = await sha256Hex(file);
+        op.declaredByteSize = file.size;
       } catch {
         return {
           ok: false,
@@ -134,6 +179,10 @@ export async function runMediaSlot(
 
   if (!op.verified) {
     if (!op.uploaded) {
+      const file = op.file;
+      if (!file) {
+        return failed("media_reselect", "MEDIA_FILE_REQUIRED", op.slot);
+      }
       onPhase("authorizing");
       let authorized;
       try {
@@ -166,7 +215,7 @@ export async function runMediaSlot(
       const uploaded = await postDirectUpload(
         authorized.upload.url,
         authorized.upload.fields,
-        op.file
+        file
       );
       if (!uploaded) {
         return failed("media_upload", "MEDIA_UPLOAD_FAILED", op.slot);
@@ -212,5 +261,6 @@ export async function runMediaSlot(
     return failed("media_attach", "INVALID_MEDIA_ATTACHMENT_RESPONSE", op.slot);
   }
   op.attached = true;
+  op.attachmentId = attached.attachment.id;
   return { ok: true };
 }

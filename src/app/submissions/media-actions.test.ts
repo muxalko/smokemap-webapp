@@ -7,17 +7,21 @@ import { getClient } from "@/lib/client";
 import {
   attachVerifiedMedia,
   createMediaUploadIntent,
+  expireMediaUploadIntent,
   issueMediaUploadIntent,
+  mediaAttachmentPreviewV3,
+  removeAttachedMedia,
   renewMediaUploadIntent,
   verifyMediaUploadIntent,
 } from "./media-actions";
 
 const auth = getBackendAuth as jest.MockedFunction<typeof getBackendAuth>;
 const mutate = jest.fn();
+const query = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (getClient as jest.Mock).mockReturnValue({ mutate });
+  (getClient as jest.Mock).mockReturnValue({ mutate, query });
   auth.mockResolvedValue({ role: "user", backendAccess: "access" });
 });
 
@@ -281,5 +285,185 @@ describe("attachVerifiedMedia", () => {
     await expect(
       attachVerifiedMedia("intent-1", "attach-key")
     ).resolves.toEqual({ ok: false, code: "MEDIA_STATE_CONFLICT" });
+  });
+});
+
+describe("removeAttachedMedia", () => {
+  it("rejects a missing intent id before mutating", async () => {
+    await expect(removeAttachedMedia("", "remove-key")).resolves.toEqual({
+      ok: false,
+      code: "INVALID_INTENT_ID",
+    });
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it("requires backend authentication", async () => {
+    auth.mockResolvedValue(null);
+    await expect(
+      removeAttachedMedia("intent-1", "remove-key")
+    ).resolves.toEqual({ ok: false, code: "AUTHENTICATION_REQUIRED" });
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it("returns the freed intent on success", async () => {
+    mutate.mockResolvedValue({
+      data: {
+        removeAttachedMedia: {
+          intent: {
+            id: "intent-1",
+            submissionId: "42",
+            state: "cleanup_pending",
+            slot: 0,
+            failureCode: "media_removed",
+          },
+          replayed: false,
+        },
+      },
+    });
+
+    await expect(
+      removeAttachedMedia("intent-1", "remove-key")
+    ).resolves.toEqual({
+      ok: true,
+      replayed: false,
+      intent: {
+        id: "intent-1",
+        submissionId: "42",
+        state: "cleanup_pending",
+        slot: 0,
+        failureCode: "media_removed",
+      },
+    });
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: { intentId: "intent-1", idempotencyKey: "remove-key" },
+        context: { headers: { Authorization: "Bearer access" } },
+      })
+    );
+  });
+
+  it("maps a state conflict, such as a non-draft submission, to its code", async () => {
+    mutate.mockRejectedValue({
+      graphQLErrors: [{ extensions: { code: "INVALID_SUBMISSION_STATE" } }],
+    });
+    await expect(
+      removeAttachedMedia("intent-1", "remove-key")
+    ).resolves.toEqual({ ok: false, code: "INVALID_SUBMISSION_STATE" });
+  });
+});
+
+describe("expireMediaUploadIntent", () => {
+  it("rejects a missing intent id before mutating", async () => {
+    await expect(expireMediaUploadIntent("", "expire-key")).resolves.toEqual({
+      ok: false,
+      code: "INVALID_INTENT_ID",
+    });
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it("requires backend authentication", async () => {
+    auth.mockResolvedValue(null);
+    await expect(
+      expireMediaUploadIntent("intent-1", "expire-key")
+    ).resolves.toEqual({ ok: false, code: "AUTHENTICATION_REQUIRED" });
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it("returns the reaped intent on success", async () => {
+    mutate.mockResolvedValue({
+      data: {
+        expireMediaUploadIntent: {
+          intent: {
+            id: "intent-1",
+            submissionId: "42",
+            state: "cleanup_pending",
+            slot: 0,
+            failureCode: "intent_expired",
+          },
+          replayed: false,
+        },
+      },
+    });
+
+    await expect(
+      expireMediaUploadIntent("intent-1", "expire-key")
+    ).resolves.toEqual({
+      ok: true,
+      replayed: false,
+      intent: {
+        id: "intent-1",
+        submissionId: "42",
+        state: "cleanup_pending",
+        slot: 0,
+        failureCode: "intent_expired",
+      },
+    });
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: { intentId: "intent-1", idempotencyKey: "expire-key" },
+        context: { headers: { Authorization: "Bearer access" } },
+      })
+    );
+  });
+
+  it("maps an intent that has not reached its absolute expiry to its code", async () => {
+    mutate.mockRejectedValue({
+      graphQLErrors: [{ extensions: { code: "MEDIA_STATE_CONFLICT" } }],
+    });
+    await expect(
+      expireMediaUploadIntent("intent-1", "expire-key")
+    ).resolves.toEqual({ ok: false, code: "MEDIA_STATE_CONFLICT" });
+  });
+});
+
+describe("mediaAttachmentPreviewV3", () => {
+  it("rejects a missing attachment id before querying", async () => {
+    await expect(mediaAttachmentPreviewV3("")).resolves.toEqual({
+      ok: false,
+      code: "INVALID_ATTACHMENT_ID",
+    });
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it("requires backend authentication", async () => {
+    auth.mockResolvedValue(null);
+    await expect(mediaAttachmentPreviewV3("image-1")).resolves.toEqual({
+      ok: false,
+      code: "AUTHENTICATION_REQUIRED",
+    });
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it("returns a short-lived preview URL with the bearer credential", async () => {
+    query.mockResolvedValue({
+      data: {
+        mediaAttachmentPreviewV3: {
+          url: "https://storage.invalid/preview",
+          expiresAt: "2026-01-01T00:10:00Z",
+        },
+      },
+    });
+
+    await expect(mediaAttachmentPreviewV3("image-1")).resolves.toEqual({
+      ok: true,
+      url: "https://storage.invalid/preview",
+      expiresAt: "2026-01-01T00:10:00Z",
+    });
+    expect(query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: { attachmentId: "image-1" },
+        context: { headers: { Authorization: "Bearer access" } },
+      })
+    );
+  });
+
+  it("maps a denied preview to NOT_FOUND without distinguishing the reason", async () => {
+    query.mockRejectedValue({
+      graphQLErrors: [{ extensions: { code: "NOT_FOUND" } }],
+    });
+    await expect(mediaAttachmentPreviewV3("image-1")).resolves.toEqual({
+      ok: false,
+      code: "NOT_FOUND",
+    });
   });
 });

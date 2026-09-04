@@ -19,7 +19,12 @@ import {
 } from "./media-actions";
 import { sha256Hex } from "./media-crypto";
 import { postDirectUpload } from "./media-upload";
-import { createMediaSlotOperations, runMediaSlot } from "./media-pipeline";
+import {
+  createMediaSlotOperation,
+  createMediaSlotOperations,
+  createResumedMediaSlotOperation,
+  runMediaSlot,
+} from "./media-pipeline";
 
 const createIntent = createMediaUploadIntent as jest.MockedFunction<
   typeof createMediaUploadIntent
@@ -731,4 +736,256 @@ it("skips straight to attach when a retried create-intent replays an already-ver
   expect(upload).not.toHaveBeenCalled();
   expect(verifyIntent).not.toHaveBeenCalled();
   expect(attachMedia).toHaveBeenCalledWith("intent-1", op.attachKey);
+});
+
+it("records the attachment id once a slot attaches", async () => {
+  createIntent.mockResolvedValue({
+    ok: true,
+    replayed: false,
+    intent: {
+      id: "intent-1",
+      submissionId: "42",
+      state: "created",
+      slot: 0,
+      failureCode: "",
+    },
+  });
+  issueIntent.mockResolvedValue({
+    ok: true,
+    replayed: false,
+    intent: {
+      id: "intent-1",
+      submissionId: "42",
+      state: "issued",
+      slot: 0,
+      failureCode: "",
+    },
+    upload: authorization,
+  });
+  upload.mockResolvedValue(true);
+  verifyIntent.mockResolvedValue({
+    ok: true,
+    replayed: false,
+    intent: {
+      id: "intent-1",
+      submissionId: "42",
+      state: "verified",
+      slot: 0,
+      failureCode: "",
+    },
+  });
+  attachMedia.mockResolvedValue({
+    ok: true,
+    replayed: false,
+    attachment: {
+      id: "image-1",
+      submissionId: "42",
+      position: 0,
+      state: "attached",
+    },
+  });
+
+  const [op] = createMediaSlotOperations([file]);
+  await runMediaSlot("42", op, jest.fn());
+
+  expect(op.attachmentId).toBe("image-1");
+});
+
+describe("createMediaSlotOperation", () => {
+  it("builds a single operation bound to an explicit slot, not a sequential index", () => {
+    const op = createMediaSlotOperation(2, file);
+    expect(op.slot).toBe(2);
+    expect(op.file).toBe(file);
+    expect(op.mimeType).toBe("image/png");
+    expect(op.intentId).toBeUndefined();
+  });
+
+  it("allows a slot with no file, for operations that only need to continue an existing intent", () => {
+    const op = createMediaSlotOperation(1);
+    expect(op.file).toBeUndefined();
+    expect(op.mimeType).toBe("");
+  });
+});
+
+describe("createResumedMediaSlotOperation", () => {
+  it("marks a verified-but-unattached intent ready to attach without any file", async () => {
+    const op = createResumedMediaSlotOperation({
+      id: "intent-1",
+      slot: 2,
+      state: "verified",
+    });
+    expect(op.verified).toBe(true);
+    expect(op.uploaded).toBe(true);
+    expect(op.issuedOnce).toBe(true);
+    expect(op.file).toBeUndefined();
+
+    attachMedia.mockResolvedValue({
+      ok: true,
+      replayed: false,
+      attachment: {
+        id: "image-2",
+        submissionId: "42",
+        position: 2,
+        state: "attached",
+      },
+    });
+
+    const result = await runMediaSlot("42", op, jest.fn());
+
+    expect(result).toEqual({ ok: true });
+    expect(createIntent).not.toHaveBeenCalled();
+    expect(issueIntent).not.toHaveBeenCalled();
+    expect(renewIntent).not.toHaveBeenCalled();
+    expect(upload).not.toHaveBeenCalled();
+    expect(verifyIntent).not.toHaveBeenCalled();
+    expect(attachMedia).toHaveBeenCalledWith("intent-1", op.attachKey);
+  });
+
+  it("renews rather than issues for an already-issued intent once a file is reselected", async () => {
+    const op = createResumedMediaSlotOperation(
+      { id: "intent-1", slot: 1, state: "issued" },
+      file
+    );
+    expect(op.issuedOnce).toBe(true);
+
+    renewIntent.mockResolvedValue({
+      ok: true,
+      replayed: false,
+      intent: {
+        id: "intent-1",
+        submissionId: "42",
+        state: "issued",
+        slot: 1,
+        failureCode: "",
+      },
+      upload: authorization,
+    });
+    upload.mockResolvedValue(true);
+    verifyIntent.mockResolvedValue({
+      ok: true,
+      replayed: false,
+      intent: {
+        id: "intent-1",
+        submissionId: "42",
+        state: "verified",
+        slot: 1,
+        failureCode: "",
+      },
+    });
+    attachMedia.mockResolvedValue({
+      ok: true,
+      replayed: false,
+      attachment: {
+        id: "image-1",
+        submissionId: "42",
+        position: 1,
+        state: "attached",
+      },
+    });
+
+    const result = await runMediaSlot("42", op, jest.fn());
+
+    expect(result).toEqual({ ok: true });
+    expect(createIntent).not.toHaveBeenCalled();
+    expect(issueIntent).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
+    expect(renewIntent).toHaveBeenCalledWith("intent-1", "generated-uuid");
+  });
+
+  it("issues (not renews) for a created intent that was never authorized", async () => {
+    const op = createResumedMediaSlotOperation(
+      { id: "intent-1", slot: 0, state: "created" },
+      file
+    );
+    expect(op.issuedOnce).toBeUndefined();
+
+    issueIntent.mockResolvedValue({
+      ok: true,
+      replayed: false,
+      intent: {
+        id: "intent-1",
+        submissionId: "42",
+        state: "issued",
+        slot: 0,
+        failureCode: "",
+      },
+      upload: authorization,
+    });
+    upload.mockResolvedValue(true);
+    verifyIntent.mockResolvedValue({
+      ok: true,
+      replayed: false,
+      intent: {
+        id: "intent-1",
+        submissionId: "42",
+        state: "verified",
+        slot: 0,
+        failureCode: "",
+      },
+    });
+    attachMedia.mockResolvedValue({
+      ok: true,
+      replayed: false,
+      attachment: {
+        id: "image-1",
+        submissionId: "42",
+        position: 0,
+        state: "attached",
+      },
+    });
+
+    const result = await runMediaSlot("42", op, jest.fn());
+
+    expect(result).toEqual({ ok: true });
+    expect(createIntent).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
+    expect(issueIntent).toHaveBeenCalledWith("intent-1", op.issueKey);
+  });
+
+  it("fails with media_reselect when a created or issued intent has no file to upload", async () => {
+    const created = createResumedMediaSlotOperation({
+      id: "intent-1",
+      slot: 0,
+      state: "created",
+    });
+    await expect(runMediaSlot("42", created, jest.fn())).resolves.toEqual({
+      ok: false,
+      failure: {
+        operation: "media_reselect",
+        code: "MEDIA_FILE_REQUIRED",
+        slot: 0,
+      },
+    });
+
+    const issued = createResumedMediaSlotOperation({
+      id: "intent-1",
+      slot: 1,
+      state: "issued",
+    });
+    await expect(runMediaSlot("42", issued, jest.fn())).resolves.toEqual({
+      ok: false,
+      failure: {
+        operation: "media_reselect",
+        code: "MEDIA_FILE_REQUIRED",
+        slot: 1,
+      },
+    });
+
+    expect(createIntent).not.toHaveBeenCalled();
+    expect(issueIntent).not.toHaveBeenCalled();
+    expect(renewIntent).not.toHaveBeenCalled();
+  });
+});
+
+it("fails with media_reselect for a brand-new slot given no file to hash", async () => {
+  const op = createMediaSlotOperation(0);
+
+  const result = await runMediaSlot("42", op, jest.fn());
+
+  expect(result).toEqual({
+    ok: false,
+    failure: { operation: "media_reselect", code: "MEDIA_FILE_REQUIRED", slot: 0 },
+  });
+  expect(hash).not.toHaveBeenCalled();
+  expect(createIntent).not.toHaveBeenCalled();
 });

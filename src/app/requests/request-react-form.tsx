@@ -48,6 +48,7 @@ import {
   M3FormSchema,
   type ValidatedM3FormInput,
 } from "@/app/submissions/m3-schema";
+import { ResumeDraftDialog } from "@/app/submissions/resume-draft-dialog";
 import { useSubmission } from "@/app/submissions/submission-provider";
 
 const emptyForm: DefaultValues<ValidatedM3FormInput> = {
@@ -134,6 +135,8 @@ export default function RequestReactForm({
 
   return (
     <>
+      <ResumeDraftDialog categories={categories} />
+
       {choosingLocation ? (
         <Button
           aria-label="Confirm submission location"

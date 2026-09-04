@@ -7,7 +7,10 @@ import { getClient } from "@/lib/client";
 import {
   ATTACH_VERIFIED_MEDIA,
   CREATE_MEDIA_UPLOAD_INTENT,
+  EXPIRE_MEDIA_UPLOAD_INTENT,
   ISSUE_MEDIA_UPLOAD_INTENT,
+  MEDIA_ATTACHMENT_PREVIEW_V3,
+  REMOVE_ATTACHED_MEDIA,
   RENEW_MEDIA_UPLOAD_INTENT,
   VERIFY_MEDIA_UPLOAD_INTENT,
 } from "@/graphql/queries/gql";
@@ -291,5 +294,118 @@ export async function attachVerifiedMedia(
       : { ok: false, code: "INVALID_MEDIA_INTENT_RESPONSE" };
   } catch (error) {
     return failure(error, "MEDIA_ATTACH_FAILED");
+  }
+}
+
+export async function removeAttachedMedia(
+  intentId: string,
+  idempotencyKey: string
+): Promise<MediaActionResult<{ intent: MediaIntentSnapshot }>> {
+  if (!isValidIntentId(intentId))
+    return { ok: false, code: "INVALID_INTENT_ID" };
+  if (!isValidIdempotencyKey(idempotencyKey)) {
+    return { ok: false, code: "INVALID_IDEMPOTENCY_KEY" };
+  }
+
+  const token = await accessToken();
+  if (!token) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
+
+  try {
+    const response = await getClient().mutate<{
+      removeAttachedMedia?: {
+        intent?: MediaIntentSnapshot;
+        replayed?: boolean;
+      };
+    }>({
+      fetchPolicy: "no-cache",
+      mutation: REMOVE_ATTACHED_MEDIA,
+      variables: { intentId, idempotencyKey },
+      context: bearerContext(token),
+    });
+    const intent = response.data?.removeAttachedMedia?.intent;
+    return intent?.id
+      ? {
+          ok: true,
+          intent,
+          replayed: response.data?.removeAttachedMedia?.replayed ?? false,
+        }
+      : { ok: false, code: "INVALID_MEDIA_INTENT_RESPONSE" };
+  } catch (error) {
+    return failure(error, "MEDIA_REMOVE_FAILED");
+  }
+}
+
+/**
+ * Reaps one media intent that is past its absolute expiry (created/issued/verified
+ * but never attached). The backend rejects this before that deadline, so callers
+ * treat failure here as a routine, ignorable outcome rather than a user-facing error.
+ */
+export async function expireMediaUploadIntent(
+  intentId: string,
+  idempotencyKey: string
+): Promise<MediaActionResult<{ intent: MediaIntentSnapshot }>> {
+  if (!isValidIntentId(intentId))
+    return { ok: false, code: "INVALID_INTENT_ID" };
+  if (!isValidIdempotencyKey(idempotencyKey)) {
+    return { ok: false, code: "INVALID_IDEMPOTENCY_KEY" };
+  }
+
+  const token = await accessToken();
+  if (!token) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
+
+  try {
+    const response = await getClient().mutate<{
+      expireMediaUploadIntent?: {
+        intent?: MediaIntentSnapshot;
+        replayed?: boolean;
+      };
+    }>({
+      fetchPolicy: "no-cache",
+      mutation: EXPIRE_MEDIA_UPLOAD_INTENT,
+      variables: { intentId, idempotencyKey },
+      context: bearerContext(token),
+    });
+    const intent = response.data?.expireMediaUploadIntent?.intent;
+    return intent?.id
+      ? {
+          ok: true,
+          intent,
+          replayed: response.data?.expireMediaUploadIntent?.replayed ?? false,
+        }
+      : { ok: false, code: "INVALID_MEDIA_INTENT_RESPONSE" };
+  } catch (error) {
+    return failure(error, "MEDIA_EXPIRE_FAILED");
+  }
+}
+
+export type MediaPreviewResult =
+  | { ok: true; url: string; expiresAt: string }
+  | { ok: false; code: string };
+
+export async function mediaAttachmentPreviewV3(
+  attachmentId: string
+): Promise<MediaPreviewResult> {
+  if (!attachmentId || attachmentId.includes("\0")) {
+    return { ok: false, code: "INVALID_ATTACHMENT_ID" };
+  }
+
+  const token = await accessToken();
+  if (!token) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
+
+  try {
+    const response = await getClient().query<{
+      mediaAttachmentPreviewV3?: { url?: string; expiresAt?: string };
+    }>({
+      fetchPolicy: "no-cache",
+      query: MEDIA_ATTACHMENT_PREVIEW_V3,
+      variables: { attachmentId },
+      context: bearerContext(token),
+    });
+    const preview = response.data?.mediaAttachmentPreviewV3;
+    return preview?.url && preview.expiresAt
+      ? { ok: true, url: preview.url, expiresAt: preview.expiresAt }
+      : { ok: false, code: "INVALID_MEDIA_PREVIEW_RESPONSE" };
+  } catch (error) {
+    return failure(error, "MEDIA_PREVIEW_FAILED");
   }
 }
