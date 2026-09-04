@@ -36,6 +36,105 @@ export const FINALIZE_SUBMISSION_V3 = gql`
     }
 `;
 
+export const CREATE_MEDIA_UPLOAD_INTENT = gql`
+    mutation CreateMediaUploadIntent(
+        $idempotencyKey: String!
+        $input: CreateMediaUploadIntentInput!
+    ) {
+        createMediaUploadIntent(idempotencyKey: $idempotencyKey, input: $input) {
+            intent {
+                id
+                submissionId
+                state
+                slot
+                failureCode
+            }
+            replayed
+        }
+    }
+`;
+
+export const ISSUE_MEDIA_UPLOAD_INTENT = gql`
+    mutation IssueMediaUploadIntent($intentId: ID!, $idempotencyKey: String!) {
+        issueMediaUploadIntent(
+            intentId: $intentId
+            idempotencyKey: $idempotencyKey
+        ) {
+            intent {
+                id
+                submissionId
+                state
+                slot
+                failureCode
+            }
+            upload {
+                url
+                fields
+                expiresAt
+            }
+            replayed
+        }
+    }
+`;
+
+export const RENEW_MEDIA_UPLOAD_INTENT = gql`
+    mutation RenewMediaUploadIntent($intentId: ID!, $idempotencyKey: String!) {
+        renewMediaUploadIntent(
+            intentId: $intentId
+            idempotencyKey: $idempotencyKey
+        ) {
+            intent {
+                id
+                submissionId
+                state
+                slot
+                failureCode
+            }
+            upload {
+                url
+                fields
+                expiresAt
+            }
+            replayed
+        }
+    }
+`;
+
+export const VERIFY_MEDIA_UPLOAD_INTENT = gql`
+    mutation VerifyMediaUploadIntent($intentId: ID!, $idempotencyKey: String!) {
+        verifyMediaUploadIntent(
+            intentId: $intentId
+            idempotencyKey: $idempotencyKey
+        ) {
+            intent {
+                id
+                submissionId
+                state
+                slot
+                failureCode
+            }
+            replayed
+        }
+    }
+`;
+
+export const ATTACH_VERIFIED_MEDIA = gql`
+    mutation AttachVerifiedMedia($intentId: ID!, $idempotencyKey: String!) {
+        attachVerifiedMedia(
+            intentId: $intentId
+            idempotencyKey: $idempotencyKey
+        ) {
+            attachment {
+                id
+                submissionId
+                position
+                state
+            }
+            replayed
+        }
+    }
+`;
+
 export const ALL_REQUESTS_QUERY = gql`
     query GetAllRequests {
         requests {

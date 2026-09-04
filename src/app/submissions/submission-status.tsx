@@ -14,6 +14,29 @@ const FAILURE_MESSAGES: Record<string, string> = {
     "The draft could not be created. You can safely retry.",
   SUBMISSION_FINALIZE_FAILED:
     "The draft was saved but could not be finalized. Retrying will not create another draft.",
+  TOO_MANY_MEDIA_FILES: "Choose at most 3 photos.",
+  UNSUPPORTED_MEDIA_TYPE: "Photos must be JPEG, PNG, or WebP.",
+  MEDIA_TOO_LARGE: "Each photo must be 5 MB or smaller.",
+  MEDIA_LIMIT_REACHED: "This submission already has three photos.",
+  MEDIA_SLOT_CONFLICT: "A photo slot conflict occurred. You can safely retry.",
+  MEDIA_DIGEST_CONFLICT: "That photo is already attached to this submission.",
+  MEDIA_INTENT_EXPIRED:
+    "The photo upload window expired. You can safely retry.",
+  UPLOAD_AUTHORIZATION_EXPIRED:
+    "The photo upload window expired. You can safely retry.",
+  MEDIA_STORAGE_UNAVAILABLE:
+    "Photo storage is temporarily unavailable. You can safely retry.",
+  MEDIA_UPLOAD_FAILED: "The photo upload failed. You can safely retry.",
+  MEDIA_VERIFICATION_FAILED:
+    "The uploaded photo could not be verified. You can safely retry.",
+};
+
+const PHASE_MESSAGES: Partial<Record<string, string>> = {
+  creating: "Creating a private draft…",
+  uploading: "Uploading photo…",
+  verifying: "Verifying photo…",
+  attaching: "Attaching photo…",
+  finalizing: "Finalizing the draft for review…",
 };
 
 export function SubmissionStatus() {
@@ -22,9 +45,18 @@ export function SubmissionStatus() {
 
   const isFailure = progress.phase === "failed";
   const retryable = isFailure && progress.failure?.operation !== "validation";
-  let message = "Creating a private draft…";
-  if (progress.phase === "finalizing")
-    message = "Finalizing the draft for review…";
+  let message = PHASE_MESSAGES[progress.phase] ?? "Creating a private draft…";
+  if (
+    (progress.phase === "uploading" ||
+      progress.phase === "verifying" ||
+      progress.phase === "attaching") &&
+    progress.mediaCount !== undefined &&
+    progress.mediaIndex !== undefined
+  ) {
+    message = `${message.replace("…", "")} (${progress.mediaIndex + 1} of ${
+      progress.mediaCount
+    })…`;
+  }
   if (progress.phase === "pending") {
     message = `Submission ${progress.submissionId} is pending review.`;
   }

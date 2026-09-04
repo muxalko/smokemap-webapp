@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, type DefaultValues } from "react-hook-form";
 
 import { TagInput, type Tag } from "@/components/tag-input";
+import UploadComponent from "@/components/upload/upload-component";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -83,6 +84,7 @@ export default function RequestReactForm({
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [choosingLocation, setChoosingLocation] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [images, setImages] = useState<File[]>([]);
   const completedSubmissionRef = useRef<string>();
 
   useEffect(() => {
@@ -95,6 +97,7 @@ export default function RequestReactForm({
     completedSubmissionRef.current = progress.submissionId;
     setDialogOpen(false);
     setTags([]);
+    setImages([]);
     form.reset(emptyForm);
     updateDataCallback?.();
   }, [form, progress, updateDataCallback]);
@@ -118,7 +121,7 @@ export default function RequestReactForm({
 
   function onSubmit(values: ValidatedM3FormInput) {
     const { consent: _consent, ...input } = values;
-    submit(input);
+    submit(input, images);
   }
 
   if (!authenticated) {
@@ -157,7 +160,7 @@ export default function RequestReactForm({
             <DialogTitle>Submit a place</DialogTitle>
             <DialogDescription>
               Your private submission will enter review after it is finalized.
-              Image uploads are not part of this submission path yet.
+              You may attach up to 3 photos (JPEG, PNG, or WebP; 5 MB max each).
             </DialogDescription>
           </DialogHeader>
 
@@ -360,6 +363,13 @@ export default function RequestReactForm({
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium leading-none">
+                  Photos (optional)
+                </p>
+                <UploadComponent setCallbackHandler={setImages} />
+              </div>
 
               <FormField
                 control={form.control}
