@@ -86,6 +86,25 @@ export default function RequestReactForm({
   const [choosingLocation, setChoosingLocation] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   const [images, setImages] = useState<File[]>([]);
+  // Mirrors categorySlug outside react-hook-form for display/gating: the
+  // category combobox has no real DOM-registered input (only field.value
+  // would be read, never field.onChange/ref), and react-hook-form's
+  // Controller keeps that field registered across the dialog's close/reopen
+  // even though form.reset() below empties _formValues/_fields. When the
+  // Controller doesn't itself unmount across that reset, its useWatch
+  // subscription re-syncs from a closure captured on the last pre-reset
+  // render and silently re-populates the field with the previous category
+  // (confirmed by forcing the same sequence without the `key` remount
+  // below - the leaked value reappears within one render of the reset).
+  // categoryFieldKey forces the FormField/Controller to fully remount on
+  // every reset so it re-registers clean instead of resurrecting stale
+  // state, and this plain categorySlug state is the belt-and-suspenders
+  // gate so submission can never depend on react-hook-form's internal
+  // timing here even if that remount behavior changes.
+  const [categorySlug, setCategorySlug] = useState<
+    ValidatedM3FormInput["categorySlug"] | undefined
+  >(undefined);
+  const [categoryFieldKey, setCategoryFieldKey] = useState(0);
   const completedSubmissionRef = useRef<string>();
 
   useEffect(() => {
@@ -99,6 +118,8 @@ export default function RequestReactForm({
     setDialogOpen(false);
     setTags([]);
     setImages([]);
+    setCategorySlug(undefined);
+    setCategoryFieldKey((key) => key + 1);
     form.reset(emptyForm);
     updateDataCallback?.();
   }, [form, progress, updateDataCallback]);
@@ -189,9 +210,10 @@ export default function RequestReactForm({
               />
 
               <FormField
+                key={categoryFieldKey}
                 control={form.control}
                 name="categorySlug"
-                render={({ field }) => (
+                render={() => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Category</FormLabel>
                     <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
@@ -201,14 +223,14 @@ export default function RequestReactForm({
                             aria-expanded={categoryOpen}
                             className={cn(
                               "w-full justify-between",
-                              !field.value && "text-muted-foreground"
+                              !categorySlug && "text-muted-foreground"
                             )}
                             role="combobox"
                             type="button"
                             variant="outline"
                           >
                             {categories.find(
-                              (category) => category.slug === field.value
+                              (category) => category.slug === categorySlug
                             )?.name ?? "Select category"}
                             <ChevronsUpDown className="h-4 w-4 opacity-50" />
                           </Button>
@@ -223,15 +245,14 @@ export default function RequestReactForm({
                               <CommandItem
                                 key={category.slug}
                                 onSelect={() => {
-                                  form.setValue(
-                                    "categorySlug",
-                                    category.slug as ValidatedM3FormInput["categorySlug"],
-                                    {
-                                      shouldDirty: true,
-                                      shouldTouch: true,
-                                      shouldValidate: true,
-                                    }
-                                  );
+                                  const slug =
+                                    category.slug as ValidatedM3FormInput["categorySlug"];
+                                  setCategorySlug(slug);
+                                  form.setValue("categorySlug", slug, {
+                                    shouldDirty: true,
+                                    shouldTouch: true,
+                                    shouldValidate: true,
+                                  });
                                   setCategoryOpen(false);
                                 }}
                                 value={category.name}
@@ -240,7 +261,7 @@ export default function RequestReactForm({
                                 <CheckIcon
                                   className={cn(
                                     "ml-auto h-4 w-4",
-                                    category.slug === field.value
+                                    category.slug === categorySlug
                                       ? "opacity-100"
                                       : "opacity-0"
                                   )}
@@ -413,7 +434,7 @@ export default function RequestReactForm({
               </Button>
             </DialogClose>
             <Button
-              disabled={active || !form.formState.isValid}
+              disabled={active || !categorySlug || !form.formState.isValid}
               form="m3-submission-form"
               type="submit"
             >
