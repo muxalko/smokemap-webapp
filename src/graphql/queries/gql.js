@@ -135,6 +135,124 @@ export const ATTACH_VERIFIED_MEDIA = gql`
     }
 `;
 
+export const REMOVE_ATTACHED_MEDIA = gql`
+    mutation RemoveAttachedMedia($intentId: ID!, $idempotencyKey: String!) {
+        removeAttachedMedia(
+            intentId: $intentId
+            idempotencyKey: $idempotencyKey
+        ) {
+            intent {
+                id
+                submissionId
+                state
+                slot
+                failureCode
+            }
+            replayed
+        }
+    }
+`;
+
+export const EXPIRE_MEDIA_UPLOAD_INTENT = gql`
+    mutation ExpireMediaUploadIntent($intentId: ID!, $idempotencyKey: String!) {
+        expireMediaUploadIntent(
+            intentId: $intentId
+            idempotencyKey: $idempotencyKey
+        ) {
+            intent {
+                id
+                submissionId
+                state
+                slot
+                failureCode
+            }
+            replayed
+        }
+    }
+`;
+
+export const MEDIA_ATTACHMENT_PREVIEW_V3 = gql`
+    query MediaAttachmentPreviewV3($attachmentId: ID!) {
+        mediaAttachmentPreviewV3(attachmentId: $attachmentId) {
+            url
+            expiresAt
+        }
+    }
+`;
+
+const SUBMISSION_V3_SNAPSHOT_FIELDS = `
+    id
+    state
+    name
+    categorySlug
+    longitude
+    latitude
+    addressLabel
+    tags
+    description
+    website
+`;
+
+export const EDIT_SUBMISSION_V3 = gql`
+    mutation EditSubmissionV3(
+        $submissionId: ID!
+        $idempotencyKey: String!
+        $input: SubmissionV3Input!
+    ) {
+        editSubmissionV3(
+            submissionId: $submissionId
+            idempotencyKey: $idempotencyKey
+            input: $input
+        ) {
+            submission {
+                ${SUBMISSION_V3_SNAPSHOT_FIELDS}
+            }
+            replayed
+        }
+    }
+`;
+
+export const REORDER_SUBMISSION_MEDIA_V3 = gql`
+    mutation ReorderSubmissionMediaV3(
+        $submissionId: ID!
+        $idempotencyKey: String!
+        $attachmentIds: [ID!]!
+    ) {
+        reorderSubmissionMediaV3(
+            submissionId: $submissionId
+            idempotencyKey: $idempotencyKey
+            attachmentIds: $attachmentIds
+        ) {
+            orderedAttachmentIds
+            replayed
+        }
+    }
+`;
+
+export const SUBMISSION_MEDIA_STATE_V3 = gql`
+    query SubmissionMediaStateV3($submissionId: ID!) {
+        submissionMediaStateV3(submissionId: $submissionId) {
+            submission {
+                ${SUBMISSION_V3_SNAPSHOT_FIELDS}
+            }
+            attachments {
+                id
+                submissionId
+                position
+                state
+                mediaIntentId
+            }
+            mediaIntents {
+                id
+                submissionId
+                state
+                slot
+                failureCode
+            }
+        }
+    }
+`;
+
 export const ALL_REQUESTS_QUERY = gql`
     query GetAllRequests {
         requests {
