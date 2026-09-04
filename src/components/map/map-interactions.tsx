@@ -65,9 +65,11 @@ export interface SubmissionLocationState {
   updateCoordinates: (coordinates: number[]) => void;
 }
 
-export function useSubmissionLocation(): SubmissionLocationState {
+export function useSubmissionLocation(
+  initialCoordinates: number[] = [0, 0]
+): SubmissionLocationState {
   const [tracking, setTracking] = useState(false);
-  const [coordinates, setCoordinates] = useState<number[]>([0, 0]);
+  const [coordinates, setCoordinates] = useState<number[]>(initialCoordinates);
   const updateCoordinates = useCallback((nextCoordinates: number[]) => {
     setCoordinates(nextCoordinates);
   }, []);
@@ -76,14 +78,17 @@ export function useSubmissionLocation(): SubmissionLocationState {
 }
 
 export function SubmissionControls({
+  authenticated,
   categories,
   location,
 }: {
+  authenticated: boolean;
   categories: CategoryType[];
   location: SubmissionLocationState;
 }) {
   return (
     <RequestReactForm
+      authenticated={authenticated}
       categories={categories}
       enableTracking={location.setTracking}
       crosshairPosition={location.coordinates}

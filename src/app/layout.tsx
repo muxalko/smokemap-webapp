@@ -5,6 +5,8 @@ import { Inter } from "next/font/google";
 import Template from "../components/template/template";
 import { ApolloWrapper } from "@/lib/apollo-wrapper";
 import { Toaster } from "@/components/ui/toaster";
+import { SubmissionProvider } from "@/app/submissions/submission-provider";
+import { SubmissionStatus } from "@/app/submissions/submission-status";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,10 +24,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ApolloWrapper>
-          {/* <Providers> */}
-          <Template>{children}</Template>
-          {/* {children} */}
-          {/* </Providers> */}
+          <SubmissionProvider>
+            <Template>{children}</Template>
+            <SubmissionStatus />
+          </SubmissionProvider>
         </ApolloWrapper>
         <Toaster />
       </body>

@@ -4,8 +4,34 @@ export const ALL_CATEGORIES_QUERY = gql`
     query GetAllCategories {
         categories {
             id
+            slug
             name
             description
+        }
+    }
+`;
+
+export const CREATE_SUBMISSION_V3 = gql`
+    mutation CreateSubmissionV3($input: SubmissionV3Input!, $idempotencyKey: String!) {
+        createSubmissionV3(input: $input, idempotencyKey: $idempotencyKey) {
+            submission {
+                id
+                state
+            }
+        }
+    }
+`;
+
+export const FINALIZE_SUBMISSION_V3 = gql`
+    mutation FinalizeSubmissionV3($submissionId: ID!, $idempotencyKey: String!) {
+        finalizeSubmissionV3(
+            submissionId: $submissionId
+            idempotencyKey: $idempotencyKey
+        ) {
+            submission {
+                id
+                state
+            }
         }
     }
 `;

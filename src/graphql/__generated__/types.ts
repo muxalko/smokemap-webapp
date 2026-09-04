@@ -46,6 +46,7 @@ export type CategoryType = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
 };
 
 export type CreateImage = {
@@ -275,7 +276,7 @@ export type Verify = {
 export type GetAllCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllCategoriesQuery = { __typename?: 'Query', categories?: Array<{ __typename?: 'CategoryType', id: string, name: string, description?: string | null } | null> | null };
+export type GetAllCategoriesQuery = { __typename?: 'Query', categories?: Array<{ __typename?: 'CategoryType', id: string, slug: string, name: string, description?: string | null } | null> | null };
 
 export type GetAllRequestsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -358,6 +359,7 @@ export const GetAllCategoriesDocument = gql`
     query GetAllCategories {
   categories {
     id
+    slug
     name
     description
   }
