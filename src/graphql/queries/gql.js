@@ -275,36 +275,36 @@ export const ALL_REQUESTS_QUERY = gql`
     }
 `;
 
-export const NOT_APPROVED_REQUESTS_QUERY = gql`
-    query GetAllNotApprovedRequests {
-        requestsToApprove {
-            id
-            name
-            category {
-                name
-            }
-            address {
-                properties {
-                    addressString
-                }
-                geometry {
-                    coordinates
-                }
-            }
-            imageSet {
+export const MODERATION_QUEUE_V4 = gql`
+    query ModerationQueueV4($first: Int!, $after: String) {
+        moderationQueueV4(first: $first, after: $after) {
+            items {
                 id
                 name
-                url
+                category {
+                    name
+                }
+                address {
+                    properties {
+                        addressString
+                    }
+                    geometry {
+                        coordinates
+                    }
+                }
+                attachments {
+                    id
+                    position
+                }
+                description
+                tags
+                website
+                dateCreated
+                state
+                requestedBy
             }
-            description
-            tags
-            dateCreated
-            dateUpdated
-            dateApproved
-            approved
-            approvedBy
-            approvedComment
-            requestedBy
+            hasNextPage
+            nextCursor
         }
     }
 `;
@@ -334,33 +334,25 @@ export const CREATE_REQUEST = gql`
     }
 `;
 
-export const APPROVE_REQUEST = gql`
-    mutation ApproveRequest($id: ID!, $input: RequestApproveInput!) {
-        approveRequest(id: $id, input: $input) {
-            request {
+export const APPROVE_SUBMISSION_V4 = gql`
+    mutation ApproveSubmissionV4(
+        $submissionId: ID!
+        $idempotencyKey: String!
+        $input: ReviewSubmissionV4Input!
+    ) {
+        approveSubmissionV4(
+            submissionId: $submissionId
+            idempotencyKey: $idempotencyKey
+            input: $input
+        ) {
+            submission {
                 id
-                name
-                category {
-                    name
-                }
-                address {
-                    properties {
-                        addressString
-                    }
-                    geometry {
-                        coordinates
-                    }
-                }
-                description
-                requestedBy
-                dateCreated
-                dateUpdated
-                dateApproved
-                approved
-                approvedBy
-                approvedComment
-                tags
+                state
             }
+            place {
+                id
+            }
+            replayed
         }
     }
 `;
