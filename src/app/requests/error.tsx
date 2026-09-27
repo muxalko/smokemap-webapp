@@ -1,30 +1,17 @@
-"use client"; // Error components must be Client Components
+"use client";
 
-import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    // Log the error to an error reporting service
-    console.error(error);
-  }, [error]);
-
+export default function ModerationRouteError({ reset }: { reset: () => void }) {
   return (
-    <div>
-      <h2>Something went wrong!</h2>
-      <button
-        onClick={
-          // Attempt to recover by trying to re-render the segment
-          () => reset()
-        }
-      >
+    <main className="container mx-auto max-w-3xl px-4 py-10">
+      <h1 className="text-2xl font-semibold">Moderation queue unavailable</h1>
+      <p className="mt-2 text-muted-foreground">
+        The queue could not be opened. No moderation action was submitted.
+      </p>
+      <Button className="mt-6" onClick={reset}>
         Try again
-      </button>
-    </div>
+      </Button>
+    </main>
   );
 }
