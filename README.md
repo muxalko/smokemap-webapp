@@ -34,6 +34,19 @@ replace the current viewport. Loading, refreshing, empty, and error overlays
 leave the MapLibre instance mounted, and request failures provide a retry
 action.
 
+## Place search
+
+The map search box calls the backend's bounded `GET /api/v1/places/search/`
+contract through the same-origin `/api/smokemap/places/search` browser route.
+Queries are normalized like the backend (NFKC, collapsed whitespace, lower
+case); fewer than 2 or more than 100 characters never send a request. Settled
+input is debounced, each request asks for at most 10 results (the backend caps
+`limit` at 20), and superseded requests are aborted and cannot replace newer
+results. The combobox shows explicit idle, too-short, loading, empty, error
+(with retry) and result states, supports ArrowUp/ArrowDown, Enter and Escape,
+and selecting a result flies the map to it and opens its details. No search
+path downloads the full place-name collection.
+
 ## NextJS Getting Started
 
 For installing any packages inside the docker container use the following,

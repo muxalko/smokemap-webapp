@@ -225,7 +225,6 @@ jest.mock("../places/PlaceCard", () => ({
   },
 }));
 
-jest.mock("../places/PlaceList", () => () => null);
 jest.mock("../places/Search", () => () => null);
 jest.mock("@/app/requests/request-react-form", () => () => null);
 jest.mock("./custom-overlay", () => ({

@@ -15,6 +15,10 @@ const nextConfig = {
         source: "/api/smokemap/locations",
         destination: `${backendInternalUrl}/api/v1/places/`,
       },
+      {
+        source: "/api/smokemap/places/search",
+        destination: `${backendInternalUrl}/api/v1/places/search/`,
+      },
     ];
   },
   images: {
