@@ -329,18 +329,6 @@ export type GetPlaceByIdQueryVariables = Exact<{
 
 export type GetPlaceByIdQuery = { __typename?: 'Query', placeById?: { __typename?: 'PlaceType', id: string, name: string, description?: string | null, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, category: { __typename?: 'CategoryType', name: string }, imageSet: Array<{ __typename?: 'ImageType', id: string, url: string, name: string }> } | null };
 
-export type GetPlacesStartwithNameQueryVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
-
-
-export type GetPlacesStartwithNameQuery = { __typename?: 'Query', placesStartwithName?: Array<{ __typename?: 'PlaceType', id: string, name: string, description?: string | null, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, category: { __typename?: 'CategoryType', name: string }, imageSet: Array<{ __typename?: 'ImageType', id: string, url: string, name: string }> } | null> | null };
-
-export type GetAllPlacesNamesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetAllPlacesNamesQuery = { __typename?: 'Query', placesNames?: Array<string | null> | null };
-
 export type LoginMutationVariables = Exact<{
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -786,101 +774,6 @@ export type GetPlaceByIdQueryHookResult = ReturnType<typeof useGetPlaceByIdQuery
 export type GetPlaceByIdLazyQueryHookResult = ReturnType<typeof useGetPlaceByIdLazyQuery>;
 export type GetPlaceByIdSuspenseQueryHookResult = ReturnType<typeof useGetPlaceByIdSuspenseQuery>;
 export type GetPlaceByIdQueryResult = Apollo.QueryResult<GetPlaceByIdQuery, GetPlaceByIdQueryVariables>;
-export const GetPlacesStartwithNameDocument = gql`
-    query GetPlacesStartwithName($name: String!) {
-  placesStartwithName(name: $name) {
-    id
-    name
-    description
-    address {
-      properties {
-        addressString
-      }
-      geometry {
-        coordinates
-      }
-    }
-    category {
-      name
-    }
-    imageSet {
-      id
-      url
-      name
-    }
-  }
-}
-    `;
-
-/**
- * __useGetPlacesStartwithNameQuery__
- *
- * To run a query within a React component, call `useGetPlacesStartwithNameQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetPlacesStartwithNameQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetPlacesStartwithNameQuery({
- *   variables: {
- *      name: // value for 'name'
- *   },
- * });
- */
-export function useGetPlacesStartwithNameQuery(baseOptions: Apollo.QueryHookOptions<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>(GetPlacesStartwithNameDocument, options);
-      }
-export function useGetPlacesStartwithNameLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>(GetPlacesStartwithNameDocument, options);
-        }
-export function useGetPlacesStartwithNameSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>(GetPlacesStartwithNameDocument, options);
-        }
-export type GetPlacesStartwithNameQueryHookResult = ReturnType<typeof useGetPlacesStartwithNameQuery>;
-export type GetPlacesStartwithNameLazyQueryHookResult = ReturnType<typeof useGetPlacesStartwithNameLazyQuery>;
-export type GetPlacesStartwithNameSuspenseQueryHookResult = ReturnType<typeof useGetPlacesStartwithNameSuspenseQuery>;
-export type GetPlacesStartwithNameQueryResult = Apollo.QueryResult<GetPlacesStartwithNameQuery, GetPlacesStartwithNameQueryVariables>;
-export const GetAllPlacesNamesDocument = gql`
-    query GetAllPlacesNames {
-  placesNames
-}
-    `;
-
-/**
- * __useGetAllPlacesNamesQuery__
- *
- * To run a query within a React component, call `useGetAllPlacesNamesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetAllPlacesNamesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetAllPlacesNamesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetAllPlacesNamesQuery(baseOptions?: Apollo.QueryHookOptions<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>(GetAllPlacesNamesDocument, options);
-      }
-export function useGetAllPlacesNamesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>(GetAllPlacesNamesDocument, options);
-        }
-export function useGetAllPlacesNamesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>(GetAllPlacesNamesDocument, options);
-        }
-export type GetAllPlacesNamesQueryHookResult = ReturnType<typeof useGetAllPlacesNamesQuery>;
-export type GetAllPlacesNamesLazyQueryHookResult = ReturnType<typeof useGetAllPlacesNamesLazyQuery>;
-export type GetAllPlacesNamesSuspenseQueryHookResult = ReturnType<typeof useGetAllPlacesNamesSuspenseQuery>;
-export type GetAllPlacesNamesQueryResult = Apollo.QueryResult<GetAllPlacesNamesQuery, GetAllPlacesNamesQueryVariables>;
 export const LoginDocument = gql`
     mutation Login($email: String!, $password: String!) {
   tokenAuth(email: $email, password: $password) {

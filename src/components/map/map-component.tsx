@@ -119,7 +119,10 @@ export default function MapComponent({
   return (
     <>
       <PlaceDetailsDialog state={placeDialog} />
-      <MapSearch onFlyTo={lifecycle.flyToCoordinates} />
+      <MapSearch
+        onFlyTo={lifecycle.flyToCoordinates}
+        onOpenPlace={placeDialog.selectPlace}
+      />
       <SubmissionControls
         authenticated={authenticated}
         categories={categories.categories}

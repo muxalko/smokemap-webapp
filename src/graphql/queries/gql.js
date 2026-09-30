@@ -413,38 +413,6 @@ export const GET_PLACE_BY_ID = gql`
     }
 `;
 
-export const GET_PLACES_STARTWITH_NAME = gql`
-    query GetPlacesStartwithName($name: String!) {
-        placesStartwithName(name: $name) {
-            id
-            name
-            description
-            address {
-                    properties {
-                        addressString
-                    }
-                    geometry {
-                        coordinates
-                    }
-                }
-            category {
-                    name
-                }
-            imageSet {
-                    id
-                    url
-                    name
-                }
-            }
-    }
-`;
-
-export const ALL_PLACES_NAMES_QUERY = gql`
-    query GetAllPlacesNames {
-        placesNames
-    }
-`;
-
 export const LOGIN = gql`
     mutation Login($email: String!, $password: String! ) {
         tokenAuth(email: $email, password: $password) {
