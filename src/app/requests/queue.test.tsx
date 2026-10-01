@@ -185,6 +185,9 @@ it("confirms approval once with a comment, prevents duplicate actions, and refre
   });
   await waitFor(() => expect(loadQueue).toHaveBeenCalledTimes(2));
   expect(await screen.findByText("No pending submissions")).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Submission approved and published to the map. The queue has been refreshed."
+  );
 });
 
 it("requires one administrator confirmation and prevents duplicate deletion", async () => {
@@ -255,4 +258,123 @@ it("shows authorization, queue error, and conflict states explicitly", async () 
     await screen.findByText(/no longer pending.*refreshed/i)
   ).toBeInTheDocument();
   expect(loadQueue).toHaveBeenCalledTimes(2);
+});
+
+const otherItem: ModerationQueueItem = {
+  ...item,
+  id: "submission-2",
+  name: "Harbor Deck",
+  attachments: [],
+};
+
+async function approveFirst(comment = "Verified") {
+  const [approveButton] = await screen.findAllByRole("button", {
+    name: "Approve",
+  });
+  fireEvent.click(approveButton);
+  fireEvent.change(screen.getByRole("textbox", { name: "Review comment" }), {
+    target: { value: comment },
+  });
+  await act(() => {
+    fireEvent.click(screen.getByRole("button", { name: "Confirm approval" }));
+    return Promise.resolve();
+  });
+}
+
+it("keeps the remaining queue usable when the post-approval refresh fails", async () => {
+  loadQueue
+    .mockResolvedValueOnce(page([item, otherItem]))
+    .mockResolvedValueOnce({ ok: false, code: "MODERATION_QUEUE_FAILED" })
+    .mockResolvedValueOnce(page([otherItem]));
+  render(<ModerationQueue canDelete={false} />);
+
+  await approveFirst();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "could not be refreshed"
+  );
+  expect(screen.getByRole("status")).toHaveTextContent(
+    /^Submission approved and published to the map\.$/
+  );
+  expect(screen.queryByText("Cedar Garden")).not.toBeInTheDocument();
+  expect(screen.getByText("Harbor Deck")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Approve" })).toBeEnabled();
+
+  await act(() => {
+    fireEvent.click(screen.getByRole("button", { name: "Retry refresh" }));
+    return Promise.resolve();
+  });
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(loadQueue).toHaveBeenCalledTimes(3);
+  expect(screen.getByText("Harbor Deck")).toBeInTheDocument();
+});
+
+it("keeps state intact after a failed review and allows a retry", async () => {
+  loadQueue.mockResolvedValueOnce(page([item])).mockResolvedValueOnce(page([]));
+  approve.mockResolvedValueOnce({
+    ok: false,
+    code: "SUBMISSION_APPROVE_FAILED",
+  });
+  render(<ModerationQueue canDelete={false} />);
+
+  await approveFirst("Verified on site");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "No successful change was assumed"
+  );
+  expect(screen.getByRole("textbox", { name: "Review comment" })).toHaveValue(
+    "Verified on site"
+  );
+  expect(loadQueue).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+  await act(() => {
+    fireEvent.click(screen.getByRole("button", { name: "Confirm approval" }));
+    return Promise.resolve();
+  });
+  expect(screen.getByText("No pending submissions")).toBeInTheDocument();
+  expect(approve).toHaveBeenCalledTimes(2);
+  expect(approve.mock.calls[0][2]).toBe(approve.mock.calls[1][2]);
+});
+
+it("keeps a conflicting submission when the conflict refresh fails", async () => {
+  loadQueue
+    .mockResolvedValueOnce(page([item]))
+    .mockResolvedValueOnce({ ok: false, code: "MODERATION_QUEUE_FAILED" });
+  approve.mockResolvedValueOnce({ ok: false, code: "DUPLICATE_SUBMISSION" });
+  render(<ModerationQueue canDelete={false} />);
+
+  await approveFirst();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "could not be refreshed"
+  );
+  expect(screen.getByRole("status")).toHaveTextContent(
+    /^Approval conflicts with an existing nearby place\. The submission was not changed\.$/
+  );
+  expect(screen.getByText("Cedar Garden")).toBeInTheDocument();
+});
+
+it("reports a confirmed deletion even when the refresh needs a new session", async () => {
+  loadQueue
+    .mockResolvedValueOnce(page([item]))
+    .mockResolvedValueOnce({ ok: false, code: "AUTHENTICATION_REQUIRED" });
+  render(<ModerationQueue canDelete />);
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Delete permanently" })
+  );
+  await act(() => {
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirm permanent deletion" })
+    );
+    return Promise.resolve();
+  });
+
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Your session expired"
+  );
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Submission permanently deleted."
+  );
 });

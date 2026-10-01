@@ -41,6 +41,8 @@ type QueueStatus =
   | "authentication"
   | "authorization";
 
+type FetchMode = "replace" | "append" | "refresh";
+
 type ReviewIntent = {
   kind: "approve" | "delete";
   item: ModerationQueueItem;
@@ -58,6 +60,8 @@ const conflictCodes = new Set([
   "MEDIA_CLEANUP_REQUIRED",
   "NOT_FOUND",
 ]);
+// Outcomes the backend confirms leave a submission outside the pending queue.
+const settledCodes = new Set(["INVALID_SUBMISSION_STATE", "NOT_FOUND"]);
 
 function actionKey(): string {
   return (
@@ -86,10 +90,10 @@ function failureMessage(failure: ModerationFailure): string {
     failure.code === "INVALID_SUBMISSION_STATE" ||
     failure.code === "NOT_FOUND"
   ) {
-    return "This submission is no longer pending. The queue has been refreshed.";
+    return "This submission is no longer pending.";
   }
   if (failure.code === "IDEMPOTENCY_CONFLICT") {
-    return "This approval conflicts with an earlier attempt. The queue has been refreshed.";
+    return "This approval conflicts with an earlier attempt.";
   }
   if (failure.code === "MEDIA_CLEANUP_REQUIRED") {
     return "This submission still has managed media and cannot be hard-deleted safely.";
@@ -346,24 +350,38 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
   const [comment, setComment] = useState("");
   const [actionError, setActionError] = useState<string>();
   const [acting, setActing] = useState(false);
-  const fetchRef = useRef<Promise<void> | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const fetchRef = useRef<Promise<boolean> | null>(null);
   const actionRef = useRef<Promise<void> | null>(null);
 
-  const fetchPage = useCallback((after: string | null, reset: boolean) => {
+  const fetchPage = useCallback((after: string | null, mode: FetchMode) => {
     if (fetchRef.current) return fetchRef.current;
-    if (reset) {
+    if (mode === "replace") {
       setStatus("loading");
       setLoadingMore(false);
-    } else {
+    } else if (mode === "append") {
       setLoadingMore(true);
+    } else {
+      setRefreshing(true);
     }
     const request = (async () => {
       const result = await loadModerationQueue(after);
+      setLoadingMore(false);
+      setRefreshing(false);
       if (!result.ok) {
-        setStatus(queueFailureStatus(result.code));
-        setLoadingMore(false);
-        return;
+        const failureStatus = queueFailureStatus(result.code);
+        // A refresh after a review keeps the last known queue usable: the
+        // review outcome is already reported and the refresh can be retried.
+        if (mode === "refresh" && failureStatus === "error") {
+          setRefreshFailed(true);
+        } else {
+          setStatus(failureStatus);
+        }
+        return false;
       }
+      const reset = mode !== "append";
+      setRefreshFailed(false);
       setItems((current) => {
         if (reset) return result.page.items;
         const existing = new Set(current.map((item) => item.id));
@@ -375,7 +393,7 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
       setHasNextPage(result.page.hasNextPage);
       setNextCursor(result.page.nextCursor);
       setStatus(reset && result.page.items.length === 0 ? "empty" : "ready");
-      setLoadingMore(false);
+      return true;
     })();
     fetchRef.current = request;
     void request.finally(() => {
@@ -385,8 +403,24 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
   }, []);
 
   useEffect(() => {
-    void fetchPage(null, true);
+    void fetchPage(null, "replace");
   }, [fetchPage]);
+
+  // Applies a review outcome the backend has confirmed, then replaces the
+  // queue with the authoritative first page. The notice only claims a refresh
+  // after one succeeded.
+  const settleReview = useCallback(
+    async (message: string, settledId?: string) => {
+      if (settledId) {
+        setItems((current) => current.filter((item) => item.id !== settledId));
+      }
+      setNotice(message);
+      if (await fetchPage(null, "refresh")) {
+        setNotice(`${message} The queue has been refreshed.`);
+      }
+    },
+    [fetchPage]
+  );
 
   const openReview = useCallback(
     (kind: ReviewIntent["kind"], item: ModerationQueueItem) => {
@@ -417,12 +451,12 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
           : await deleteSubmission(review.item.id);
       if (result.ok) {
         setReview(undefined);
-        setNotice(
+        await settleReview(
           review.kind === "approve"
-            ? "Submission approved. The queue and public map state were refreshed."
-            : "Submission permanently deleted. The queue was refreshed."
+            ? "Submission approved and published to the map."
+            : "Submission permanently deleted.",
+          review.item.id
         );
-        await fetchPage(null, true);
         return;
       }
       const message = failureMessage(result);
@@ -434,8 +468,10 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
         setStatus("authorization");
       } else if (conflictCodes.has(result.code)) {
         setReview(undefined);
-        setNotice(message);
-        await fetchPage(null, true);
+        await settleReview(
+          message,
+          settledCodes.has(result.code) ? review.item.id : undefined
+        );
       } else {
         setActionError(message);
       }
@@ -445,30 +481,42 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
       if (actionRef.current === request) actionRef.current = null;
       setActing(false);
     });
-  }, [comment, fetchPage, review]);
+  }, [comment, review, settleReview]);
+
+  const noticeBanner = notice ? (
+    <div className="mb-4 rounded-md border p-3" role="status">
+      {notice}
+    </div>
+  ) : null;
 
   if (status === "loading" && items.length === 0) {
     return <p role="status">Loading pending submissions…</p>;
   }
   if (status === "authentication") {
     return (
-      <div className="rounded-md border border-destructive p-4" role="alert">
-        Your session expired.{" "}
-        <a
-          className="underline"
-          href="/api/auth/signin?callbackUrl=%2Frequests"
-        >
-          Sign in again
-        </a>
-        .
-      </div>
+      <>
+        {noticeBanner}
+        <div className="rounded-md border border-destructive p-4" role="alert">
+          Your session expired.{" "}
+          <a
+            className="underline"
+            href="/api/auth/signin?callbackUrl=%2Frequests"
+          >
+            Sign in again
+          </a>
+          .
+        </div>
+      </>
     );
   }
   if (status === "authorization") {
     return (
-      <div className="rounded-md border border-destructive p-4" role="alert">
-        Access denied. Moderator or administrator permission is required.
-      </div>
+      <>
+        {noticeBanner}
+        <div className="rounded-md border border-destructive p-4" role="alert">
+          Access denied. Moderator or administrator permission is required.
+        </div>
+      </>
     );
   }
   if (status === "error") {
@@ -477,7 +525,7 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
         <p>The moderation queue could not be loaded.</p>
         <Button
           className="mt-3"
-          onClick={() => void fetchPage(null, true)}
+          onClick={() => void fetchPage(null, "replace")}
           type="button"
           variant="outline"
         >
@@ -489,11 +537,7 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
   if (status === "empty") {
     return (
       <>
-        {notice ? (
-          <div className="mb-4 rounded-md border p-3" role="status">
-            {notice}
-          </div>
-        ) : null}
+        {noticeBanner}
         <div className="rounded-md border p-8 text-center">
           <h2 className="text-xl font-medium">No pending submissions</h2>
           <p className="mt-2 text-muted-foreground">
@@ -501,7 +545,7 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
           </p>
           <Button
             className="mt-4"
-            onClick={() => void fetchPage(null, true)}
+            onClick={() => void fetchPage(null, "replace")}
             type="button"
             variant="outline"
           >
@@ -514,15 +558,31 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
 
   return (
     <>
-      {notice ? (
-        <div className="mb-4 rounded-md border p-3" role="status">
-          {notice}
+      {noticeBanner}
+      {refreshFailed ? (
+        <div
+          className="mb-4 rounded-md border border-destructive p-3"
+          role="alert"
+        >
+          <p>The queue could not be refreshed and may be out of date.</p>
+          <Button
+            className="mt-3"
+            disabled={acting || refreshing}
+            onClick={() => void fetchPage(null, "refresh")}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {refreshing ? "Refreshing…" : "Retry refresh"}
+          </Button>
         </div>
       ) : null}
       <div className="space-y-6">
         {items.map((item) => (
           <SubmissionCard
-            actionsDisabled={acting || loadingMore || status === "loading"}
+            actionsDisabled={
+              acting || loadingMore || refreshing || status === "loading"
+            }
             canDelete={canDelete}
             item={item}
             key={item.id}
@@ -533,8 +593,10 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
       <div className="mt-8 flex justify-center">
         {hasNextPage && nextCursor ? (
           <Button
-            disabled={acting || loadingMore || Boolean(fetchRef.current)}
-            onClick={() => void fetchPage(nextCursor, false)}
+            disabled={
+              acting || loadingMore || refreshing || Boolean(fetchRef.current)
+            }
+            onClick={() => void fetchPage(nextCursor, "append")}
             type="button"
             variant="outline"
           >
