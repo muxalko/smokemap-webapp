@@ -1,5 +1,6 @@
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { print } from "graphql";
+import type { HTMLAttributes, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/test/render";
 import {
   GetPlaceByIdDocument,
@@ -11,6 +12,18 @@ import PlaceCard, {
   placeDetailsQueryOptions,
   type SimplePlaceType,
 } from "./PlaceCard";
+
+jest.mock("@/components/ui/carousel", () => ({
+  Carousel: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
+    <div {...props}>{children}</div>
+  ),
+  CarouselContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  CarouselItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  CarouselPrevious: () => <button type="button">Previous slide</button>,
+  CarouselNext: () => <button type="button">Next slide</button>,
+}));
 
 const selectedPlace: SimplePlaceType = {
   place_id: 42,
