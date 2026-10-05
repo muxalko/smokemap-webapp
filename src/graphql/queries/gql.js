@@ -404,10 +404,14 @@ export const GET_PLACE_BY_ID = gql`
             category {
                     name
                 }
-            imageSet {
-                    id
+            media {
+                    publicId
                     url
-                    name
+                    position
+                    mimeType
+                    byteSize
+                    width
+                    height
                 }
             }
     }

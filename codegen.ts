@@ -26,6 +26,7 @@ const config: CodegenConfig = {
              input: 'string',
              output: 'string'
            },
+           UUID: 'string',
            DateTime: 'Date',
            JSON: '{ [key: string]: any }',
            Upload: 'File'
