@@ -115,7 +115,7 @@ it("uses the supplied opaque URL for one photo without carousel controls", async
   const opaqueUrl = "/api/v1/media/4dcf22a0-opaque/";
   renderCard([queryMock(result([media("public-1", 0, opaqueUrl)]))]);
 
-  const image = await screen.findByAltText("Approved place photo 1");
+  const image = await screen.findByAltText("Approved place view 1");
   expect(image).toHaveAttribute("src", opaqueUrl);
   expect(image).toHaveAttribute("width", "640");
   expect(image).toHaveAttribute("height", "480");
@@ -148,12 +148,12 @@ it("renders multiple photos in the backend-provided order", async () => {
 
 it("contains revoked or unavailable image failures inside the detail card", async () => {
   renderCard([queryMock(result([media("revoked", 0, "/public/revoked")]))]);
-  const image = await screen.findByAltText("Approved place photo 1");
+  const image = await screen.findByAltText("Approved place view 1");
 
   fireEvent.error(image);
 
   expect(screen.getByRole("alert")).toHaveTextContent("Photo unavailable.");
-  expect(screen.queryByAltText("Approved place photo 1")).toBeNull();
+  expect(screen.queryByAltText("Approved place view 1")).toBeNull();
   expect(screen.getByText("Approved place")).toBeInTheDocument();
 });
 
@@ -185,7 +185,7 @@ it("reopening detail fetches publication truth instead of retaining revoked medi
     </MockedProvider>
   );
 
-  expect(await screen.findByAltText("Approved place photo 1")).toHaveAttribute(
+  expect(await screen.findByAltText("Approved place view 1")).toHaveAttribute(
     "src",
     "/public/later-revoked"
   );
@@ -206,5 +206,5 @@ it("reopening detail fetches publication truth instead of retaining revoked medi
       screen.getByText("No approved photos for this place.")
     ).toBeInTheDocument();
   });
-  expect(screen.queryByAltText("Approved place photo 1")).toBeNull();
+  expect(screen.queryByAltText("Approved place view 1")).toBeNull();
 });

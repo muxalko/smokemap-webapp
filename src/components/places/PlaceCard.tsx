@@ -114,7 +114,7 @@ export function PublicPlaceMedia({
     return (
       <PublicMediaImage
         media={item}
-        alt={`${placeName} photo ${index + 1}`}
+        alt={`${placeName} view ${index + 1}`}
         onOpen={() => setCurrentMedia(item)}
         onUnavailable={() => markUnavailable(item)}
       />
@@ -149,7 +149,7 @@ export function PublicPlaceMedia({
               width={currentMedia.width}
               height={currentMedia.height}
               className="max-h-[75vh] w-full object-contain"
-              alt={`${placeName} enlarged photo`}
+              alt={`${placeName} enlarged view`}
               onError={() => markUnavailable(currentMedia)}
             />
           ) : null}
