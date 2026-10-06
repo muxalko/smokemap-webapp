@@ -5,6 +5,16 @@ const backendInternalUrl = (
 ).replace(/\/$/, "");
 
 const nextConfig = {
+  skipTrailingSlashRedirect: true,
+  async redirects() {
+    return [
+      {
+        source: "/:path((?!api/v1/media/).+)/",
+        destination: "/:path",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
@@ -18,6 +28,10 @@ const nextConfig = {
       {
         source: "/api/smokemap/places/search",
         destination: `${backendInternalUrl}/api/v1/places/search/`,
+      },
+      {
+        source: "/api/v1/media/:publicId/",
+        destination: `${backendInternalUrl}/api/v1/media/:publicId/`,
       },
       {
         source: "/api/v1/media/:path*",
