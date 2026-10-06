@@ -15,6 +15,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  UUID: { input: string; output: string; }
   DateTime: { input: Date; output: Date; }
   GenericScalar: { input: any; output: any; }
   JSONString: { input: any; output: any; }
@@ -163,8 +164,20 @@ export type PlaceType = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   imageSet: Array<ImageType>;
+  media: Array<PublicMediaRenditionType>;
   name: Scalars['String']['output'];
   tags: Array<TagType>;
+};
+
+export type PublicMediaRenditionType = {
+  __typename?: 'PublicMediaRenditionType';
+  byteSize: Scalars['Int']['output'];
+  height: Scalars['Int']['output'];
+  mimeType: Scalars['String']['output'];
+  position: Scalars['Int']['output'];
+  publicId: Scalars['UUID']['output'];
+  url: Scalars['String']['output'];
+  width: Scalars['Int']['output'];
 };
 
 export type Query = {
@@ -327,7 +340,7 @@ export type GetPlaceByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetPlaceByIdQuery = { __typename?: 'Query', placeById?: { __typename?: 'PlaceType', id: string, name: string, description?: string | null, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, category: { __typename?: 'CategoryType', name: string }, imageSet: Array<{ __typename?: 'ImageType', id: string, url: string, name: string }> } | null };
+export type GetPlaceByIdQuery = { __typename?: 'Query', placeById?: { __typename?: 'PlaceType', id: string, name: string, description?: string | null, address: { __typename?: 'AddressType', properties?: { __typename?: 'AddressProperties', addressString: string } | null, geometry: { __typename?: 'GeometryObjectType', coordinates?: any | null } }, category: { __typename?: 'CategoryType', name: string }, media: Array<{ __typename?: 'PublicMediaRenditionType', publicId: string, url: string, position: number, mimeType: string, byteSize: number, width: number, height: number }> } | null };
 
 export type LoginMutationVariables = Exact<{
   email: Scalars['String']['input'];
@@ -733,10 +746,14 @@ export const GetPlaceByIdDocument = gql`
     category {
       name
     }
-    imageSet {
-      id
+    media {
+      publicId
       url
-      name
+      position
+      mimeType
+      byteSize
+      width
+      height
     }
   }
 }
