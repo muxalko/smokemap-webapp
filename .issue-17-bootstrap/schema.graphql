@@ -1,0 +1,422 @@
+DEVELOPMENT MODE !!! - Hello from 3572
+GDAL_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgdal.so.34
+GEOS_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgeos_c.so.1
+type Query {
+  categories: [CategoryType]
+  tags: [TagType]
+  addresses: [AddressType]
+  images: [ImageType]
+  requests: [RequestType]
+  requestsToApprove: [RequestType]
+  moderationQueueV4(first: Int, after: String): ModerationQueuePageV4!
+  requestById(id: ID): RequestType
+  requestsByName(name: String): RequestType
+  submissionMediaStateV3(submissionId: ID!): SubmissionMediaStateType
+  mediaAttachmentPreviewV3(attachmentId: ID!): MediaPreviewAuthorization
+  places: [PlaceType] @deprecated(reason: "Unbounded; use GET /api/v1/places/search/ for name search or GET /api/v1/places/ for viewport reads.")
+  placesNames: [String]
+  placeById(id: ID): PlaceType
+  placesByName(name: String): [PlaceType]
+  placesStartwithName(name: String): [PlaceType]
+  s3PresignedUrl: JSONString
+}
+
+type CategoryType {
+  id: ID!
+  slug: String!
+  name: String!
+  description: String
+}
+
+type TagType {
+  id: ID!
+  name: String!
+}
+
+type AddressType {
+  type: String
+  id: ID!
+
+  """"""
+  geometry: GeometryObjectType!
+  bbox: GenericScalar
+  properties: AddressProperties
+}
+
+"\n`GeometryObjectType` represents a pair of values:\n- Geometry `type`\n- Geometry `coordinates`\n"
+type GeometryObjectType {
+  type: String
+  coordinates: GenericScalar
+}
+
+"""
+The `GenericScalar` scalar type represents a generic
+GraphQL scalar value that could be:
+String, Boolean, Int, Float, List or Object.
+"""
+scalar GenericScalar
+
+type AddressProperties {
+  addressString: String
+}
+
+type ImageType {
+  id: ID!
+  name: String!
+  url: String!
+  metadata: JSONString
+}
+
+"""
+Allows use of a JSON String for input / output from the GraphQL schema.
+
+Use of this type is *not recommended* as you lose the benefits of having a defined, static
+schema (one of the key benefits of GraphQL).
+"""
+scalar JSONString
+
+type RequestType {
+  id: ID!
+  approved: Boolean!
+  name: String!
+  category: CategoryType!
+  description: String
+  address: AddressType!
+  tags: [String!]!
+  website: String
+  dateCreated: DateTime!
+  dateUpdated: DateTime!
+  dateApproved: DateTime
+  approvedComment: String
+  state: String!
+
+  """
+  Pending managed attachment identities in display order. Use each ID with mediaAttachmentPreviewV3; storage metadata is never exposed.
+  """
+  attachments: [ModerationMediaAttachmentV4!]!
+
+  """Deprecated compatibility field containing the reviewer ID."""
+  approvedBy: String
+
+  """Deprecated compatibility field containing the owner ID."""
+  requestedBy: String
+}
+
+"""
+The `DateTime` scalar type represents a DateTime
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar DateTime
+
+"""Minimum safe identity needed to preview one queued attachment."""
+type ModerationMediaAttachmentV4 {
+  id: ID!
+  position: Int!
+}
+
+type ModerationQueuePageV4 {
+  items: [RequestType!]!
+  hasNextPage: Boolean!
+  nextCursor: String
+}
+
+"""Owner-safe resume read model: no bucket, key, credential, or owner id."""
+type SubmissionMediaStateType {
+  submission: SubmissionV3SnapshotType!
+  attachments: [ManagedMediaAttachmentType!]!
+  mediaIntents: [MediaUploadIntentType!]!
+}
+
+type SubmissionV3SnapshotType {
+  id: ID!
+  state: String!
+  name: String!
+  categorySlug: String!
+  longitude: Float!
+  latitude: Float!
+  addressLabel: String
+  tags: [String!]!
+  description: String
+  website: String
+}
+
+type ManagedMediaAttachmentType {
+  id: ID!
+  position: Int
+  state: String!
+  byteSize: Int
+  detectedMime: String!
+  width: Int
+  height: Int
+  attachedAt: DateTime
+  submissionId: ID!
+  mediaIntentId: ID!
+}
+
+type MediaUploadIntentType {
+  id: UUID!
+  state: String!
+  slot: Int!
+  expectedMime: String!
+  declaredByteSize: Int!
+  serverByteSize: Int
+  detectedMime: String!
+  width: Int
+  height: Int
+  failureCode: String!
+  verificationAttempts: Int!
+  cleanupAttempts: Int!
+  cleanupNextAttemptAt: DateTime
+  createdAt: DateTime!
+  absoluteExpiresAt: DateTime!
+  presignExpiresAt: DateTime
+  verifiedAt: DateTime
+  attachedAt: DateTime
+  deletedAt: DateTime
+  submissionId: ID!
+}
+
+"""
+Leverages the internal Python implementation of UUID (uuid.UUID) to provide native UUID objects
+in fields, resolvers and input.
+"""
+scalar UUID
+
+"""
+A short-lived, exact-object GET capability. Never a bucket, key, or credential.
+"""
+type MediaPreviewAuthorization {
+  url: String!
+  expiresAt: DateTime!
+}
+
+type PlaceType {
+  id: ID!
+  name: String!
+  category: CategoryType!
+  description: String
+  address: AddressType!
+  tags: [TagType!]!
+  website: String
+  imageSet: [ImageType!]!
+  media: [PublicMediaRenditionType!]!
+}
+
+type PublicMediaRenditionType {
+  publicId: UUID!
+  url: String!
+  position: Int!
+  mimeType: String!
+  byteSize: Int!
+  width: Int!
+  height: Int!
+}
+
+type Mutation {
+  tokenAuth(email: String!, password: String!): ObtainJSONWebToken
+  verifyToken(token: String!): Verify
+  refreshToken(refreshToken: String): Refresh
+  revokeToken(refreshToken: String): Revoke
+  createRequest(input: RequestInput!): CreateRequest
+  createSubmissionV3(idempotencyKey: String!, input: SubmissionV3Input!): CreateSubmissionV3
+  editSubmissionV3(idempotencyKey: String!, input: SubmissionV3Input!, submissionId: ID!): EditSubmissionV3
+  finalizeSubmissionV3(idempotencyKey: String!, submissionId: ID!): FinalizeSubmissionV3
+  reorderSubmissionMediaV3(attachmentIds: [ID!]!, idempotencyKey: String!, submissionId: ID!): ReorderSubmissionMediaV3
+  withdrawSubmissionV4(idempotencyKey: String!, submissionId: ID!): WithdrawSubmissionV4
+  approveSubmissionV4(idempotencyKey: String!, input: ReviewSubmissionV4Input, submissionId: ID!): ApproveSubmissionV4
+  rejectSubmissionV4(idempotencyKey: String!, input: ReviewSubmissionV4Input, submissionId: ID!): RejectSubmissionV4
+  revokePublicMediaV4(idempotencyKey: String!, publicId: UUID!): RevokePublicMediaV4
+  createMediaUploadIntent(idempotencyKey: String!, input: CreateMediaUploadIntentInput!): CreateMediaUploadIntent
+  issueMediaUploadIntent(idempotencyKey: String!, intentId: ID!): IssueMediaUploadIntent
+  renewMediaUploadIntent(idempotencyKey: String!, intentId: ID!): RenewMediaUploadIntent
+  verifyMediaUploadIntent(idempotencyKey: String!, intentId: ID!): VerifyMediaUploadIntent
+  attachVerifiedMedia(idempotencyKey: String!, intentId: ID!): AttachVerifiedMedia
+  removeAttachedMedia(idempotencyKey: String!, intentId: ID!): RemoveAttachedMedia
+  expireMediaUploadIntent(idempotencyKey: String!, intentId: ID!): ExpireMediaUploadIntent
+  cleanupMediaUploadIntent(idempotencyKey: String!, intentId: ID!): CleanupMediaUploadIntent
+  createImage(input: ImageInput!): CreateImage
+  approveRequest(id: ID, input: RequestApproveInput!): ApproveRequest
+  deleteRequest(id: ID): DeleteRequest
+}
+
+type ObtainJSONWebToken {
+  payload: GenericScalar!
+  token: String!
+  refreshToken: String!
+  refreshExpiresIn: Int!
+  user: UserType
+}
+
+type UserType {
+  name: String!
+  image: String!
+  email: String!
+  role: String
+}
+
+type Verify {
+  payload: GenericScalar!
+}
+
+type Refresh {
+  payload: GenericScalar!
+  token: String!
+  refreshToken: String!
+  refreshExpiresIn: Int!
+}
+
+type Revoke {
+  revoked: Int!
+}
+
+type CreateRequest {
+  request: RequestType
+}
+
+input RequestInput {
+  name: String
+  category: String
+  description: String
+  addressString: String
+  tags: [String]
+  website: String
+}
+
+type CreateSubmissionV3 {
+  submission: RequestType!
+  replayed: Boolean!
+}
+
+input SubmissionV3Input {
+  name: String!
+  categorySlug: String!
+  longitude: Float!
+  latitude: Float!
+  addressLabel: String
+  tags: [String]
+  description: String
+  website: String
+}
+
+type EditSubmissionV3 {
+  submission: SubmissionV3SnapshotType!
+  replayed: Boolean!
+}
+
+type FinalizeSubmissionV3 {
+  submission: SubmissionV3SnapshotType!
+  replayed: Boolean!
+}
+
+type ReorderSubmissionMediaV3 {
+  orderedAttachmentIds: [ID!]!
+  replayed: Boolean!
+}
+
+type WithdrawSubmissionV4 {
+  submission: RequestType!
+  replayed: Boolean!
+}
+
+type ApproveSubmissionV4 {
+  submission: RequestType!
+  place: PlaceType!
+  replayed: Boolean!
+}
+
+input ReviewSubmissionV4Input {
+  comment: String
+}
+
+type RejectSubmissionV4 {
+  submission: RequestType!
+  replayed: Boolean!
+}
+
+type RevokePublicMediaV4 {
+  publicId: UUID!
+  state: String!
+  replayed: Boolean!
+}
+
+type CreateMediaUploadIntent {
+  intent: MediaUploadIntentType!
+  replayed: Boolean!
+}
+
+input CreateMediaUploadIntentInput {
+  submissionId: ID!
+  mimeType: String!
+  declaredByteSize: Int!
+  declaredSha256: String!
+  originalFilename: String
+  slot: Int
+}
+
+type IssueMediaUploadIntent {
+  intent: MediaUploadIntentType!
+  upload: MediaUploadAuthorization!
+  replayed: Boolean!
+}
+
+type MediaUploadAuthorization {
+  url: String!
+  fields: GenericScalar!
+  expiresAt: DateTime!
+}
+
+type RenewMediaUploadIntent {
+  intent: MediaUploadIntentType!
+  upload: MediaUploadAuthorization!
+  replayed: Boolean!
+}
+
+type VerifyMediaUploadIntent {
+  intent: MediaUploadIntentType!
+  replayed: Boolean!
+}
+
+type AttachVerifiedMedia {
+  attachment: ManagedMediaAttachmentType!
+  replayed: Boolean!
+}
+
+type RemoveAttachedMedia {
+  intent: MediaUploadIntentType!
+  replayed: Boolean!
+}
+
+type ExpireMediaUploadIntent {
+  intent: MediaUploadIntentType!
+  replayed: Boolean!
+}
+
+type CleanupMediaUploadIntent {
+  intent: MediaUploadIntentType!
+  deleted: Boolean!
+  replayed: Boolean!
+}
+
+type CreateImage {
+  image: ImageType
+}
+
+input ImageInput {
+  requestId: String
+  name: String
+  url: String
+  metadata: String
+}
+
+type ApproveRequest {
+  request: RequestType
+}
+
+input RequestApproveInput {
+  approvedComment: String
+}
+
+type DeleteRequest {
+  ok: Boolean
+}
