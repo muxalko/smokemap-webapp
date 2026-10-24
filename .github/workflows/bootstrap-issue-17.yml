@@ -1,0 +1,118 @@
+name: Bootstrap issue 17 artifacts
+
+on:
+  push:
+    branches: [issue-17-supported-dependencies]
+
+permissions:
+  contents: write
+
+jobs:
+  artifacts:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      SETTINGS_MODE: local
+      DJANGO_SECRET_KEY: local-ci-only-django-key
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: smokemap_ci
+      POSTGRES_USER: smokemap_ci
+      POSTGRES_PASSWORD: local-ci-only
+      POSTGRES_OPTIONS: "-c search_path=public"
+      AWS_ACCESS_KEY_ID: local-ci-only
+      AWS_SECRET_ACCESS_KEY: local-ci-only
+      AWS_REGION: us-east-1
+      AWS_STORAGE_BUCKET_NAME: local-ci-only
+      AWS_S3_ENDPOINT_URL: http://127.0.0.1:9000
+      AWS_S3_ADDRESSING_STYLE: path
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: frontend
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+      - name: Resolve the framework lockfile and offline packages
+        working-directory: frontend
+        shell: bash
+        run: |
+          offline_mirror="$RUNNER_TEMP/yarn-offline-mirror"
+          cp yarn.lock "$RUNNER_TEMP/original-yarn.lock"
+          yarn config set yarn-offline-mirror "$offline_mirror"
+          yarn config set yarn-offline-mirror-pruning true
+          yarn install
+          cp yarn.lock "$RUNNER_TEMP/issue-17-yarn.lock"
+      - uses: actions/checkout@v4
+        with:
+          repository: muxalko/smokemap-django-backend
+          ref: development
+          path: backend
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Generate the development GraphQL schema snapshot
+        working-directory: backend
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends binutils gdal-bin libproj-dev
+          python -m pip install --requirement requirements.txt
+          python - <<'PY' > "$RUNNER_TEMP/issue-17-schema.graphql"
+          import os
+          os.environ.setdefault("DJANGO_SETTINGS_MODULE", "smokemap.settings")
+          import django
+          django.setup()
+          from backend.schema import schema
+          print(schema)
+          PY
+      - name: Prepare one-use bootstrap files
+        working-directory: frontend
+        shell: bash
+        run: |
+          mkdir .issue-17-bootstrap
+          cp "$RUNNER_TEMP/issue-17-yarn.lock" .issue-17-bootstrap/yarn.lock
+          cp "$RUNNER_TEMP/issue-17-schema.graphql" .issue-17-bootstrap/schema.graphql
+          python - "$RUNNER_TEMP/original-yarn.lock" "$RUNNER_TEMP/issue-17-yarn.lock" "$RUNNER_TEMP/yarn-offline-mirror" .issue-17-bootstrap/offline <<'PY'
+          import difflib
+          from pathlib import Path
+          import shutil
+          import sys
+          from urllib.parse import unquote
+
+          old_lock, new_lock, mirror_dir, output_dir = map(Path, sys.argv[1:])
+          added_tarballs = set()
+          for line in difflib.unified_diff(
+              old_lock.read_text().splitlines(), new_lock.read_text().splitlines()
+          ):
+              if line.startswith('+  resolved "'):
+                  url = line.split('"', 2)[1].split('#', 1)[0]
+                  added_tarballs.add(unquote(url.rsplit('/', 1)[-1]))
+
+          output_dir.mkdir()
+          mirror_files = list(mirror_dir.iterdir())
+          for tarball in sorted(added_tarballs):
+              matches = [path for path in mirror_files if path.name.endswith(tarball)]
+              if len(matches) != 1:
+                  print(f"Skipping unmatched offline package {tarball}: {matches}")
+                  continue
+              shutil.copy2(matches[0], output_dir / matches[0].name)
+          print(f"Selected {len(added_tarballs)} changed packages for offline verification")
+          PY
+      - name: Publish one-use bootstrap files to the feature branch
+        working-directory: frontend
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add --force .issue-17-bootstrap
+          git commit -m "[bootstrap artifacts] issue 17"
+          git push origin HEAD:issue-17-supported-dependencies
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-17-bootstrap
+          path: |
+            ${{ runner.temp }}/issue-17-yarn.lock
+            ${{ runner.temp }}/issue-17-schema.graphql
+          retention-days: 1
