@@ -80,7 +80,10 @@ closed on drift. It also requires:
 
 The standalone server resolves backend connectivity at request time. Browser
 GraphQL, place-list, search, and approved-media calls remain same-origin and
-are forwarded only to their established backend paths. Client-supplied
+are forwarded only to their established backend paths. Next.js canonicalizes
+route-handler query strings to form encoding (for example, `bbox=1,2,3,4`
+becomes `bbox=1%2C2%2C3%2C4`), which matches what the browser client already
+sends and decodes to identical values in Django. Client-supplied
 forwarding headers are removed and the trusted internal frontend hop supplies
 `X-Forwarded-Proto: https`, matching the TLS/proxy contract introduced by
 backend PR #116. Direct server-side authentication and GraphQL calls use the

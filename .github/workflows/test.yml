@@ -118,9 +118,30 @@ jobs:
             fi
             sleep 2
           done
-          proxy_response="$(curl --fail --silent --show-error "http://127.0.0.1:${host_port}/api/smokemap/locations?bbox=1,2,3,4&zoom=10")"
-          if [ "${proxy_response}" != '{"path":"/api/v1/places/?bbox=1,2,3,4&zoom=10","proto":"https"}' ]; then
-            echo "::error title=Unexpected backend proxy response::The startup probe received a mismatched non-secret response"
+          expect_proxy() {
+            request_path=$1
+            expected=$2
+            if ! actual="$(curl --fail --silent --show-error "http://127.0.0.1:${host_port}${request_path}")"; then
+              echo "::error title=Backend proxy request failed::${request_path}"
+              docker logs "${frontend_id}" || true
+              exit 1
+            fi
+            if [ "${actual}" != "${expected}" ]; then
+              echo "::error title=Unexpected backend proxy response::${request_path} returned ${actual}"
+              exit 1
+            fi
+          }
+          # The browser sends URLSearchParams output; it must reach the backend unchanged.
+          expect_proxy '/api/smokemap/locations?bbox=1%2C2%2C3%2C4&zoom=10' \
+            '{"path":"/api/v1/places/?bbox=1%2C2%2C3%2C4&zoom=10","proto":"https"}'
+          # Next.js canonicalizes route-handler queries to the same form-encoded values.
+          expect_proxy '/api/smokemap/locations?bbox=1,2,3,4&zoom=10' \
+            '{"path":"/api/v1/places/?bbox=1%2C2%2C3%2C4&zoom=10","proto":"https"}'
+          expect_proxy '/api/smokemap/places/search?q=smoke+map' \
+            '{"path":"/api/v1/places/search/?q=smoke+map","proto":"https"}'
+          unlisted_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:${host_port}/api/smokemap/admin")"
+          if [ "${unlisted_status}" != "404" ]; then
+            echo "::error title=Unlisted backend path was proxied::/api/smokemap/admin returned ${unlisted_status}"
             exit 1
           fi
 

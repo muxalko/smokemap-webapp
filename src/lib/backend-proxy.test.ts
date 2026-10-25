@@ -38,6 +38,21 @@ it("preserves approved-media slash behavior without accepting empty paths", () =
   expect(mediaBackendPath([], true)).toBeNull();
 });
 
+it("forwards the browser's encoded viewport query unchanged", async () => {
+  const upstream = jest.fn().mockResolvedValue(new Response("{}"));
+  global.fetch = upstream;
+  const request = new Request(
+    "https://staging.smokemap.test/api/smokemap/locations?bbox=1%2C2%2C3%2C4&zoom=10"
+  );
+
+  await proxyBackendRequest(request, "/api/v1/places/");
+
+  const [url] = upstream.mock.calls[0] as [URL];
+  expect(url.href).toBe(
+    "http://backend:8000/api/v1/places/?bbox=1%2C2%2C3%2C4&zoom=10"
+  );
+});
+
 it("proxies method, query, and body through the runtime backend contract", async () => {
   const upstream = jest.fn().mockResolvedValue(
     new Response('{"data":{"ok":true}}', {
