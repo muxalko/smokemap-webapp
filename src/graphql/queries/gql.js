@@ -180,17 +180,19 @@ export const MEDIA_ATTACHMENT_PREVIEW_V3 = gql`
     }
 `;
 
-const SUBMISSION_V3_SNAPSHOT_FIELDS = `
-    id
-    state
-    name
-    categorySlug
-    longitude
-    latitude
-    addressLabel
-    tags
-    description
-    website
+const SUBMISSION_V3_SNAPSHOT_FIELDS = gql`
+    fragment SubmissionV3SnapshotFields on SubmissionV3SnapshotType {
+        id
+        state
+        name
+        categorySlug
+        longitude
+        latitude
+        addressLabel
+        tags
+        description
+        website
+    }
 `;
 
 export const EDIT_SUBMISSION_V3 = gql`
@@ -205,11 +207,12 @@ export const EDIT_SUBMISSION_V3 = gql`
             input: $input
         ) {
             submission {
-                ${SUBMISSION_V3_SNAPSHOT_FIELDS}
+                ...SubmissionV3SnapshotFields
             }
             replayed
         }
     }
+    ${SUBMISSION_V3_SNAPSHOT_FIELDS}
 `;
 
 export const REORDER_SUBMISSION_MEDIA_V3 = gql`
@@ -233,7 +236,7 @@ export const SUBMISSION_MEDIA_STATE_V3 = gql`
     query SubmissionMediaStateV3($submissionId: ID!) {
         submissionMediaStateV3(submissionId: $submissionId) {
             submission {
-                ${SUBMISSION_V3_SNAPSHOT_FIELDS}
+                ...SubmissionV3SnapshotFields
             }
             attachments {
                 id
@@ -251,6 +254,7 @@ export const SUBMISSION_MEDIA_STATE_V3 = gql`
             }
         }
     }
+    ${SUBMISSION_V3_SNAPSHOT_FIELDS}
 `;
 
 export const ALL_REQUESTS_QUERY = gql`

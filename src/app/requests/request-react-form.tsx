@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckIcon, ChevronsUpDown } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useForm, type DefaultValues } from "react-hook-form";
 
@@ -149,7 +150,7 @@ export default function RequestReactForm({
   if (!authenticated) {
     return (
       <Button asChild className="absolute right-3 top-5 z-30" variant="outline">
-        <a href="/api/auth/signin?callbackUrl=%2F">Sign in to submit</a>
+        <Link href="/api/auth/signin?callbackUrl=%2F">Sign in to submit</Link>
       </Button>
     );
   }
