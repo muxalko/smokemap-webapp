@@ -87,8 +87,11 @@ jobs:
           grep -q '^Invalid ' "${RUNNER_TEMP}/missing-config.log"
 
           docker network create "${network_name}" >/dev/null
-          backend_id="$(docker run --detach --network "${network_name}" --name "${backend_name}" --entrypoint node smokemap-frontend:ci -e 'require("http").createServer((request,response)=>{response.setHeader("content-type","application/json");response.end(JSON.stringify({path:request.url,proto:request.headers["x-forwarded-proto"]}))}).listen(8000,"0.0.0.0")')"
-          frontend_id="$(docker run --detach --network "${network_name}" --publish 127.0.0.1::3000 \
+          # The backend double redirects any request not marked HTTPS, like Django's SECURE_SSL_REDIRECT.
+          backend_id="$(docker run --detach --network "${network_name}" --name "${backend_name}" \
+            --volume "${GITHUB_WORKSPACE}/docker:/probe:ro" \
+            --entrypoint node smokemap-frontend:ci /probe/probe-backend.js)"
+          frontend_id="$(docker run --detach --network "${network_name}" --network-alias frontend --publish 127.0.0.1::3000 \
             --env NODE_ENV=production \
             --env NEXT_PUBLIC_ENVIRONMENT=staging \
             --env "NEXT_PUBLIC_VERSION=${source_sha}" \
@@ -142,6 +145,15 @@ jobs:
           unlisted_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:${host_port}/api/smokemap/admin")"
           if [ "${unlisted_status}" != "404" ]; then
             echo "::error title=Unlisted backend path was proxied::/api/smokemap/admin returned ${unlisted_status}"
+            exit 1
+          fi
+          # Real credentials sign-in, authenticated /requests middleware, and a server action through getClient.
+          if ! docker run --rm --network "${network_name}" \
+            --volume "${GITHUB_WORKSPACE}/docker:/probe:ro" \
+            --entrypoint node smokemap-frontend:ci \
+            /probe/probe-auth-flow.js http://frontend:3000 http://backend:8000; then
+            echo "::error title=Authenticated production probe failed::See the frontend log below"
+            docker logs "${frontend_id}" || true
             exit 1
           fi
 

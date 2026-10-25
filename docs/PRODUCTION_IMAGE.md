@@ -86,8 +86,25 @@ becomes `bbox=1%2C2%2C3%2C4`), which matches what the browser client already
 sends and decodes to identical values in Django. Client-supplied
 forwarding headers are removed and the trusted internal frontend hop supplies
 `X-Forwarded-Proto: https`, matching the TLS/proxy contract introduced by
-backend PR #116. Direct server-side authentication and GraphQL calls use the
-same header in production. Development continues to use its local defaults.
+backend PR #116. Direct server-side authentication calls, the SSR Apollo
+client, and the `getClient()` link used by submission, moderation, and media
+presign server actions send the same header in production; without it the
+backend's HTTPS redirect breaks every server action. Development continues to
+use its local defaults.
+
+Middleware runs in the Edge runtime and logs only through
+`src/lib/edge-logger.ts`, a structured logger that redacts credential-bearing
+fields. It must not import the `"use client"` browser logger or the Node
+stream logger; `src/middleware.test.ts` guards that import graph.
+
+CI proves these paths against the built image. `docker/probe-backend.js` is a
+backend double that, like Django with `SECURE_SSL_REDIRECT`, redirects any
+request not marked HTTPS. `docker/probe-auth-flow.js` performs a real
+credentials sign-in, loads authenticated `/requests`, and invokes the
+`loadModerationQueue` server action by the ID recorded in the image's own
+action manifest. It requires one authenticated HTTPS-marked queue query and no
+redirected requests. The probe uses only test-only credentials and never
+prints cookies or tokens.
 
 ## Image and source provenance
 

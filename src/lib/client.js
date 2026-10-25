@@ -15,6 +15,12 @@ export const { getClient } = registerApolloClient((user) => {
       process.env.GRAPHQL_INTERNAL_ENDPOINT ??
       `${process.env.BACKEND_INTERNAL_URL ?? "http://localhost:8000"}/graphql/`,
     credentials: "include",
+    // The production backend redirects requests not marked as HTTPS by this
+    // trusted internal hop (SECURE_SSL_REDIRECT behind a TLS proxy).
+    headers:
+      process.env.NODE_ENV === "production"
+        ? { "X-Forwarded-Proto": "https" }
+        : undefined,
   });
   const authLink = setContext(async (_, { headers }) => {
     logger.debug("registerApolloClient().setContext() fired");
