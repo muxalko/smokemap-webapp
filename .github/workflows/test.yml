@@ -64,11 +64,20 @@ jobs:
           backend_name="backend"
           frontend_id=""
           backend_id=""
+          diagnose() {
+            status=$?
+            line=$1
+            echo "::error title=Production startup probe failed::Script line ${line} exited with status ${status}"
+            if [ -n "${frontend_id}" ]; then docker logs "${frontend_id}" || true; fi
+            if [ -n "${backend_id}" ]; then docker logs "${backend_id}" || true; fi
+            exit "${status}"
+          }
           cleanup() {
             if [ -n "${frontend_id}" ]; then docker rm --force "${frontend_id}" >/dev/null 2>&1 || true; fi
             if [ -n "${backend_id}" ]; then docker rm --force "${backend_id}" >/dev/null 2>&1 || true; fi
             docker network rm "${network_name}" >/dev/null 2>&1 || true
           }
+          trap 'diagnose ${LINENO}' ERR
           trap cleanup EXIT
 
           if docker run --rm --network none smokemap-frontend:ci >"${RUNNER_TEMP}/missing-config.log" 2>&1; then
@@ -110,7 +119,10 @@ jobs:
             sleep 2
           done
           proxy_response="$(curl --fail --silent --show-error "http://127.0.0.1:${host_port}/api/smokemap/locations?bbox=1,2,3,4&zoom=10")"
-          test "${proxy_response}" = '{"path":"/api/v1/places/?bbox=1,2,3,4&zoom=10","proto":"https"}'
+          if [ "${proxy_response}" != '{"path":"/api/v1/places/?bbox=1,2,3,4&zoom=10","proto":"https"}' ]; then
+            echo "::error title=Unexpected backend proxy response::The startup probe received a mismatched non-secret response"
+            exit 1
+          fi
 
   secrets:
     runs-on: ubuntu-latest
