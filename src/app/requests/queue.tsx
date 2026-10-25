@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -498,12 +499,12 @@ export function ModerationQueue({ canDelete }: { canDelete: boolean }) {
         {noticeBanner}
         <div className="rounded-md border border-destructive p-4" role="alert">
           Your session expired.{" "}
-          <a
+          <Link
             className="underline"
             href="/api/auth/signin?callbackUrl=%2Frequests"
           >
             Sign in again
-          </a>
+          </Link>
           .
         </div>
       </>
