@@ -2,6 +2,9 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 The server-side authentication and future identity-provider boundary is
 documented in [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md).
+The non-root staging image, build/runtime configuration boundary, and immutable
+provenance requirements are documented in
+[`docs/PRODUCTION_IMAGE.md`](docs/PRODUCTION_IMAGE.md).
 
 ## Tests
 
@@ -39,8 +42,11 @@ Jest discovers no tests. `codegen:check` regenerates the checked-in GraphQL
 types from `src/graphql/schema.graphql` and fails if they drift. Pull requests
 and pushes to `development` install the frozen lockfile with the `.nvmrc`
 runtime, then run typecheck, lint, unit tests, a production build, and the
-codegen drift check. CI also scans the full Git history with Gitleaks and
-redacts any detected values.
+codegen drift check. CI also builds the real `production` Docker target,
+verifies its fixed non-root identity and source label, proves missing
+configuration fails, starts it against a mock `backend:8000`, and probes the
+home page plus same-origin API proxy. The separate secrets job scans the full
+Git history with Gitleaks and redacts any detected values.
 
 ## Viewport map data
 

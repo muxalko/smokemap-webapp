@@ -28,7 +28,12 @@ async function request<T>(
   try {
     const response = await fetch(graphqlEndpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(process.env.NODE_ENV === "production"
+          ? { "X-Forwarded-Proto": "https" }
+          : {}),
+      },
       body: JSON.stringify({ query, variables }),
       cache: "no-store",
     });
