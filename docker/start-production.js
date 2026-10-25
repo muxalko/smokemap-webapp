@@ -1,7 +1,12 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { validateRuntimeEnvironment } = require("./production-config");
+const productionConfigPath = fs.existsSync(
+  path.join(__dirname, "production-config.js")
+)
+  ? "./production-config"
+  : "../src/lib/production-config";
+const { validateRuntimeEnvironment } = require(productionConfigPath);
 
 function parseServerArguments(argumentsToParse) {
   const options = {};

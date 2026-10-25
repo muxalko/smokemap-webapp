@@ -50,7 +50,7 @@ jobs:
             --tag smokemap-frontend:ci \
             .
           test "$(docker inspect --format '{{.Config.User}}' smokemap-frontend:ci)" = "10001:10001"
-          test "$(docker inspect --format '{{ index .Config.Labels \"org.opencontainers.image.revision\" }}' smokemap-frontend:ci)" = "${source_sha}"
+          test "$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' smokemap-frontend:ci)" = "${source_sha}"
           if docker inspect --format '{{json .Config.Env}}' smokemap-frontend:ci | grep -q NEXTAUTH_SECRET; then
             echo "The image must not contain NEXTAUTH_SECRET" >&2
             exit 1
