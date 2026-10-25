@@ -4,12 +4,12 @@
 //https://next-auth.js.org/configuration/nextjs#advanced-usage
 import { NextRequestWithAuth, withAuth } from "next-auth/middleware";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
-import clogger from "./lib/clogger";
+import edgeLogger from "./lib/edge-logger";
 
 const protectedRoutesMiddleware = withAuth(
   // 'withAuth' augments 'Request' with the user\s token.
   function middleware(request: NextRequestWithAuth) {
-    clogger.debug(
+    edgeLogger.debug(
       { pathname: request.nextUrl.pathname },
       "withAuth middleware"
     );
