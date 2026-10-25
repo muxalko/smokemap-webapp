@@ -5,24 +5,42 @@ documented in [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md).
 
 ## Tests
 
-Run the canonical local checks from the workspace root:
+The supported frontend toolchain is Node 22.23.4 (pinned in `.nvmrc`) with
+Yarn 1.22.22. Next.js and `eslint-config-next` are deliberately aligned at
+15.5.28, the maintained Next.js 15 line selected as the bounded upgrade from
+the legacy Next.js 13 baseline. Install exactly what `yarn.lock` records:
 
 ```sh
-make check
-make test
+nvm use
+yarn install --frozen-lockfile
 ```
 
-For a focused frontend run in the existing Compose container:
+Run the canonical local checks from this repository:
+
+```sh
+yarn typecheck
+yarn lint
+yarn test:ci
+yarn build
+yarn codegen:check
+```
+
+The workspace-level `make check` and `make test` commands run the corresponding
+checks in the existing Compose container.
+
+For a focused frontend test run in that container:
 
 ```sh
 docker compose exec -T frontend yarn test:ci
 ```
 
 `test:ci` exits after one deterministic run and fails when tests fail or when
-Jest discovers no tests. Pull requests and pushes to `development` run the
-same type, lint, and test commands, then compile and serve the home page with
-Next.js. CI also scans the full Git history with Gitleaks and redacts any
-detected values.
+Jest discovers no tests. `codegen:check` regenerates the checked-in GraphQL
+types from `src/graphql/schema.graphql` and fails if they drift. Pull requests
+and pushes to `development` install the frozen lockfile with the `.nvmrc`
+runtime, then run typecheck, lint, unit tests, a production build, and the
+codegen drift check. CI also scans the full Git history with Gitleaks and
+redacts any detected values.
 
 ## Viewport map data
 
@@ -66,7 +84,7 @@ $ graphql-codegen --config codegen.ts
 ✔ Parse Configuration
 ✔ Generate outputs
 $ next dev --hostname 0.0.0.0 --port 3000
-  ▲ Next.js 13.5.4
+  ▲ Next.js 15.5.28
   - Local:        http://localhost:3000
   - Network:      http://0.0.0.0:3000
   - Environments: .env.local, .env.development

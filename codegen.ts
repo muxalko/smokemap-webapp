@@ -7,7 +7,7 @@ const config: CodegenConfig = {
     process.env.GRAPHQL_SCHEMA_URL ??
     process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ??
     path.join(__dirname, "src/graphql/schema.graphql"),
-  documents: "src/graphql/queries/**/*.(ts|js|graphql)",
+  documents: "src/graphql/queries/gql.js",
   generates: { 
     // "./src/graphql/__generated__/": {
     //   preset: "client",
