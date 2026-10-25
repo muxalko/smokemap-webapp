@@ -1,0 +1,9 @@
+{
+  "name": "smokemap-webapp-production",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
+  "scripts": {
+    "start": "node runtime/start-production.js"
+  }
+}

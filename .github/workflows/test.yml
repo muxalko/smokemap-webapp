@@ -25,6 +25,138 @@ jobs:
       - run: yarn build
       - run: yarn codegen:check
 
+  production-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Build the production target from validated public inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha="${{ github.event.pull_request.head.sha || github.sha }}"
+          docker build \
+            --target production \
+            --build-arg "VCS_REF=${source_sha}" \
+            --build-arg NEXT_PUBLIC_ENVIRONMENT=staging \
+            --build-arg "NEXT_PUBLIC_VERSION=${source_sha}" \
+            --build-arg NEXT_PUBLIC_BASE_URL=https://staging.smokemap.test \
+            --build-arg NEXT_PUBLIC_BACKEND=/api/smokemap \
+            --build-arg NEXT_PUBLIC_GRAPHQL_ENDPOINT=/api/smokemap/graphql \
+            --build-arg NEXT_PUBLIC_FEATURESERV_ENDPOINT=/api/smokemap/locations \
+            --build-arg NEXT_PUBLIC_MAP_STYLE=https://tiles.openfreemap.org/styles/liberty \
+            --build-arg NEXT_PUBLIC_LOG_LEVEL=info \
+            --tag smokemap-frontend:ci \
+            .
+          test "$(docker inspect --format '{{.Config.User}}' smokemap-frontend:ci)" = "10001:10001"
+          test "$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' smokemap-frontend:ci)" = "${source_sha}"
+          if docker inspect --format '{{json .Config.Env}}' smokemap-frontend:ci | grep -q NEXTAUTH_SECRET; then
+            echo "The image must not contain NEXTAUTH_SECRET" >&2
+            exit 1
+          fi
+      - name: Reject missing runtime configuration and probe startup
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha="${{ github.event.pull_request.head.sha || github.sha }}"
+          network_name="smokemap-frontend-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          backend_name="backend"
+          frontend_id=""
+          backend_id=""
+          diagnose() {
+            status=$?
+            line=$1
+            echo "::error title=Production startup probe failed::Script line ${line} exited with status ${status}"
+            if [ -n "${frontend_id}" ]; then docker logs "${frontend_id}" || true; fi
+            if [ -n "${backend_id}" ]; then docker logs "${backend_id}" || true; fi
+            exit "${status}"
+          }
+          cleanup() {
+            if [ -n "${frontend_id}" ]; then docker rm --force "${frontend_id}" >/dev/null 2>&1 || true; fi
+            if [ -n "${backend_id}" ]; then docker rm --force "${backend_id}" >/dev/null 2>&1 || true; fi
+            docker network rm "${network_name}" >/dev/null 2>&1 || true
+          }
+          trap 'diagnose ${LINENO}' ERR
+          trap cleanup EXIT
+
+          if docker run --rm --network none smokemap-frontend:ci >"${RUNNER_TEMP}/missing-config.log" 2>&1; then
+            echo "Production startup unexpectedly accepted missing configuration" >&2
+            exit 1
+          fi
+          grep -q '^Invalid ' "${RUNNER_TEMP}/missing-config.log"
+
+          docker network create "${network_name}" >/dev/null
+          # The backend double redirects any request not marked HTTPS, like Django's SECURE_SSL_REDIRECT.
+          backend_id="$(docker run --detach --network "${network_name}" --name "${backend_name}" \
+            --volume "${GITHUB_WORKSPACE}/docker:/probe:ro" \
+            --entrypoint node smokemap-frontend:ci /probe/probe-backend.js)"
+          frontend_id="$(docker run --detach --network "${network_name}" --network-alias frontend --publish 127.0.0.1::3000 \
+            --env NODE_ENV=production \
+            --env NEXT_PUBLIC_ENVIRONMENT=staging \
+            --env "NEXT_PUBLIC_VERSION=${source_sha}" \
+            --env NEXT_PUBLIC_BASE_URL=https://staging.smokemap.test \
+            --env NEXT_PUBLIC_BACKEND=/api/smokemap \
+            --env NEXT_PUBLIC_GRAPHQL_ENDPOINT=/api/smokemap/graphql \
+            --env NEXT_PUBLIC_FEATURESERV_ENDPOINT=/api/smokemap/locations \
+            --env NEXT_PUBLIC_MAP_STYLE=https://tiles.openfreemap.org/styles/liberty \
+            --env NEXT_PUBLIC_LOG_LEVEL=info \
+            --env NEXTAUTH_URL=https://staging.smokemap.test \
+            --env NEXTAUTH_SECRET=test-only-nextauth-secret-32-chars \
+            --env BACKEND_INTERNAL_URL=http://backend:8000 \
+            --env GRAPHQL_INTERNAL_ENDPOINT=http://backend:8000/graphql/ \
+            smokemap-frontend:ci)"
+          host_port="$(docker port "${frontend_id}" 3000/tcp | sed 's/.*://')"
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error "http://127.0.0.1:${host_port}/" >/dev/null; then
+              break
+            fi
+            if ! docker inspect --format '{{.State.Running}}' "${frontend_id}" | grep -qx true; then
+              docker logs "${frontend_id}"
+              exit 1
+            fi
+            if [ "${attempt}" -eq 30 ]; then
+              docker logs "${frontend_id}"
+              exit 1
+            fi
+            sleep 2
+          done
+          expect_proxy() {
+            request_path=$1
+            expected=$2
+            if ! actual="$(curl --fail --silent --show-error "http://127.0.0.1:${host_port}${request_path}")"; then
+              echo "::error title=Backend proxy request failed::${request_path}"
+              docker logs "${frontend_id}" || true
+              exit 1
+            fi
+            if [ "${actual}" != "${expected}" ]; then
+              echo "::error title=Unexpected backend proxy response::${request_path} returned ${actual}"
+              exit 1
+            fi
+          }
+          # The browser sends URLSearchParams output; it must reach the backend unchanged.
+          expect_proxy '/api/smokemap/locations?bbox=1%2C2%2C3%2C4&zoom=10' \
+            '{"path":"/api/v1/places/?bbox=1%2C2%2C3%2C4&zoom=10","proto":"https"}'
+          # Next.js canonicalizes route-handler queries to the same form-encoded values.
+          expect_proxy '/api/smokemap/locations?bbox=1,2,3,4&zoom=10' \
+            '{"path":"/api/v1/places/?bbox=1%2C2%2C3%2C4&zoom=10","proto":"https"}'
+          expect_proxy '/api/smokemap/places/search?q=smoke+map' \
+            '{"path":"/api/v1/places/search/?q=smoke+map","proto":"https"}'
+          unlisted_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:${host_port}/api/smokemap/admin")"
+          if [ "${unlisted_status}" != "404" ]; then
+            echo "::error title=Unlisted backend path was proxied::/api/smokemap/admin returned ${unlisted_status}"
+            exit 1
+          fi
+          # Real credentials sign-in, authenticated /requests middleware, and a server action through getClient.
+          if ! docker run --rm --network "${network_name}" \
+            --volume "${GITHUB_WORKSPACE}/docker:/probe:ro" \
+            --entrypoint node smokemap-frontend:ci \
+            /probe/probe-auth-flow.js http://frontend:3000 http://backend:8000; then
+            echo "::error title=Authenticated production probe failed::See the frontend log below"
+            docker logs "${frontend_id}" || true
+            exit 1
+          fi
+
   secrets:
     runs-on: ubuntu-latest
     steps:

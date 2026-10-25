@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 
-const backendInternalUrl = (
-  process.env.BACKEND_INTERNAL_URL ?? "http://localhost:8000"
-).replace(/\/$/, "");
-
 const nextConfig = {
+  output: "standalone",
   skipTrailingSlashRedirect: true,
   async redirects() {
     return [
@@ -12,30 +9,6 @@ const nextConfig = {
         source: "/:path((?!api/v1/media/).+)/",
         destination: "/:path",
         permanent: true,
-      },
-    ];
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/smokemap/graphql",
-        destination: `${backendInternalUrl}/graphql/`,
-      },
-      {
-        source: "/api/smokemap/locations",
-        destination: `${backendInternalUrl}/api/v1/places/`,
-      },
-      {
-        source: "/api/smokemap/places/search",
-        destination: `${backendInternalUrl}/api/v1/places/search/`,
-      },
-      {
-        source: "/api/v1/media/:publicId/",
-        destination: `${backendInternalUrl}/api/v1/media/:publicId/`,
-      },
-      {
-        source: "/api/v1/media/:path*",
-        destination: `${backendInternalUrl}/api/v1/media/:path*`,
       },
     ];
   },

@@ -51,29 +51,20 @@ async function resolveCustomRoute(pathname) {
   return null;
 }
 
-it("preserves a trailing slash while routing approved media to the backend", async () => {
-  const route = await resolveCustomRoute("/api/v1/media/4dcf22a0-opaque/");
-
-  expect(route).toMatchObject({
-    type: "rewrite",
-    destination: {
-      protocol: "http:",
-      hostname: "localhost",
-      port: "8000",
-      pathname: "/api/v1/media/4dcf22a0-opaque/",
-    },
-  });
+it("builds a standalone server for the production image", () => {
+  expect(nextConfig.output).toBe("standalone");
 });
 
-it("retains slashless media routing and unrelated trailing-slash redirects", async () => {
+it("leaves media paths with either slash form for the runtime proxy", async () => {
+  await expect(
+    resolveCustomRoute("/api/v1/media/4dcf22a0-opaque/")
+  ).resolves.toBeNull();
   await expect(
     resolveCustomRoute("/api/v1/media/4dcf22a0-opaque")
-  ).resolves.toMatchObject({
-    type: "rewrite",
-    destination: {
-      pathname: "/api/v1/media/4dcf22a0-opaque",
-    },
-  });
+  ).resolves.toBeNull();
+});
+
+it("retains unrelated trailing-slash redirects", async () => {
   await expect(resolveCustomRoute("/places/42/")).resolves.toMatchObject({
     type: "redirect",
     destination: {
