@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { Session } from "next-auth";
+import Link from "next/link";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 
 const controlClassName =
@@ -50,9 +51,9 @@ function AccountControl() {
           {pending ? "Signing out…" : "Sign out"}
         </button>
       ) : (
-        <a className={controlClassName} href="/api/auth/signin?callbackUrl=%2F">
+        <Link className={controlClassName} href="/api/auth/signin?callbackUrl=%2F" prefetch={false}>
           Sign in
-        </a>
+        </Link>
       )}
       {error && (
         <p
