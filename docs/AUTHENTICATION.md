@@ -34,8 +34,14 @@ credentials and requires a new login. Logout attempts to revoke the active
 refresh family, but local logout still completes when the backend is
 unavailable.
 
-The shared layout shows an account navigation below the logo on desktop and
-mobile. Signed-out visitors (including expired sessions) get **Sign in**;
+The shared layout reserves a compact, normal-flow header containing the
+Smokemap home link and account navigation on desktop and mobile. Its flex row
+wraps on narrow screens, and account feedback expands the header in flow.
+The remaining page area is a `relative min-h-0 flex-1` region: existing absolute
+map search, submission/draft controls, category filter, and viewport status
+are anchored below the header while the map fills the remaining height.
+No route-specific offsets or overlay are needed to place account controls.
+Signed-out visitors (including expired sessions) get **Sign in**;
 signed-in visitors get a keyboard-focusable **Sign out** button without needing
 an avatar or a menu. Session loading shows **Loading account…**. While logout
 is pending, the button is disabled and shows **Signing out…**; a request failure

@@ -166,11 +166,70 @@ it("removes the signed-in control when NextAuth reports a cleared session", () =
 it("mounts account navigation in the shared layout with the safe server session", async () => {
   jest.mocked(getServerSession).mockResolvedValueOnce(session);
   render(await Template({ children: <main>Page content</main> }));
-  expect(screen.getByRole("navigation", { name: "Account" })).toBeVisible();
+  const header = screen.getByRole("banner");
+  const account = screen.getByRole("navigation", { name: "Account" });
+  const brand = screen.getByRole("link", { name: "Smokemap" });
+  const content = screen.getByRole("main").parentElement;
+
+  // These utilities establish the layout contract; JSDOM does not do layout.
+  expect(header.parentElement).toHaveClass("flex", "h-dvh", "flex-col");
+  expect(header).toHaveClass("flex", "shrink-0", "flex-wrap", "items-center");
+  expect(header.className).not.toMatch(/\b(absolute|fixed)\b/);
+  expect(brand.parentElement).toBe(header);
+  expect(brand).toHaveAttribute("href", "/");
+  expect(brand.className).not.toMatch(/\b(absolute|fixed)\b/);
+  expect(account.parentElement).toBe(header);
+  expect(account.className).not.toMatch(/\b(absolute|fixed)\b/);
+  expect(account).toBeVisible();
+  expect(header.nextElementSibling).toBe(content);
+  expect(content).toHaveClass("relative", "min-h-0", "flex-1");
+  expect(content).not.toContainElement(account);
   expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
-  expect(screen.getByRole("img", { name: "Smokemap" })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: "Smokemap" })).toHaveClass("h-10");
   expect(screen.getByRole("main")).toHaveTextContent("Page content");
   expect(jest.mocked(SessionProvider).mock.calls[0][0].session).toEqual(
     session
   );
+});
+
+it.each(["loading", "unauthenticated"] as const)(
+  "keeps %s account navigation inside the reserved header",
+  async (status) => {
+    readSession.mockReturnValue({ data: null, status, update: jest.fn() });
+    jest.mocked(getServerSession).mockResolvedValueOnce(null);
+    render(await Template({ children: <main>Page content</main> }));
+
+    const header = screen.getByRole("banner");
+    const account = screen.getByRole("navigation", { name: "Account" });
+    expect(account.parentElement).toBe(header);
+    expect(account.className).not.toMatch(/\b(absolute|fixed)\b/);
+    expect(header.nextElementSibling).toContainElement(screen.getByRole("main"));
+    expect(account).toContainElement(
+      status === "loading"
+        ? screen.getByRole("status")
+        : screen.getByRole("link", { name: "Sign in" })
+    );
+  }
+);
+
+it("keeps pending logout and retry feedback in the header without replacing page content", async () => {
+  logout.mockRejectedValueOnce(new Error("private response detail"));
+  jest.mocked(getServerSession).mockResolvedValueOnce(session);
+  render(await Template({ children: <main>Page content</main> }));
+  const header = screen.getByRole("banner");
+  const account = screen.getByRole("navigation", { name: "Account" });
+  const content = screen.getByRole("main").parentElement;
+  const button = screen.getByRole("button", { name: "Sign out" });
+
+  fireEvent.click(button);
+  expect(button).toBeDisabled();
+  expect(header).toContainElement(button);
+  const error = await screen.findByRole("alert");
+  expect(error.parentElement).toBe(account);
+  expect(error.className).not.toMatch(/\b(absolute|fixed)\b/);
+  expect(header).toContainElement(error);
+  expect(header.nextElementSibling).toBe(content);
+  expect(content).toHaveClass("relative", "min-h-0", "flex-1");
+  expect(content).toContainElement(screen.getByRole("main"));
+  expect(button).toBeEnabled();
 });

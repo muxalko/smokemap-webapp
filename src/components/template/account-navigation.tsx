@@ -31,10 +31,7 @@ function AccountControl() {
   }
 
   return (
-    <nav
-      aria-label="Account"
-      className="absolute left-3 top-20 z-30 max-w-[calc(100%-1.5rem)]"
-    >
+    <nav aria-label="Account" className="max-w-full">
       {status === "loading" ? (
         <span role="status" className={controlClassName}>
           Loading account…
