@@ -98,8 +98,8 @@ it("disables duplicate logout requests and retains NextAuth's full-page public r
   let finish!: () => void;
   logout.mockImplementationOnce(
     () =>
-      new Promise<void>((resolve) => {
-        finish = resolve;
+      new Promise<undefined>((resolve) => {
+        finish = () => resolve(undefined);
       })
   );
   render(<AccountNavigation session={session} />);
