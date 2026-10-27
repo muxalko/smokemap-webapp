@@ -1,7 +1,7 @@
 import { options } from "@/app/api/auth/[...nextauth]/config";
-import { getServerSession, User } from "next-auth";
+import { getServerSession } from "next-auth";
 
-import Navigation from "./navigation";
+import AccountNavigation from "./account-navigation";
 import Footer from "./footer";
 
 export default async function Template({
@@ -11,27 +11,9 @@ export default async function Template({
 }) {
   const session = await getServerSession(options);
 
-  let logged_user: User;
-
-  if (!session) {
-    // default guest profile
-    logged_user = {
-      id: "-1",
-      name: "Guest",
-      email: "",
-      image: "/guest.svg",
-      role: "guest",
-    };
-  } else {
-    logged_user = session?.user;
-  }
-
   return (
     <>
       <div className="flex h-dvh flex-col">
-        {/* {(logged_user && logged_user.role == "admin" && (
-          <Navigation user={logged_user} />
-        )) || ( */}
         <div className="absolute left-3 top-0 z-50">
           <a className="cursor-default" href={"/"} key={"a-logo-image"}>
             <img
@@ -41,7 +23,7 @@ export default async function Template({
             />
           </a>
         </div>
-        {/* )} */}
+        <AccountNavigation session={session} />
         {/* <header className="bg-white shadow">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">

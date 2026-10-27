@@ -34,6 +34,20 @@ credentials and requires a new login. Logout attempts to revoke the active
 refresh family, but local logout still completes when the backend is
 unavailable.
 
+The shared layout shows an account navigation below the logo on desktop and
+mobile. Signed-out visitors (including expired sessions) get **Sign in**;
+signed-in visitors get a keyboard-focusable **Sign out** button without needing
+an avatar or a menu. Session loading shows **Loading account…**. While logout
+is pending, the button is disabled and shows **Signing out…**; a request failure
+shows a generic retry message without exposing session details.
+
+The button calls NextAuth's `signOut({ callbackUrl: "/" })`, retaining its
+CSRF-protected POST, session-cookie clearing, and server-side refresh-family
+revocation event. The full-page redirect to the public home page discards
+protected page and client state. Subsequent protected requests still require a
+valid session and Django authorization. No credentials are passed to the
+account navigation beyond the existing safe public session.
+
 Concurrent refreshes are deduplicated within one frontend process. This is the
 tested M1 deployment model used by Docker Compose. A horizontally scaled or
 serverless deployment requires shared refresh coordination, an idempotent
