@@ -34,6 +34,26 @@ credentials and requires a new login. Logout attempts to revoke the active
 refresh family, but local logout still completes when the backend is
 unavailable.
 
+The shared layout reserves a compact, normal-flow header containing the
+Smokemap home link and account navigation on desktop and mobile. Its flex row
+wraps on narrow screens, and account feedback expands the header in flow.
+The remaining page area is a `relative min-h-0 flex-1` region: existing absolute
+map search, submission/draft controls, category filter, and viewport status
+are anchored below the header while the map fills the remaining height.
+No route-specific offsets or overlay are needed to place account controls.
+Signed-out visitors (including expired sessions) get **Sign in**;
+signed-in visitors get a keyboard-focusable **Sign out** button without needing
+an avatar or a menu. Session loading shows **Loading account…**. While logout
+is pending, the button is disabled and shows **Signing out…**; a request failure
+shows a generic retry message without exposing session details.
+
+The button calls NextAuth's `signOut({ callbackUrl: "/" })`, retaining its
+CSRF-protected POST, session-cookie clearing, and server-side refresh-family
+revocation event. The full-page redirect to the public home page discards
+protected page and client state. Subsequent protected requests still require a
+valid session and Django authorization. No credentials are passed to the
+account navigation beyond the existing safe public session.
+
 Concurrent refreshes are deduplicated within one frontend process. This is the
 tested M1 deployment model used by Docker Compose. A horizontally scaled or
 serverless deployment requires shared refresh coordination, an idempotent
